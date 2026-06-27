@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="logo-ia.png" alt="IntelliASHA Logo" width="150" />
+  <img src="public/logo-ia.png" alt="IntelliASHA Logo" width="150" />
   
   # IntelliASHA 
   **An Agentic Nervous System for Rural Healthcare**
