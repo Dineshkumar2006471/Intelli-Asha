@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [22.x]
 
     steps:
     - name: Checkout repository
@@ -37,3 +37,10 @@ jobs:
       
     - name: Build Application
       run: npm run build
+      env:
+        VITE_FIREBASE_API_KEY: "dummy-key"
+        VITE_FIREBASE_AUTH_DOMAIN: "dummy-domain"
+        VITE_FIREBASE_PROJECT_ID: "dummy-id"
+        VITE_FIREBASE_STORAGE_BUCKET: "dummy-bucket"
+        VITE_FIREBASE_MESSAGING_SENDER_ID: "dummy-sender"
+        VITE_FIREBASE_APP_ID: "dummy-app-id"
