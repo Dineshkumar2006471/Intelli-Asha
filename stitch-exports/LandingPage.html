@@ -1,0 +1,399 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>IntelliASHA - Trusted Field Intelligence</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "border-default": "#E5E7EB",
+                      "verified-bg": "#E6F4EA",
+                      "error": "#ba1a1a",
+                      "surface-variant": "#e1e2e4",
+                      "primary-fixed-dim": "#adc7ff",
+                      "on-tertiary-fixed": "#341100",
+                      "neutral-bg": "#F1F3F4",
+                      "secondary-fixed-dim": "#bdc7d8",
+                      "secondary": "#555f6d",
+                      "on-error": "#ffffff",
+                      "outline": "#727785",
+                      "surface-container": "#edeef0",
+                      "on-secondary": "#ffffff",
+                      "on-primary-fixed-variant": "#004493",
+                      "border-strong": "#D1D5DB",
+                      "text-muted": "#9CA3AF",
+                      "on-background": "#191c1e",
+                      "on-primary-fixed": "#001a41",
+                      "neutral-grey": "#5F6368",
+                      "on-surface": "#191c1e",
+                      "surface-bright": "#f8f9fb",
+                      "text-primary": "#0F1117",
+                      "outline-variant": "#c1c6d6",
+                      "error-container": "#ffdad6",
+                      "tertiary": "#9e4300",
+                      "flagged-bg": "#FEF3C7",
+                      "secondary-container": "#d6e0f1",
+                      "surface-tint": "#005bc0",
+                      "tertiary-fixed-dim": "#ffb691",
+                      "surface-container-low": "#f2f4f6",
+                      "inverse-primary": "#adc7ff",
+                      "tertiary-fixed": "#ffdbcb",
+                      "on-tertiary-fixed-variant": "#783100",
+                      "on-secondary-container": "#596372",
+                      "at-risk-bg": "#FCE8E6",
+                      "inverse-on-surface": "#f0f1f3",
+                      "secondary-fixed": "#d9e3f4",
+                      "tertiary-container": "#c55500",
+                      "surface-container-highest": "#e1e2e4",
+                      "on-error-container": "#93000a",
+                      "background": "#f8f9fb",
+                      "surface-container-high": "#e7e8ea",
+                      "on-primary": "#ffffff",
+                      "inverse-surface": "#2e3132",
+                      "flagged-amber": "#B45309",
+                      "verified-green": "#137333",
+                      "on-secondary-fixed-variant": "#3e4755",
+                      "on-surface-variant": "#414754",
+                      "primary-fixed": "#d8e2ff",
+                      "on-tertiary": "#ffffff",
+                      "surface": "#f8f9fb",
+                      "on-secondary-fixed": "#121c28",
+                      "surface-dim": "#d9dadc",
+                      "on-tertiary-container": "#0e0200",
+                      "on-primary-container": "#ffffff",
+                      "primary": "#005bbf",
+                      "primary-container": "#1a73e8",
+                      "surface-container-lowest": "#ffffff",
+                      "at-risk-red": "#C5221F"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "card-padding": "24px",
+                      "unit": "4px",
+                      "max-width": "1200px",
+                      "margin-tablet": "48px",
+                      "margin-mobile": "24px",
+                      "component-gap": "8px",
+                      "margin-desktop": "80px"
+              },
+              "fontFamily": {
+                      "title-sm": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "title-md": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "headline-kpi-mobile": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "headline-kpi": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "display-landing": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "display-hero": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "data-mono": [
+                              "jetbrainsMono"
+                      ],
+                      "title-lg": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "body-base": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "title-sm": [
+                              "17px",
+                              {
+                                      "lineHeight": "26px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "title-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "30px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "13px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-kpi-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-kpi": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display-landing": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display-hero": [
+                              "64px",
+                              {
+                                      "lineHeight": "72px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "data-mono": [
+                              "13px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "title-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-base": [
+                              "15px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.04em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .pulse-dot {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(19, 115, 51, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(19, 115, 51, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(19, 115, 51, 0); }
+        }
+        .horizontal-scroll {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+        }
+        .horizontal-scroll::-webkit-scrollbar {
+            display: none; /* Safari and Chrome */
+        }
+        .scroll-item {
+            scroll-snap-align: center;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-base antialiased">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-on-background docked full-width top-0 border-b border-border-default dark:border-outline-variant flat no shadows transition-all duration-200 ease-in-out relative z-20">
+<div class="flex justify-between items-center px-gutter py-4 w-full max-w-max-width mx-auto">
+<div class="font-title-md text-title-md font-bold text-primary dark:text-primary-fixed">IntelliASHA</div>
+<nav class="hidden md:flex gap-8">
+<a class="text-primary dark:text-primary-fixed border-b-2 border-primary pb-1 font-title-sm text-title-sm hover:text-primary-container dark:hover:text-primary-fixed transition-colors" href="#">Home</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-title-sm text-title-sm hover:text-primary-container dark:hover:text-primary-fixed transition-colors" href="#how-it-works">How It Works</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-title-sm text-title-sm hover:text-primary-container dark:hover:text-primary-fixed transition-colors" href="#impact">Impact</a>
+</nav>
+<button class="bg-primary-container text-on-primary-container font-label-md text-label-md px-4 py-2 rounded-lg hover:bg-surface-tint transition-colors">Request Demo</button>
+</div>
+</header>
+<!-- Hero Section -->
+<section class="relative overflow-hidden" style="background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuB117roifbrnG-_WFRr23Gxcw0slFjSqj77t8WGbsgbuxjlizwwOVXnmO5xxUPZDhwqwudaGuA6Bb4BVgBOZC03AXJFDP-_0LmBrUHe429UhUdG_jCwuDpbLZNPsGQsHQ9Q1F-1WaLcA8oSWsfsTVM3UolmsQyOk03DlkSRPnuM_dH1iSXWrjZ7cxTFi7FojSzGr1O5FdC-Nwfo_-DJ5jLp3LYFtKQok41wOevB4FjewHvsJWZEBVTylyWpaMjnphsvoYpTLABLvFo&quot;); background-size: cover; background-position: center center; background-repeat: no-repeat;">
+
+<div class="max-w-max-width mx-auto px-gutter py-margin-desktop grid grid-cols-1 xl:grid-cols-[1fr_auto] gap-12 items-center relative z-10">
+<div>
+<h1 class="font-display-hero text-on-surface mb-6 text-[32px] md:text-display-landing lg:text-[56px] leading-tight xl:whitespace-nowrap"><span class="text-text-primary">1 Million ASHA Workers.</span> <span class="text-at-risk-red">Zero Verified Visits.</span></h1>
+<p class="font-title-lg text-title-lg text-secondary mb-8 leading-snug max-w-3xl">We built the AI agent network that fixes India's last-mile health reporting — in real time, in 6 languages, entirely on Google's AI stack.</p>
+<div class="flex gap-4">
+<button class="bg-primary-container text-on-primary-container font-label-md text-label-md px-6 py-3 rounded-lg hover:bg-surface-tint transition-colors">Explore the Platform</button>
+<button class="border border-border-strong text-text-primary font-label-md text-label-md px-6 py-3 rounded-lg hover:bg-surface-variant transition-colors bg-surface/50 backdrop-blur-sm">Read Case Study</button>
+</div>
+</div>
+<div class="relative h-[400px] xl:w-[500px] w-full bg-neutral-bg/80 backdrop-blur-sm rounded-xl border border-border-default overflow-hidden flex items-center justify-center">
+<!-- Simulated Map -->
+<img class="w-full h-full object-contain opacity-80 mix-blend-darken" data-alt="A clean, highly stylized, light-mode abstract map of India in light gray on a pure white background. The map is minimalist, professional, and corporate, resembling a high-end data visualization dashboard. Small, glowing, intense green dots (#137333) are scattered across the map, suggesting real-time active data points. The aesthetic is clean, authoritative, and completely devoid of organic clutter." data-location="India" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD12SkO-tziUSJZTV-QjTkqGcILx9nadxU6b5GKvRBVT5qSG-j1S511Px0At_UZwkc2qzeGAeX2gc6Tzv74XH3--r7u-eIXlmvtt_8uCDcN5UogQFx_BY6GcKJkhRLbQCiJga13lpRpfkJC0xFVy9hYxkI5XMWoC-UN6QmG7oh4oZDWIUfyFGZDt7_H5F7ZE20URy96Lxa2MOP3Fz89cNPyXuN46mpqz_clrF8mb8mCtocDbW06EMQtPyuGXO-o_M0ebbwNJ1dAUkU">
+<!-- Animated Dots Overlay -->
+<div class="absolute top-[30%] left-[40%] w-3 h-3 bg-verified-green rounded-full pulse-dot"></div>
+<div class="absolute top-[50%] left-[30%] w-3 h-3 bg-verified-green rounded-full pulse-dot" style="animation-delay: 0.5s;"></div>
+<div class="absolute top-[60%] left-[60%] w-3 h-3 bg-verified-green rounded-full pulse-dot" style="animation-delay: 1s;"></div>
+<div class="absolute top-[20%] left-[50%] w-3 h-3 bg-verified-green rounded-full pulse-dot" style="animation-delay: 1.5s;"></div>
+</div>
+</div>
+</section>
+<!-- Stats Strip -->
+<section class="bg-surface-container-low border-y border-border-default py-8">
+<div class="max-w-max-width mx-auto px-gutter grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+<div>
+<div class="font-headline-kpi text-headline-kpi text-primary mb-2">1M+</div>
+<div class="font-label-md text-label-md text-secondary uppercase tracking-wider">Health Workers</div>
+</div>
+<div>
+<div class="font-headline-kpi text-headline-kpi text-primary mb-2">6</div>
+<div class="font-label-md text-label-md text-secondary uppercase tracking-wider">Native Languages</div>
+</div>
+<div>
+<div class="font-headline-kpi text-headline-kpi text-primary mb-2">&lt; 2s</div>
+<div class="font-label-md text-label-md text-secondary uppercase tracking-wider">Verification Latency</div>
+</div>
+<div>
+<div class="font-headline-kpi text-headline-kpi text-primary mb-2">100%</div>
+<div class="font-label-md text-label-md text-secondary uppercase tracking-wider">Cloud Native</div>
+</div>
+</div>
+</section>
+<!-- The Ground Reality Section -->
+<section class="max-w-max-width mx-auto px-gutter py-margin-desktop">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+<div>
+<h2 class="font-display-landing text-display-landing text-on-surface mb-6">The Ground Reality</h2>
+<p class="font-body-base text-body-base text-secondary mb-6 text-lg">ASHA workers are the backbone of India's rural health system. Yet, legacy reporting systems are slow, prone to errors, and difficult to verify at scale.</p>
+<p class="font-body-base text-body-base text-secondary text-lg">By introducing intelligent data capture and automated verification, we bring transparency to the frontlines without adding burden to the workers.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<img alt="ASHA worker interacting with mother and child" class="w-full h-[300px] object-cover rounded-xl shadow-md grayscale" src="https://lh3.googleusercontent.com/aida/AP1WRLtYq56BPLP_GD8PD_Abf5tFiclC_ouY-ZCmuYWOMY8WkiMzH5HWWoHQcebs7i3n7PoXFchZdldYMsQABVvLEjduZlwHaw-iOpUvMjYRxh7Ftr_boJ9QmQi6wl8kXRe44r5LQgSEdROeFER4KvEEqqlhTcUWmC8janMFSixcqlbI8jt46XmqfUrG5aejnuccCHg_HrBRnf9c0o7qoDG1nz4xGMWpIz2Kjav7l6Pgka2U7l2XViOM8NxwWE4">
+<img alt="ASHA workers in briefing" class="w-full h-[300px] object-cover rounded-xl shadow-md grayscale mt-8" src="https://lh3.googleusercontent.com/aida/AP1WRLsjzD35p6Y4msSwEgK3s2kMXtF0gaPcD2WB5S372FsHONKpxLbo8nCn0sigm22t5MHwX_U9rvgDwajiTOxjGprbgbNmFSoj_CjGMofmk4sYNsg1EWuIXMK2ESggaCCTmXB7E-gJ3m43SXwbSTvaRrY1XdhlEAbJjz8N2XjNv0_ulg5wqVXe9HGOhGztPru_AYJd9iOdnNG3g0_DiYdUv1iTVk81YRWEdNrLWI7sx2qXGzo-1fFQPlrmMg">
+</div>
+</div>
+</section>
+<!-- Image Scroll Strip -->
+<section class="w-full overflow-hidden bg-surface-container-low py-8 border-y border-border-default">
+<div class="horizontal-scroll gap-4 px-gutter max-w-max-width mx-auto pb-4">
+<img alt="ASHA worker in rural village" class="scroll-item w-[300px] md:w-[450px] h-[300px] object-cover rounded-xl shadow-sm grayscale" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBj1FYf-fw3O_VikyiZk46FoJACs0ogLKG2GqZwGz4_Qx2J4HepaczQaTQRC37aWt6MaqFB2FR9H2ABkyi6nNZfqmt9X9qaSRHEMGUeW75bdTeQXiezSr5WzoymRGePldojGqXXl4mDqAWcfTk4kyxielk2lRdFfR2aJ2QEsY5MQT4GOdD-bVSRqA-BcZFiO1AwPves9zxtsaZz7f0rft0m2V8HlCZMFI18e9hrUjon3gvO7wWNn7K9xNeG-_eSKNDaEuoOzDtC_Us">
+<img alt="Close up of health app on smartphone" class="scroll-item w-[300px] md:w-[450px] h-[300px] object-cover rounded-xl shadow-sm grayscale" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD15plri8SGWvwWeei4NWgqX7ddL9oRcjgiWMYNvHNI0fvaU2s-hTOugvtFno553aDyH1oaGgnnYPqP496N6-AImdQ22ebv_dTW48aVktDCmKW4FO5rU4TOucx4UF4_SKyFB2cq3vgraWW-r7UpLhyjiDGPBy7ENNpOR7moP-ESgJBaBwETNdBELgelrQwd5bbvwI1lEo3QB1X9ZOQVJ-ytLx9c1c5mLh6E48OVvemuzh-v33kpVadEe9Qhta5JV3z_wxtvdvt2F28">
+<img alt="ASHA worker in rural village" class="scroll-item w-[300px] md:w-[450px] h-[300px] object-cover rounded-xl shadow-sm grayscale" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBj1FYf-fw3O_VikyiZk46FoJACs0ogLKG2GqZwGz4_Qx2J4HepaczQaTQRC37aWt6MaqFB2FR9H2ABkyi6nNZfqmt9X9qaSRHEMGUeW75bdTeQXiezSr5WzoymRGePldojGqXXl4mDqAWcfTk4kyxielk2lRdFfR2aJ2QEsY5MQT4GOdD-bVSRqA-BcZFiO1AwPves9zxtsaZz7f0rft0m2V8HlCZMFI18e9hrUjon3gvO7wWNn7K9xNeG-_eSKNDaEuoOzDtC_Us">
+</div>
+</section>
+<!-- How It Works Section -->
+<section class="max-w-max-width mx-auto px-gutter py-margin-desktop" id="how-it-works">
+<div class="text-center mb-12">
+<h2 class="font-display-landing text-display-landing text-on-surface mb-4">How the Agent Network Operates</h2>
+<p class="font-title-md text-title-md text-secondary max-w-3xl mx-auto">A seamless, AI-driven pipeline verifying health data from the field to the dashboard.</p>
+</div>
+<div class="relative">
+<!-- Connecting Line -->
+<div class="hidden lg:block absolute top-1/2 left-0 w-full h-0.5 bg-border-default -z-10 transform -translate-y-1/2"></div>
+<div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8">
+<!-- Step 1 -->
+<div class="bg-surface relative flex flex-col items-center text-center">
+<div class="w-12 h-12 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-title-lg mb-4 border-4 border-surface z-10">1</div>
+<h3 class="font-title-sm text-title-sm text-on-surface mb-2">Data Capture</h3>
+<p class="font-body-base text-body-base text-secondary">Workers input text or voice notes in native languages via simple mobile interfaces.</p>
+</div>
+<!-- Step 2 -->
+<div class="bg-surface relative flex flex-col items-center text-center">
+<div class="w-12 h-12 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-title-lg mb-4 border-4 border-surface z-10">2</div>
+<h3 class="font-title-sm text-title-sm text-on-surface mb-2">Translation</h3>
+<p class="font-body-base text-body-base text-secondary">Google AI instantly translates regional dialects into standardized English for processing.</p>
+</div>
+<!-- Step 3 -->
+<div class="bg-surface relative flex flex-col items-center text-center">
+<div class="w-12 h-12 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-title-lg mb-4 border-4 border-surface z-10">3</div>
+<h3 class="font-title-sm text-title-sm text-on-surface mb-2">Verification</h3>
+<p class="font-body-base text-body-base text-secondary">Agents cross-reference historical data and geographical markers to validate reports.</p>
+</div>
+<!-- Step 4 -->
+<div class="bg-surface relative flex flex-col items-center text-center">
+<div class="w-12 h-12 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-title-lg mb-4 border-4 border-surface z-10">4</div>
+<h3 class="font-title-sm text-title-sm text-on-surface mb-2">Anomaly Detection</h3>
+<p class="font-body-base text-body-base text-secondary">Suspicious patterns or inconsistencies are automatically flagged for manual review.</p>
+</div>
+<!-- Step 5 -->
+<div class="bg-surface relative flex flex-col items-center text-center">
+<div class="w-12 h-12 rounded-full bg-verified-bg text-verified-green flex items-center justify-center font-title-lg mb-4 border-4 border-surface z-10"><span class="material-symbols-outlined">check</span></div>
+<h3 class="font-title-sm text-title-sm text-on-surface mb-2">Dashboard Sync</h3>
+<p class="font-body-base text-body-base text-secondary">Clean, verified data is visualized on institutional dashboards in real-time.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Impact Metrics Section -->
+<section class="bg-surface-bright border-y border-border-default py-margin-desktop" id="impact">
+<div class="max-w-max-width mx-auto px-gutter">
+<div class="text-center mb-16">
+<h2 class="font-display-landing text-display-landing text-on-surface mb-4">Measurable Impact at Scale</h2>
+<p class="font-title-md text-title-md text-secondary max-w-3xl mx-auto">Driving accountability and transparency in public health infrastructure.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+<div class="text-center border-b md:border-b-0 md:border-r border-border-default pb-8 md:pb-0 md:pr-8 last:border-0">
+<div class="font-display-hero text-display-hero text-primary mb-2">45%</div>
+<h3 class="font-title-lg text-title-lg text-on-surface mb-3">Reduction in Errors</h3>
+<p class="font-body-base text-body-base text-secondary">Significant decrease in reporting discrepancies and data entry mistakes across deployed districts.</p>
+</div>
+<div class="text-center border-b md:border-b-0 md:border-r border-border-default pb-8 md:pb-0 md:pr-8 md:pl-8 last:border-0">
+<div class="font-display-hero text-display-hero text-primary mb-2">2.4M</div>
+<h3 class="font-title-lg text-title-lg text-on-surface mb-3">Beneficiaries Tracked</h3>
+<p class="font-body-base text-body-base text-secondary">Accurate tracking of maternal and child health interventions leading to better resource allocation.</p>
+</div>
+<div class="text-center md:pl-8">
+<div class="font-display-hero text-display-hero text-primary mb-2">10x</div>
+<h3 class="font-title-lg text-title-lg text-on-surface mb-3">Faster Processing</h3>
+<p class="font-body-base text-body-base text-secondary">Reduction in data processing time from manual entry to dashboard availability.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="bg-surface-container-highest dark:bg-inverse-surface border-t border-border-default flat no shadows full-width transition-opacity duration-200 mt-24">
+<div class="w-full py-8 px-gutter flex flex-col md:flex-row justify-between items-center max-w-max-width mx-auto">
+<div class="font-label-sm text-label-sm text-on-surface-variant dark:text-secondary-fixed mb-4 md:mb-0">© 2024 IntelliASHA. AI House × Google for Developers.</div>
+<div class="flex gap-6">
+<a class="font-label-sm text-label-sm text-on-secondary-container hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">GitHub</a>
+<a class="font-label-sm text-label-sm text-on-secondary-container hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">Contact</a>
+<a class="font-label-sm text-label-sm text-on-secondary-container hover:text-primary dark:hover:text-primary-fixed transition-colors" href="#">Privacy</a>
+</div>
+</div>
+</footer>
+
+
+
+
+</body></html>

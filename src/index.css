@@ -1,0 +1,23 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+body {
+  background-color: var(--color-background);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Specific animations for Landing Page horizontal scroll */
+@keyframes scrollLeft {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-scroll {
+  animation: scrollLeft 30s linear infinite;
+}
+.animate-scroll:hover {
+  animation-play-state: paused;
+}

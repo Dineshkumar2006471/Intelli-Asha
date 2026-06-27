@@ -1,0 +1,363 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Field Worker App - Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "border-default": "#E5E7EB",
+                      "verified-bg": "#E6F4EA",
+                      "error": "#ba1a1a",
+                      "surface-variant": "#e1e2e4",
+                      "primary-fixed-dim": "#adc7ff",
+                      "on-tertiary-fixed": "#341100",
+                      "neutral-bg": "#F1F3F4",
+                      "secondary-fixed-dim": "#bdc7d8",
+                      "secondary": "#555f6d",
+                      "on-error": "#ffffff",
+                      "outline": "#727785",
+                      "surface-container": "#edeef0",
+                      "on-secondary": "#ffffff",
+                      "on-primary-fixed-variant": "#004493",
+                      "border-strong": "#D1D5DB",
+                      "text-muted": "#9CA3AF",
+                      "on-background": "#191c1e",
+                      "on-primary-fixed": "#001a41",
+                      "neutral-grey": "#5F6368",
+                      "on-surface": "#191c1e",
+                      "surface-bright": "#f8f9fb",
+                      "text-primary": "#0F1117",
+                      "outline-variant": "#c1c6d6",
+                      "error-container": "#ffdad6",
+                      "tertiary": "#9e4300",
+                      "flagged-bg": "#FEF3C7",
+                      "secondary-container": "#d6e0f1",
+                      "surface-tint": "#005bc0",
+                      "tertiary-fixed-dim": "#ffb691",
+                      "surface-container-low": "#f2f4f6",
+                      "inverse-primary": "#adc7ff",
+                      "tertiary-fixed": "#ffdbcb",
+                      "on-tertiary-fixed-variant": "#783100",
+                      "on-secondary-container": "#596372",
+                      "at-risk-bg": "#FCE8E6",
+                      "inverse-on-surface": "#f0f1f3",
+                      "secondary-fixed": "#d9e3f4",
+                      "tertiary-container": "#c55500",
+                      "surface-container-highest": "#e1e2e4",
+                      "on-error-container": "#93000a",
+                      "background": "#f8f9fb",
+                      "surface-container-high": "#e7e8ea",
+                      "on-primary": "#ffffff",
+                      "inverse-surface": "#2e3132",
+                      "flagged-amber": "#B45309",
+                      "verified-green": "#137333",
+                      "on-secondary-fixed-variant": "#3e4755",
+                      "on-surface-variant": "#414754",
+                      "primary-fixed": "#d8e2ff",
+                      "on-tertiary": "#ffffff",
+                      "surface": "#f8f9fb",
+                      "on-secondary-fixed": "#121c28",
+                      "surface-dim": "#d9dadc",
+                      "on-tertiary-container": "#0e0200",
+                      "on-primary-container": "#ffffff",
+                      "primary": "#005bbf",
+                      "primary-container": "#1a73e8",
+                      "surface-container-lowest": "#ffffff",
+                      "at-risk-red": "#C5221F"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "card-padding": "24px",
+                      "unit": "4px",
+                      "max-width": "1200px",
+                      "margin-tablet": "48px",
+                      "margin-mobile": "24px",
+                      "component-gap": "8px",
+                      "margin-desktop": "80px"
+              },
+              "fontFamily": {
+                      "title-sm": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "title-md": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "headline-kpi-mobile": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "headline-kpi": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "display-landing": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "display-hero": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "data-mono": [
+                              "jetbrainsMono"
+                      ],
+                      "title-lg": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "body-base": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "title-sm": [
+                              "17px",
+                              {
+                                      "lineHeight": "26px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "title-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "30px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "13px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-kpi-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-kpi": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display-landing": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display-hero": [
+                              "64px",
+                              {
+                                      "lineHeight": "72px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "data-mono": [
+                              "13px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "title-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-base": [
+                              "15px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.04em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        .pulse-ring {
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(26, 115, 232, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(26, 115, 232, 0); }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body-base antialiased pb-24">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-margin-mobile py-4 bg-surface dark:bg-on-background shadow-sm">
+<div>
+<h1 class="font-headline-kpi-mobile text-headline-kpi-mobile text-primary dark:text-primary-fixed">Good morning, Sunita</h1>
+<p class="font-label-md text-label-md text-on-surface-variant">Block: Rampur PHC</p>
+</div>
+<div class="flex gap-4">
+<button class="text-primary dark:text-primary-fixed active:opacity-80 active:scale-95 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+<button class="text-primary dark:text-primary-fixed active:opacity-80 active:scale-95 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">account_circle</span>
+</button>
+</div>
+</header>
+<main class="pt-[90px] px-margin-mobile flex flex-col gap-6">
+<!-- Verification Summary -->
+<div class="bg-verified-bg border border-border-default rounded-lg p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-verified-green" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold">3 / 7 visits verified today</span>
+</div>
+<a class="font-label-md text-label-md text-primary underline" href="#">View Details</a>
+</div>
+<!-- Main Action: Log a Visit -->
+<div class="bg-surface-container-lowest border-2 border-primary rounded-xl p-6 shadow-[0_4px_12px_rgba(26,115,232,0.15)] flex flex-col items-center justify-center text-center gap-4 relative overflow-hidden">
+<!-- Decorative background pattern -->
+<div class="absolute inset-0 opacity-5" style="background-image: repeating-linear-gradient(45deg, #1A73E8 0, #1A73E8 1px, transparent 0, transparent 50%); background-size: 10px 10px;"></div>
+<div class="z-10 bg-primary-container rounded-full p-6 pulse-ring cursor-pointer">
+<span class="material-symbols-outlined text-on-primary text-5xl block" style="font-variation-settings: 'FILL' 1;">mic</span>
+</div>
+<div class="z-10">
+<h2 class="font-title-lg text-title-lg text-primary-container">Log a Visit</h2>
+<p class="font-body-base text-body-base text-on-surface-variant mt-1">Tap to record voice notes</p>
+</div>
+</div>
+<!-- Secondary Actions Grid -->
+<div class="grid grid-cols-2 gap-4">
+<!-- Route -->
+<a class="bg-surface-container-lowest border border-border-default rounded-lg p-card-padding flex flex-col items-center justify-center gap-2 active:bg-surface-container-low transition-colors shadow-sm" href="#">
+<div class="bg-secondary-container p-3 rounded-full">
+<span class="material-symbols-outlined text-on-secondary-container" style="font-variation-settings: 'FILL' 1;">route</span>
+</div>
+<span class="font-title-sm text-title-sm text-on-surface">Route</span>
+</a>
+<!-- Records -->
+<a class="bg-surface-container-lowest border border-border-default rounded-lg p-card-padding flex flex-col items-center justify-center gap-2 active:bg-surface-container-low transition-colors shadow-sm" href="#">
+<div class="bg-secondary-container p-3 rounded-full">
+<span class="material-symbols-outlined text-on-secondary-container" style="font-variation-settings: 'FILL' 1;">folder</span>
+</div>
+<span class="font-title-sm text-title-sm text-on-surface">Records</span>
+</a>
+<!-- Earnings -->
+<a class="bg-surface-container-lowest border border-border-default rounded-lg p-card-padding flex flex-col items-center justify-center gap-2 active:bg-surface-container-low transition-colors shadow-sm" href="#">
+<div class="bg-secondary-container p-3 rounded-full">
+<span class="material-symbols-outlined text-on-secondary-container" style="font-variation-settings: 'FILL' 1;">payments</span>
+</div>
+<span class="font-title-sm text-title-sm text-on-surface">Earnings</span>
+</a>
+<!-- Alerts -->
+<a class="bg-flagged-bg border border-border-default rounded-lg p-card-padding flex flex-col items-center justify-center gap-2 active:bg-surface-container-low transition-colors shadow-sm relative" href="#">
+<div class="absolute top-2 right-2 w-3 h-3 bg-flagged-amber rounded-full"></div>
+<div class="bg-flagged-amber/20 p-3 rounded-full">
+<span class="material-symbols-outlined text-flagged-amber" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<span class="font-title-sm text-title-sm text-on-surface">Alerts</span>
+</a>
+</div>
+<!-- Recent Activity Feed (Optional for density) -->
+<div class="mt-4">
+<h3 class="font-title-sm text-title-sm text-on-surface mb-3">Recent Activity</h3>
+<div class="flex flex-col gap-3">
+<div class="bg-surface-container-lowest border border-border-default rounded-lg p-3 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="bg-surface-container-low p-2 rounded-full">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">home</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Household 42</p>
+<p class="font-data-mono text-data-mono text-text-muted text-xs">09:15 AM</p>
+</div>
+</div>
+<span class="bg-verified-bg text-verified-green font-label-sm text-label-sm px-2 py-1 rounded-full uppercase">Synced</span>
+</div>
+<div class="bg-surface-container-lowest border border-border-default rounded-lg p-3 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="bg-surface-container-low p-2 rounded-full">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">vaccines</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Immunization Drive</p>
+<p class="font-data-mono text-data-mono text-text-muted text-xs">Yesterday</p>
+</div>
+</div>
+<span class="bg-surface-variant text-on-surface-variant font-label-sm text-label-sm px-2 py-1 rounded-full uppercase">Draft</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Nav Bar Replacement (Contextual) -->
+<nav class="fixed bottom-0 left-0 w-full bg-surface border-t border-border-default flex justify-around items-center py-2 z-50 pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_3px_rgba(0,0,0,0.05)]">
+<button class="flex flex-col items-center p-2 text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</button>
+<button class="flex flex-col items-center p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">calendar_today</span>
+<span class="font-label-sm text-label-sm mt-1">Schedule</span>
+</button>
+<button class="flex flex-col items-center p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">groups</span>
+<span class="font-label-sm text-label-sm mt-1">Community</span>
+</button>
+<button class="flex flex-col items-center p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">person</span>
+<span class="font-label-sm text-label-sm mt-1">Profile</span>
+</button>
+</nav>
+<script>
+        // Simple logic for the mic button pulse
+        document.querySelector('.pulse-ring').addEventListener('click', function() {
+            this.classList.toggle('bg-error');
+            this.classList.toggle('bg-primary-container');
+            const icon = this.querySelector('span');
+            if(this.classList.contains('bg-error')) {
+                icon.style.color = 'white';
+                // simulate recording state
+                this.style.animation = 'pulse 1s infinite ease-in-out';
+            } else {
+                // back to normal
+                 this.style.animation = 'pulse 1.5s infinite ease-in-out';
+            }
+        });
+    </script>
+</body></html>

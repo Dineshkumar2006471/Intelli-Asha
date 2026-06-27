@@ -1,0 +1,274 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>IntelliASHA - Alerts &amp; Notifications</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#004493",
+                        "on-surface": "#191c1e",
+                        "on-secondary": "#ffffff",
+                        "at-risk-red": "#C5221F",
+                        "tertiary": "#9e4300",
+                        "flagged-amber": "#B45309",
+                        "primary-container": "#1a73e8",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "at-risk-bg": "#FCE8E6",
+                        "on-primary-fixed": "#001a41",
+                        "surface-container-low": "#f2f4f6",
+                        "on-secondary-fixed": "#121c28",
+                        "on-secondary-fixed-variant": "#3e4755",
+                        "surface-container": "#edeef0",
+                        "border-default": "#E5E7EB",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-container": "#c55500",
+                        "primary-fixed": "#d8e2ff",
+                        "surface-tint": "#005bc0",
+                        "secondary-fixed": "#d9e3f4",
+                        "surface-bright": "#f8f9fb",
+                        "surface-container-high": "#e7e8ea",
+                        "outline-variant": "#c1c6d6",
+                        "neutral-bg": "#F1F3F4",
+                        "flagged-bg": "#FEF3C7",
+                        "primary-fixed-dim": "#adc7ff",
+                        "on-primary-container": "#ffffff",
+                        "surface-variant": "#e1e2e4",
+                        "on-tertiary-fixed-variant": "#783100",
+                        "on-surface-variant": "#414754",
+                        "neutral-grey": "#5F6368",
+                        "secondary-container": "#d6e0f1",
+                        "text-primary": "#0F1117",
+                        "secondary-fixed-dim": "#bdc7d8",
+                        "on-tertiary-fixed": "#341100",
+                        "inverse-primary": "#adc7ff",
+                        "secondary": "#555f6d",
+                        "primary": "#005bbf",
+                        "on-error": "#ffffff",
+                        "surface-container-highest": "#e1e2e4",
+                        "text-muted": "#9CA3AF",
+                        "outline": "#727785",
+                        "on-background": "#191c1e",
+                        "tertiary-fixed-dim": "#ffb691",
+                        "on-tertiary-container": "#0e0200",
+                        "inverse-surface": "#2e3132",
+                        "background": "#f8f9fb",
+                        "verified-bg": "#E6F4EA",
+                        "tertiary-fixed": "#ffdbcb",
+                        "error": "#ba1a1a",
+                        "border-strong": "#D1D5DB",
+                        "surface": "#f8f9fb",
+                        "on-secondary-container": "#596372",
+                        "inverse-on-surface": "#f0f1f3",
+                        "verified-green": "#137333",
+                        "surface-dim": "#d9dadc"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "margin-mobile": "24px",
+                        "gutter": "24px",
+                        "max-width": "1200px",
+                        "margin-tablet": "48px",
+                        "component-gap": "8px",
+                        "card-padding": "24px",
+                        "margin-desktop": "80px"
+                    },
+                    "fontFamily": {
+                        "headline-kpi": ["Plus Jakarta Sans"],
+                        "body-base": ["Inter"],
+                        "display-hero": ["Plus Jakarta Sans"],
+                        "display-landing": ["Plus Jakarta Sans"],
+                        "headline-kpi-mobile": ["Plus Jakarta Sans"],
+                        "title-md": ["Plus Jakarta Sans"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "title-sm": ["Plus Jakarta Sans"],
+                        "title-lg": ["Plus Jakarta Sans"],
+                        "data-mono": ["jetbrainsMono"]
+                    },
+                    "fontSize": {
+                        "headline-kpi": ["32px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "body-base": ["15px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-hero": ["64px", { "lineHeight": "72px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "display-landing": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-kpi-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "title-md": ["20px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "label-md": ["13px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+                        "title-sm": ["17px", { "lineHeight": "26px", "fontWeight": "600" }],
+                        "title-lg": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "data-mono": ["13px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-text-primary font-body-base antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar for Desktop -->
+<nav class="hidden md:flex bg-surface dark:bg-on-background docked full-width top-0 border-b border-border-default dark:border-outline-variant flat no shadows justify-between items-center px-gutter py-4 w-full max-w-max-width mx-auto transition-all duration-200 ease-in-out">
+<div class="flex items-center gap-8">
+<a class="font-title-md text-title-md font-bold text-primary dark:text-primary-fixed" href="#">IntelliASHA</a>
+<div class="flex gap-6">
+<a class="font-title-sm text-title-sm text-secondary dark:text-secondary-fixed-dim hover:text-primary-container dark:hover:text-primary-fixed transition-colors" href="#">Home</a>
+<a class="font-title-sm text-title-sm text-secondary dark:text-secondary-fixed-dim hover:text-primary-container dark:hover:text-primary-fixed transition-colors" href="#">How It Works</a>
+<a class="font-title-sm text-title-sm text-secondary dark:text-secondary-fixed-dim hover:text-primary-container dark:hover:text-primary-fixed transition-colors" href="#">Impact</a>
+</div>
+</div>
+<button class="bg-primary-container text-on-primary font-label-md text-label-md px-4 py-2 rounded-lg hover:bg-on-primary-fixed-variant transition-colors">Request Demo</button>
+</nav>
+<!-- TopAppBar for Mobile -->
+<nav class="md:hidden bg-surface dark:bg-on-background docked full-width top-0 shadow-sm fixed left-0 w-full z-50 flex justify-between items-center px-margin-mobile py-4">
+<div class="font-headline-kpi-mobile text-headline-kpi-mobile text-primary dark:text-primary-fixed font-title-md text-title-md font-bold">Good morning, Anjali</div>
+<div class="flex gap-4">
+<button class="text-on-surface-variant active:opacity-80 transition-transform active:scale-95"><span class="material-symbols-outlined">notifications</span></button>
+<button class="text-on-surface-variant active:opacity-80 transition-transform active:scale-95"><span class="material-symbols-outlined">account_circle</span></button>
+</div>
+</nav>
+<div class="flex h-screen pt-[72px] md:pt-0 max-w-max-width mx-auto">
+<!-- SideNavBar for Desktop -->
+<aside class="hidden md:flex bg-surface-container-low dark:bg-surface-container-highest docked h-screen w-64 left-0 border-r border-border-default dark:border-outline-variant flat no shadows flex-col py-gutter px-4">
+<div class="mb-8 px-4">
+<div class="font-title-sm text-title-sm font-bold text-on-surface dark:text-on-surface-variant truncate">City Central PHC</div>
+<div class="text-secondary dark:text-secondary-fixed-dim font-label-sm text-label-sm truncate">District Health Office</div>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-secondary-fixed-dim hover:bg-surface-variant hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-colors duration-150 rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Overview</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-secondary-fixed-dim hover:bg-surface-variant hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-colors duration-150 rounded-lg" href="#">
+<span class="material-symbols-outlined">map</span>
+<span class="font-label-md text-label-md">Map</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-secondary-fixed-dim hover:bg-surface-variant hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-colors duration-150 rounded-lg" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-label-md text-label-md">Workers</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container font-bold rounded-lg transition-colors duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">notifications_active</span>
+<span class="font-label-md text-label-md">Alerts</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-secondary-fixed-dim hover:bg-surface-variant hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-colors duration-150 rounded-lg" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-label-md text-label-md">Reports</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-secondary-fixed-dim hover:bg-surface-variant hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-colors duration-150 rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</nav>
+<div class="mt-auto space-y-4 pt-4 border-t border-border-default dark:border-outline-variant">
+<button class="w-full bg-primary-container text-on-primary font-label-md text-label-md py-2 rounded-lg hover:bg-on-primary-fixed-variant transition-colors">Quick Report</button>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-secondary-fixed-dim hover:bg-surface-variant hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-colors duration-150 rounded-lg" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="font-label-md text-label-md">User Profile</span>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto w-full">
+<div class="px-gutter py-margin-desktop md:py-8 max-w-5xl mx-auto space-y-6">
+<header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-border-default pb-6">
+<div>
+<h1 class="font-headline-kpi text-headline-kpi text-on-surface">Alerts &amp; Notifications</h1>
+<p class="font-body-base text-body-base text-secondary mt-1">Monitor and triage field activity exceptions.</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2 border border-border-strong rounded-lg font-label-md text-label-md text-text-primary hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+                            Filter
+                        </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary-container text-on-primary rounded-lg font-label-md text-label-md hover:bg-on-primary-fixed-variant transition-colors">
+<span class="material-symbols-outlined text-[18px]">done_all</span>
+                            Mark All Read
+                        </button>
+</div>
+</header>
+<div class="grid grid-cols-1 gap-4">
+<!-- Alert: Critical (Red) -->
+<div class="bg-surface-container-lowest border border-border-default rounded-xl p-card-padding flex flex-col md:flex-row gap-4 md:items-start relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-at-risk-red"></div>
+<div class="flex-shrink-0 bg-at-risk-bg p-3 rounded-full flex items-center justify-center text-at-risk-red">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div class="flex-1 space-y-2">
+<div class="flex justify-between items-start gap-4">
+<h3 class="font-title-md text-title-md text-on-surface">Zone 4B — 0 verified visits in 48h</h3>
+<span class="font-data-mono text-data-mono text-text-muted shrink-0">10 mins ago</span>
+</div>
+<p class="font-body-base text-body-base text-secondary">No recorded ASHA worker activity in Sector 7, Zone 4B. 12 scheduled postnatal checks missed. Immediate supervisor intervention required.</p>
+<div class="flex flex-wrap gap-2 pt-2">
+<span class="bg-at-risk-bg text-at-risk-red px-2 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wider">Critical</span>
+<span class="bg-surface-container-low text-on-surface-variant px-2 py-1 rounded-full font-label-sm text-label-sm">System Generated</span>
+</div>
+</div>
+<div class="flex md:flex-col gap-2 shrink-0 mt-4 md:mt-0">
+<button class="flex-1 md:flex-none px-4 py-2 bg-at-risk-red text-on-primary rounded-lg font-label-md text-label-md hover:bg-on-error-container transition-colors">Assign Team</button>
+<button class="flex-1 md:flex-none px-4 py-2 border border-border-strong rounded-lg font-label-md text-label-md text-text-primary hover:bg-surface-container-low transition-colors">Dismiss</button>
+</div>
+</div>
+<!-- Alert: Warning (Amber) -->
+<div class="bg-surface-container-lowest border border-border-default rounded-xl p-card-padding flex flex-col md:flex-row gap-4 md:items-start relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-flagged-amber"></div>
+<div class="flex-shrink-0 bg-flagged-bg p-3 rounded-full flex items-center justify-center text-flagged-amber">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">flag</span>
+</div>
+<div class="flex-1 space-y-2">
+<div class="flex justify-between items-start gap-4">
+<h3 class="font-title-md text-title-md text-on-surface">Stockout Warning: Iron Folic Acid</h3>
+<span class="font-data-mono text-data-mono text-text-muted shrink-0">2 hours ago</span>
+</div>
+<p class="font-body-base text-body-base text-secondary">PHC Sub-center North reporting IFA tablet inventory below 15% threshold. Estimated depletion in 3 days based on current distribution rates.</p>
+<div class="flex flex-wrap gap-2 pt-2">
+<span class="bg-flagged-bg text-flagged-amber px-2 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wider">Warning</span>
+<span class="bg-surface-container-low text-on-surface-variant px-2 py-1 rounded-full font-label-sm text-label-sm">Inventory</span>
+</div>
+</div>
+<div class="flex md:flex-col gap-2 shrink-0 mt-4 md:mt-0">
+<button class="flex-1 md:flex-none px-4 py-2 border border-border-strong rounded-lg font-label-md text-label-md text-text-primary hover:bg-surface-container-low transition-colors">Review Stock</button>
+<button class="flex-1 md:flex-none px-4 py-2 text-secondary hover:text-on-surface transition-colors font-label-md text-label-md">Dismiss</button>
+</div>
+</div>
+<!-- Alert: Info (Blue) -->
+<div class="bg-surface-container-lowest border border-border-default rounded-xl p-card-padding flex flex-col md:flex-row gap-4 md:items-start relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="flex-shrink-0 bg-primary-fixed p-3 rounded-full flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">info</span>
+</div>
+<div class="flex-1 space-y-2">
+<div class="flex justify-between items-start gap-4">
+<h3 class="font-title-md text-title-md text-on-surface">New Protocol Update Available</h3>
+<span class="font-data-mono text-data-mono text-text-muted shrink-0">Yesterday</span>
+</div>
+<p class="font-body-base text-body-base text-secondary">Updated guidelines for maternal health screening have been published by the State Health Dept. Requires distribution to all active ASHA workers.</p>
+<div class="flex flex-wrap gap-2 pt-2">
+<span class="bg-primary-fixed text-primary px-2 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wider">Information</span>
+<span class="bg-surface-container-low text-on-surface-variant px-2 py-1 rounded-full font-label-sm text-label-sm">Policy</span>
+</div>
+</div>
+<div class="flex md:flex-col gap-2 shrink-0 mt-4 md:mt-0">
+<button class="flex-1 md:flex-none px-4 py-2 border border-border-strong rounded-lg font-label-md text-label-md text-text-primary hover:bg-surface-container-low transition-colors">Distribute</button>
+<button class="flex-1 md:flex-none px-4 py-2 text-secondary hover:text-on-surface transition-colors font-label-md text-label-md">Dismiss</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

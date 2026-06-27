@@ -1,0 +1,482 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Worker Directory - IntelliASHA</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "at-risk-red": "#C5221F",
+                      "outline": "#727785",
+                      "tertiary-fixed-dim": "#ffb691",
+                      "on-secondary": "#ffffff",
+                      "outline-variant": "#c1c6d6",
+                      "surface-tint": "#005bc0",
+                      "surface-container-lowest": "#ffffff",
+                      "flagged-amber": "#B45309",
+                      "error-container": "#ffdad6",
+                      "error": "#ba1a1a",
+                      "on-surface-variant": "#414754",
+                      "tertiary": "#9e4300",
+                      "secondary-fixed": "#d9e3f4",
+                      "border-strong": "#D1D5DB",
+                      "surface-container-low": "#f2f4f6",
+                      "surface-container-highest": "#e1e2e4",
+                      "surface": "#f8f9fb",
+                      "on-secondary-container": "#596372",
+                      "primary": "#005bbf",
+                      "on-tertiary-fixed-variant": "#783100",
+                      "surface-container-high": "#e7e8ea",
+                      "secondary-fixed-dim": "#bdc7d8",
+                      "inverse-on-surface": "#f0f1f3",
+                      "on-surface": "#191c1e",
+                      "on-secondary-fixed-variant": "#3e4755",
+                      "on-error-container": "#93000a",
+                      "primary-fixed-dim": "#adc7ff",
+                      "secondary": "#555f6d",
+                      "on-background": "#191c1e",
+                      "background": "#f8f9fb",
+                      "on-error": "#ffffff",
+                      "inverse-surface": "#2e3132",
+                      "primary-fixed": "#d8e2ff",
+                      "surface-bright": "#f8f9fb",
+                      "on-tertiary-fixed": "#341100",
+                      "verified-bg": "#E6F4EA",
+                      "border-default": "#E5E7EB",
+                      "on-primary-fixed-variant": "#004493",
+                      "on-primary-fixed": "#001a41",
+                      "flagged-bg": "#FEF3C7",
+                      "surface-variant": "#e1e2e4",
+                      "on-secondary-fixed": "#121c28",
+                      "on-primary-container": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "secondary-container": "#d6e0f1",
+                      "neutral-grey": "#5F6368",
+                      "surface-dim": "#d9dadc",
+                      "on-tertiary-container": "#0e0200",
+                      "tertiary-container": "#c55500",
+                      "on-primary": "#ffffff",
+                      "inverse-primary": "#adc7ff",
+                      "at-risk-bg": "#FCE8E6",
+                      "text-primary": "#0F1117",
+                      "primary-container": "#1a73e8",
+                      "tertiary-fixed": "#ffdbcb",
+                      "verified-green": "#137333",
+                      "text-muted": "#9CA3AF",
+                      "surface-container": "#edeef0",
+                      "neutral-bg": "#F1F3F4"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "max-width": "1200px",
+                      "card-padding": "24px",
+                      "component-gap": "8px",
+                      "margin-tablet": "48px",
+                      "margin-mobile": "24px",
+                      "margin-desktop": "80px",
+                      "unit": "4px",
+                      "gutter": "24px"
+              },
+              "fontFamily": {
+                      "title-sm": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "display-hero": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "body-base": [
+                              "Inter"
+                      ],
+                      "title-md": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "headline-kpi-mobile": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "title-lg": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "headline-kpi": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "display-landing": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "data-mono": [
+                              "jetbrainsMono"
+                      ]
+              },
+              "fontSize": {
+                      "title-sm": [
+                              "17px",
+                              {
+                                      "lineHeight": "26px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-hero": [
+                              "64px",
+                              {
+                                      "lineHeight": "72px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-sm": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.04em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-base": [
+                              "15px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "title-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "30px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-kpi-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "title-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "13px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-kpi": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display-landing": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "data-mono": [
+                              "13px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: #f8f9fb;
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-on-surface bg-background font-body-base">
+<!-- SideNavBar (Desktop/Tablet) -->
+<nav class="hidden md:flex flex-col h-full py-gutter px-4 bg-surface-container-low border-r border-border-default w-64 flex-shrink-0 transition-colors duration-150">
+<!-- Header -->
+<div class="flex items-center gap-3 mb-8 px-2">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container shrink-0">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">health_and_safety</span>
+</div>
+<div>
+<h2 class="font-title-sm text-title-sm font-bold text-on-surface">City Central PHC</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">District Health Office</p>
+</div>
+</div>
+<!-- Navigation Links -->
+<div class="flex-1 overflow-y-auto space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors duration-150 rounded-lg group" href="#">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors">dashboard</span>
+<span class="font-label-md text-label-md">Overview</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors duration-150 rounded-lg group" href="#">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors">map</span>
+<span class="font-label-md text-label-md">Map</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-primary-container text-on-primary-container font-bold rounded-lg transition-colors duration-150 group" href="#">
+<span class="material-symbols-outlined text-on-primary-container" style="font-variation-settings: 'FILL' 1;">groups</span>
+<span class="font-label-md text-label-md">Workers</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors duration-150 rounded-lg group" href="#">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors">notifications_active</span>
+<span class="font-label-md text-label-md">Alerts</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors duration-150 rounded-lg group" href="#">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors">description</span>
+<span class="font-label-md text-label-md">Reports</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors duration-150 rounded-lg group" href="#">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</div>
+<!-- CTA & Footer -->
+<div class="mt-auto pt-4 border-t border-border-default space-y-4">
+<button class="w-full py-2 px-4 bg-primary text-on-primary font-label-md text-label-md rounded-lg hover:bg-surface-tint transition-colors shadow-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                Quick Report
+            </button>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors duration-150 rounded-lg group" href="#">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors">account_circle</span>
+<span class="font-label-md text-label-md">User Profile</span>
+</a>
+</div>
+</nav>
+<!-- TopAppBar (Mobile Only - Fallback if Sidebar hidden) -->
+<header class="md:hidden fixed top-0 left-0 w-full z-50 bg-surface border-b border-border-default shadow-sm flex justify-between items-center px-margin-mobile py-4">
+<div class="flex items-center gap-2">
+<button class="p-2 -ml-2 text-on-surface-variant active:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<span class="font-title-md text-title-md font-bold text-primary">Workers</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-on-surface-variant active:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">search</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-label-sm font-bold">
+                A
+            </div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col h-full overflow-hidden relative mt-[72px] md:mt-0">
+<!-- Page Header -->
+<div class="flex-shrink-0 px-gutter py-6 border-b border-border-default bg-surface">
+<div class="max-w-max-width mx-auto">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h1 class="font-headline-kpi text-headline-kpi text-on-surface mb-1">Worker Directory</h1>
+<p class="font-body-base text-body-base text-on-surface-variant">Manage and monitor all 47 ASHA workers in the Rampur PHC jurisdiction.</p>
+</div>
+<button class="flex items-center justify-center gap-2 bg-primary text-on-primary px-4 py-2.5 rounded-lg font-label-md text-label-md hover:bg-surface-tint transition-colors whitespace-nowrap shadow-sm">
+<span class="material-symbols-outlined text-[18px]">person_add</span>
+                        Add New Worker
+                    </button>
+</div>
+<!-- Filters & Search Bar -->
+<div class="mt-6 flex flex-col sm:flex-row gap-3">
+<!-- Search -->
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border-1.5 border-border-strong rounded-lg font-body-base text-body-base text-on-surface focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none transition-shadow placeholder:text-text-muted" placeholder="Search by name, ID, or zone..." type="text">
+</div>
+<!-- Filters -->
+<div class="flex gap-3">
+<div class="relative">
+<select class="appearance-none w-full pl-4 pr-10 py-2 bg-surface-container-lowest border-1.5 border-border-strong rounded-lg font-label-md text-label-md text-on-surface focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none cursor-pointer">
+<option value="">All Zones</option>
+<option value="north">North Rampur</option>
+<option value="south">South Rampur</option>
+<option value="east">East Rampur</option>
+<option value="west">West Rampur</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">arrow_drop_down</span>
+</div>
+<div class="relative">
+<select class="appearance-none w-full pl-4 pr-10 py-2 bg-surface-container-lowest border-1.5 border-border-strong rounded-lg font-label-md text-label-md text-on-surface focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none cursor-pointer">
+<option value="">Performance</option>
+<option value="high">High (&gt;90%)</option>
+<option value="medium">Medium (70-90%)</option>
+<option value="low">Low (&lt;70%)</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]">arrow_drop_down</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Data Table Container -->
+<div class="flex-1 overflow-auto bg-surface-container-low p-gutter">
+<div class="max-w-max-width mx-auto">
+<div class="bg-surface-container-lowest border border-border-default rounded-xl shadow-sm overflow-hidden flex flex-col">
+<!-- Table Header -->
+<div class="grid grid-cols-12 gap-4 px-6 py-3 border-b border-border-default bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider items-center hidden md:grid">
+<div class="col-span-3">Worker Name</div>
+<div class="col-span-2">Assigned Zone</div>
+<div class="col-span-2 text-right">Visits Today</div>
+<div class="col-span-3">Verification Rate</div>
+<div class="col-span-2 text-right">Status</div>
+</div>
+<!-- Table Body -->
+<div class="divide-y divide-border-default">
+<!-- Row 1 (High Performance) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-surface-bright transition-colors cursor-pointer group">
+<div class="md:col-span-3 flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover border border-border-default shrink-0" data-alt="A professional headshot of a female health worker in rural India, wearing a neat uniform, soft natural lighting, clear background, realistic documentary style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUH3FJUGSjQfwHtUGHNaxfF4XlxMjBJO3lWW2QJkFeX7sqs7yZy8Ws_bwyyAuxs4mPpsq1e0X0-QJMa0uoTMQxP7DSrGZRsWBaY_cVi6qcyU4lhCEg3vP9oOKV2AYmf-kJ40v9N1JOD6rcVolQIhn6cSy7yPLNfZAjDJi9wwaWrU0wWiAX6SybbOcKhJQHp0b3TTnt6h_NCyZ83-E_9zPWB5ch73guJ_2L5sxOnf456X_cHQeMTTYgV2KBTV_MnOTPyisss0kcT-k">
+<div>
+<div class="font-title-sm text-title-sm text-on-surface group-hover:text-primary transition-colors">Sunita Devi</div>
+<div class="font-data-mono text-data-mono text-outline">ID: ASH-401</div>
+</div>
+</div>
+<div class="md:col-span-2 font-body-base text-body-base text-on-surface-variant flex items-center gap-1.5 before:content-['Zone:'] md:before:content-none before:text-outline before:font-label-sm before:uppercase md:block flex-row">
+                                North Rampur
+                            </div>
+<div class="md:col-span-2 font-data-mono text-data-mono text-on-surface md:text-right flex items-center gap-1.5 before:content-['Visits_Today:'] md:before:content-none before:text-outline before:font-label-sm before:uppercase md:block flex-row">
+                                12 <span class="text-verified-green text-xs ml-1 inline-flex items-center"><span class="material-symbols-outlined text-[14px]">arrow_upward</span> 2</span>
+</div>
+<div class="md:col-span-3 flex items-center gap-3">
+<div class="hidden md:block flex-1 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-verified-green rounded-full" style="width: 94%;"></div>
+</div>
+<div class="font-data-mono text-data-mono text-on-surface font-semibold flex items-center gap-1.5 before:content-['Verification:'] md:before:content-none before:text-outline before:font-label-sm before:uppercase flex-row">
+                                    94%
+                                </div>
+</div>
+<div class="md:col-span-2 md:text-right flex items-center md:justify-end gap-1.5 before:content-['Status:'] md:before:content-none before:text-outline before:font-label-sm before:uppercase flex-row">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-verified-bg text-verified-green font-label-sm text-label-sm uppercase font-bold tracking-wide">Active</span>
+</div>
+</div>
+<!-- Row 2 (Flagged/Medium) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-surface-bright transition-colors cursor-pointer group bg-flagged-bg/10">
+<div class="md:col-span-3 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant font-title-sm border border-border-default shrink-0">
+                                    MK
+                                </div>
+<div>
+<div class="font-title-sm text-title-sm text-on-surface group-hover:text-primary transition-colors flex items-center gap-1">
+                                        Meera Kumari
+                                        <span class="material-symbols-outlined text-[16px] text-flagged-amber" style="font-variation-settings: 'FILL' 1;" title="Review Needed">warning</span>
+</div>
+<div class="font-data-mono text-data-mono text-outline">ID: ASH-412</div>
+</div>
+</div>
+<div class="md:col-span-2 font-body-base text-body-base text-on-surface-variant flex items-center gap-1.5 before:content-['Zone:'] md:before:content-none before:text-outline before:font-label-sm before:uppercase md:block flex-row">
+                                South Rampur
+                            </div>
+<div class="md:col-span-2 font-data-mono text-data-mono text-on-surface md:text-right flex items-center gap-1.5 before:content-['Visits_Today:'] md:before:content-none before:text-outline before:font-label-sm before:uppercase md:block flex-row">
+                                4 <span class="text-at-risk-red text-xs ml-1 inline-flex items-center"><span class="material-symbols-outlined text-[14px]">arrow_downward</span> 3</span>
+</div>
+<div class="md:col-span-3 flex items-center gap-3">
+<div class="hidden md:block flex-1 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-flagged-amber rounded-full" style="width: 72%;"></div>
+</div>
+<div class="font-data-mono text-data-mono text-on-surface font-semibold flex items-center gap-1.5 before:content-['Verification:'] md:before:content-none before:text-outline before:font-label-sm before:uppercase flex-row">
+                                    72%
+                                </div>
+</div>
+<div class="md:col-span-2 md:text-right flex items-center md:justify-end gap-1.5 before:content-['Status:'] md:before:content-none before:text-outline before:font-label-sm before:uppercase flex-row">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-verified-bg text-verified-green font-label-sm text-label-sm uppercase font-bold tracking-wide">Active</span>
+</div>
+</div>
+<!-- Row 3 (Inactive) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-surface-bright transition-colors cursor-pointer group opacity-60">
+<div class="md:col-span-3 flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover border border-border-default shrink-0 grayscale" data-alt="A portrait of a female health worker in rural India, neutral expression, documentary style photography, slightly desaturated, light grey background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8x9Rwj5juJ3SFAC8BkcQJXa1EVmseR0G6HDa54BOi8hhU7TKgJUPXDtrRlYnEHResgZkhDbPxYI7eg1V5Ky28vVWR9Idb1L3-7V34xnv12eyL1VnqkJodNoyDvrI44_1NIuiEt1C7_U53yHEy6Sbo93w5vf6IWv_uUO46PeetYDPvV8elSyS_Pwmb2VT7imKQnXEq3HLcWA5Jz9pO1opmnglpsLnO8Tm2jwAAc-8_Beud8tEsrDqLrj1eP5UbcnNYlMHf3DWLC6o">
+<div>
+<div class="font-title-sm text-title-sm text-on-surface group-hover:text-primary transition-colors">Radha Sharma</div>
+<div class="font-data-mono text-data-mono text-outline">ID: ASH-388</div>
+</div>
+</div>
+<div class="md:col-span-2 font-body-base text-body-base text-on-surface-variant flex items-center gap-1.5 before:content-['Zone:'] md:before:content-none before:text-outline before:font-label-sm before:uppercase md:block flex-row">
+                                East Rampur
+                            </div>
+<div class="md:col-span-2 font-data-mono text-data-mono text-on-surface md:text-right flex items-center gap-1.5 before:content-['Visits_Today:'] md:before:content-none before:text-outline before:font-label-sm before:uppercase md:block flex-row">
+                                --
+                            </div>
+<div class="md:col-span-3 flex items-center gap-3">
+<div class="hidden md:block flex-1 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-outline rounded-full" style="width: 88%;"></div>
+</div>
+<div class="font-data-mono text-data-mono text-on-surface font-semibold flex items-center gap-1.5 before:content-['Verification:'] md:before:content-none before:text-outline before:font-label-sm before:uppercase flex-row">
+                                    88% <span class="text-[10px] text-outline font-normal">(Historical)</span>
+</div>
+</div>
+<div class="md:col-span-2 md:text-right flex items-center md:justify-end gap-1.5 before:content-['Status:'] md:before:content-none before:text-outline before:font-label-sm before:uppercase flex-row">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-variant text-on-surface-variant font-label-sm text-label-sm uppercase font-bold tracking-wide">Inactive</span>
+</div>
+</div>
+<!-- Row 4 (At Risk) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-surface-bright transition-colors cursor-pointer group border-l-4 border-l-at-risk-red pl-5">
+<div class="md:col-span-3 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant font-title-sm border border-border-default shrink-0">
+                                    PJ
+                                </div>
+<div>
+<div class="font-title-sm text-title-sm text-on-surface group-hover:text-primary transition-colors flex items-center gap-1">
+                                        Pooja Jain
+                                    </div>
+<div class="font-data-mono text-data-mono text-outline">ID: ASH-420</div>
+</div>
+</div>
+<div class="md:col-span-2 font-body-base text-body-base text-on-surface-variant flex items-center gap-1.5 before:content-['Zone:'] md:before:content-none before:text-outline before:font-label-sm before:uppercase md:block flex-row">
+                                West Rampur
+                            </div>
+<div class="md:col-span-2 font-data-mono text-data-mono text-on-surface md:text-right flex items-center gap-1.5 before:content-['Visits_Today:'] md:before:content-none before:text-outline before:font-label-sm before:uppercase md:block flex-row">
+                                1 <span class="text-at-risk-red text-xs ml-1 inline-flex items-center"><span class="material-symbols-outlined text-[14px]">arrow_downward</span> 8</span>
+</div>
+<div class="md:col-span-3 flex items-center gap-3">
+<div class="hidden md:block flex-1 h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-at-risk-red rounded-full" style="width: 45%;"></div>
+</div>
+<div class="font-data-mono text-data-mono text-at-risk-red font-semibold flex items-center gap-1.5 before:content-['Verification:'] md:before:content-none before:text-outline before:font-label-sm before:uppercase flex-row">
+                                    45%
+                                </div>
+</div>
+<div class="md:col-span-2 md:text-right flex items-center md:justify-end gap-1.5 before:content-['Status:'] md:before:content-none before:text-outline before:font-label-sm before:uppercase flex-row">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-at-risk-bg text-at-risk-red font-label-sm text-label-sm uppercase font-bold tracking-wide">Active</span>
+</div>
+</div>
+</div>
+<!-- Table Pagination/Footer -->
+<div class="px-6 py-4 border-t border-border-default bg-surface-container-lowest flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Showing 1-4 of 47 workers</span>
+<div class="flex gap-2">
+<button class="p-1 rounded text-outline hover:bg-surface-variant hover:text-on-surface disabled:opacity-50 transition-colors" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="p-1 rounded text-outline hover:bg-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

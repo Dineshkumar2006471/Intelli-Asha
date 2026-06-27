@@ -1,0 +1,286 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>IntelliASHA - Reports &amp; Analytics</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "at-risk-red": "#C5221F",
+                      "outline": "#727785",
+                      "tertiary-fixed-dim": "#ffb691",
+                      "on-secondary": "#ffffff",
+                      "outline-variant": "#c1c6d6",
+                      "surface-tint": "#005bc0",
+                      "surface-container-lowest": "#ffffff",
+                      "flagged-amber": "#B45309",
+                      "error-container": "#ffdad6",
+                      "error": "#ba1a1a",
+                      "on-surface-variant": "#414754",
+                      "tertiary": "#9e4300",
+                      "secondary-fixed": "#d9e3f4",
+                      "border-strong": "#D1D5DB",
+                      "surface-container-low": "#f2f4f6",
+                      "surface-container-highest": "#e1e2e4",
+                      "surface": "#f8f9fb",
+                      "on-secondary-container": "#596372",
+                      "primary": "#005bbf",
+                      "on-tertiary-fixed-variant": "#783100",
+                      "surface-container-high": "#e7e8ea",
+                      "secondary-fixed-dim": "#bdc7d8",
+                      "inverse-on-surface": "#f0f1f3",
+                      "on-surface": "#191c1e",
+                      "on-secondary-fixed-variant": "#3e4755",
+                      "on-error-container": "#93000a",
+                      "primary-fixed-dim": "#adc7ff",
+                      "secondary": "#555f6d",
+                      "on-background": "#191c1e",
+                      "background": "#f8f9fb",
+                      "on-error": "#ffffff",
+                      "inverse-surface": "#2e3132",
+                      "primary-fixed": "#d8e2ff",
+                      "surface-bright": "#f8f9fb",
+                      "on-tertiary-fixed": "#341100",
+                      "verified-bg": "#E6F4EA",
+                      "border-default": "#E5E7EB",
+                      "on-primary-fixed-variant": "#004493",
+                      "on-primary-fixed": "#001a41",
+                      "flagged-bg": "#FEF3C7",
+                      "surface-variant": "#e1e2e4",
+                      "on-secondary-fixed": "#121c28",
+                      "on-primary-container": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "secondary-container": "#d6e0f1",
+                      "neutral-grey": "#5F6368",
+                      "surface-dim": "#d9dadc",
+                      "on-tertiary-container": "#0e0200",
+                      "tertiary-container": "#c55500",
+                      "on-primary": "#ffffff",
+                      "inverse-primary": "#adc7ff",
+                      "at-risk-bg": "#FCE8E6",
+                      "text-primary": "#0F1117",
+                      "primary-container": "#1a73e8",
+                      "tertiary-fixed": "#ffdbcb",
+                      "verified-green": "#137333",
+                      "text-muted": "#9CA3AF",
+                      "surface-container": "#edeef0",
+                      "neutral-bg": "#F1F3F4"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "max-width": "1200px",
+                      "card-padding": "24px",
+                      "component-gap": "8px",
+                      "margin-tablet": "48px",
+                      "margin-mobile": "24px",
+                      "margin-desktop": "80px",
+                      "unit": "4px",
+                      "gutter": "24px"
+              },
+              "fontFamily": {
+                      "title-sm": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "display-hero": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "body-base": [
+                              "Inter"
+                      ],
+                      "title-md": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "headline-kpi-mobile": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "title-lg": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "headline-kpi": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "display-landing": [
+                              "Plus Jakarta Sans"
+                      ],
+                      "data-mono": [
+                              "jetbrainsMono"
+                      ]
+              },
+              "fontSize": {
+                      "title-sm": [
+                              "17px",
+                              {
+                                      "lineHeight": "26px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-hero": [
+                              "64px",
+                              {
+                                      "lineHeight": "72px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-sm": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.04em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-base": [
+                              "15px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "title-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "30px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-kpi-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "title-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "13px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-kpi": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display-landing": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "data-mono": [
+                              "13px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24
+        }
+        
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-base antialiased flex h-screen overflow-hidden">
+<!-- SideNavBar (hidden on mobile, flex on md+) -->
+<nav class="hidden md:flex flex-col h-screen w-64 left-0 border-r border-border-default dark:border-outline-variant bg-surface-container-low dark:bg-surface-container-highest py-gutter px-4 z-40 flex-shrink-0">
+<div class="flex items-center gap-3 mb-8">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-title-sm font-bold shrink-0">
+<img alt="PHC Logo" class="w-full h-full object-cover rounded-full" data-alt="A clean, minimalist logo for a public health initiative, using simple geometric shapes in shades of blue and white, set against a solid white background, high contrast, professional and trustworthy aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTPB72ZWolAzcqcWgulHEvmbNpQoF9-I__e5NQM0k_-oPUfAqgWsw7bOzy4yqcVplZF4wEePw1QfuEqL4yQyFm7uQuNenW9_Wo-8bctkXGeJUZDcSmApoRlZXDUnG2WbOG026kUQQ5_r_9dIm1SA2RcHZl-rQJyoinxqRipPtRgQdIOa4QE38cSy61L_9KI73dpkPLkPLJ9QcXDbPPyeumgt7q2igK3MulcFy199OCogPlAwuEH3PIx9EFUIvMOhNGxuLlmMkB5GM">
+</div>
+<div class="overflow-hidden">
+<h2 class="font-title-sm text-title-sm font-bold text-on-surface dark:text-on-surface-variant truncate">City Central PHC</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant truncate">District Health Office</p>
+</div>
+</div>
+<button class="w-full bg-primary-container text-on-primary-container font-label-md text-label-md font-bold py-3 rounded-lg mb-8 hover:bg-surface-tint transition-colors">
+            Quick Report
+        </button>
+<div class="flex flex-col gap-2 flex-grow">
+<!-- Inactive -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-secondary-fixed-dim hover:bg-surface-variant hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-colors duration-150 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="dashboard">dashboard</span>
+<span class="font-label-md text-label-md">Overview</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-secondary-fixed-dim hover:bg-surface-variant hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-colors duration-150 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="map">map</span>
+<span class="font-label-md text-label-md">Map</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-secondary-fixed-dim hover:bg-surface-variant hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-colors duration-150 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="groups">groups</span>
+<span class="font-label-md text-label-md">Workers</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-secondary-fixed-dim hover:bg-surface-variant hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-colors duration-150 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="notifications_active">notifications_active</span>
+<span class="font-label-md text-label-md">Alerts</span>
+</a>
+<!-- Active -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary-container text-on-primary-container font-bold transition-colors duration-150" href="#">
+<span class="material-symbols-outlined text-[20px] fill" data-icon="description" data-weight="fill">description</span>
+<span class="font-label-md text-label-md">Reports</span>
+</a>
+<!-- Inactive -->
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-secondary-fixed-dim hover:bg-surface-variant hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-colors duration-150 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</div>
+<div class="mt-auto pt-4 border-t border-border-default dark:border-outline-variant">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-secondary-fixed-dim hover:bg-surface-variant hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-colors duration-150 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary transition-colors" data-icon="account_circle">account_circle</span>
+<span class="font-label-md text-label-md">User Profile</span>
+</a>
+</div>
+</nav>
+<!-- Main Canvas -->
+<main class="flex-1 flex flex-col h-screen overflow-y-auto bg-surface relative">
+<!-- TopAppBar (Mobile Only - Simplified for destination) -->
+<header class="md:hidden sticky top-0 left-0 w-full z-30 bg-surface dark:bg-on-background shadow-sm flex justify-between items-center px-margin-mobile py-4 transition-all duration-200 ease-in-out">
+<h1 class="font-headline-kpi-mobile text-headline-kpi-mobile font-bold text-primary truncate">Reports</h1>
+<div class="flex gap-4">
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:opacity-80 transition-opacity"></button></div></header></main></body></html>

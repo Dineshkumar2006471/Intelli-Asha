@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+    // Helper functions for schema validation
+    function hasFields(requiredFields) {
+      return request.resource.data.keys().hasAll(requiredFields);
+    }
+    
+    function isWorker() {
+      return request.auth != null;
+    }
+
+  match /databases/{database}/documents {
+    match /visits/{visitId} {
+      allow read: if isWorker();
+      allow create: if isWorker() 
+        && hasFields(['workerId', 'householdName', 'status', 'timestamp'])
+        && request.resource.data.workerId is string;
+    }
+    match /alerts/{alertId} {
+      allow read: if isWorker();
+      allow create: if isWorker() 
+        && hasFields(['severity', 'title', 'timestamp']);
+    }
+    match /workers/{workerId} {
+      allow read: if isWorker();
+      // In production, this should be: if request.auth.uid == workerId
+      allow write: if isWorker()
+        && (request.resource.data.keys().hasAny(['phone', 'role', 'location', 'lastActive']));
+    }
+  }
+}
