@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { onFlaggedVisitsSnapshot, onVisitsSnapshot } from '../services/db';
+import type { Visit } from '../types';
 import Sidebar from '../components/Sidebar';
 
 const SupervisorReports = () => {
-  const [flaggedVisits, setFlaggedVisits] = useState([]);
-  const [allVisits, setAllVisits] = useState([]);
+  const [flaggedVisits, setFlaggedVisits] = useState<Visit[]>([]);
+  const [allVisits, setAllVisits] = useState<Visit[]>([]);
   const [locationName, setLocationName] = useState('Rampur District');
-  const [terminalLines, setTerminalLines] = useState([]);
+  const [terminalLines, setTerminalLines] = useState<{ text: string; color: string }[]>([]);
 
   useEffect(() => {
     // REAL-TIME LISTENERS: These fire automatically whenever a field worker submits a new visit
@@ -52,7 +53,7 @@ const SupervisorReports = () => {
       { text: `[VERIFICATION_AGENT] Standing by...`, color: 'text-[#58A6FF]', delay: 16000 },
     ];
 
-    let timeouts = [];
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
     setTerminalLines([]); // reset on location change
 
     sequence.forEach(({ text, color, delay }) => {
@@ -135,13 +136,13 @@ const SupervisorReports = () => {
                 </thead>
                 <tbody>
                   {flaggedVisits.length === 0 ? (
-                    <tr><td colSpan="3" className="p-4 text-center text-on-surface-variant font-body-base text-body-base">No flagged visits.</td></tr>
+                    <tr><td colSpan={3} className="p-4 text-center text-on-surface-variant font-body-base text-body-base">No flagged visits.</td></tr>
                   ) : (
                     flaggedVisits.map((visit) => (
                       <tr key={visit.id} className="border-b border-border-default hover:bg-surface-container-lowest transition-colors">
                         <td className="p-4 font-body-base text-body-base text-on-surface">{visit.householdName}</td>
                         <td className="p-4">
-                          <span className="inline-block px-2 py-1 rounded bg-flagged-bg text-flagged-amber font-label-sm text-label-sm uppercase">{visit.anomalyReason || 'Anomaly'}</span>
+                          <span className="inline-block px-2 py-1 rounded bg-flagged-bg text-flagged-amber font-label-sm text-label-sm uppercase">{visit.flaggedReason || 'Anomaly'}</span>
                         </td>
                         <td className="p-4">
                           <button className="text-primary font-label-md text-label-md hover:underline font-semibold">Review</button>
@@ -170,7 +171,7 @@ const SupervisorReports = () => {
                 </thead>
                 <tbody>
                   {allVisits.filter(v => !v.anomaliesFound).length === 0 ? (
-                    <tr><td colSpan="3" className="p-4 text-center text-on-surface-variant font-body-base text-body-base">No recent verified visits.</td></tr>
+                    <tr><td colSpan={3} className="p-4 text-center text-on-surface-variant font-body-base text-body-base">No recent verified visits.</td></tr>
                   ) : (
                     allVisits.filter(v => !v.anomaliesFound).slice(0, 5).map((visit) => (
                       <tr key={visit.id} className="border-b border-border-default hover:bg-surface-container-lowest transition-colors">

@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { onAlertsSnapshot } from '../services/db';
+import type { Alert } from '../types';
 import Sidebar from '../components/Sidebar';
 
 const Alerts = () => {
-  const [alerts, setAlerts] = useState([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

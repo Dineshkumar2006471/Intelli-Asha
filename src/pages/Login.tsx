@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -19,15 +19,16 @@ const Login = () => {
     }
   }, [currentUser, navigate]);
 
-  const handleFieldWorkerLogin = async (e) => {
+  const handleFieldWorkerLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
     try {
       await loginAsFieldWorker(workerName.trim(), phoneNumber.trim());
       navigate('/app/field');
-    } catch (err) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Login failed';
+      setError(message);
       setIsLoading(false);
     }
   };
@@ -38,8 +39,9 @@ const Login = () => {
     try {
       await loginWithGoogle();
       navigate('/dashboard/supervisor');
-    } catch (err) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Login failed';
+      setError(message);
       setIsLoading(false);
     }
   };

@@ -1,14 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Sidebar from '../components/Sidebar';
 import { db } from '../firebase';
-import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import type { Visit } from '../types';
+import { createLogger } from '../utils/logger';
+
+const log = createLogger('FIELD_WORKER');
 
 const FieldWorker = () => {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
-  const [visits, setVisits] = useState([]);
+  const [visits, setVisits] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,11 +23,11 @@ const FieldWorker = () => {
     const q = query(visitsRef, where("workerId", "==", currentUser.photoURL), orderBy("timestamp", "desc"));
     
     const unsub = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }) as Visit);
       setVisits(data);
       setLoading(false);
     }, (error) => {
-      console.error("Real-time field worker visits error:", error);
+      log.error('Real-time field worker visits error', error);
       setLoading(false);
     });
 
@@ -33,12 +37,10 @@ const FieldWorker = () => {
   const [locationName, setLocationName] = useState('Detecting location...');
 
   useEffect(() => {
-    const updateLocationInDb = (loc) => {
+    const updateLocationInDb = (loc: string): void => {
       setLocationName(loc);
       if (currentUser?.photoURL) {
-        import('firebase/firestore').then(({ doc, updateDoc }) => {
-          updateDoc(doc(db, 'workers', currentUser.photoURL), { location: loc }).catch(console.error);
-        });
+        updateDoc(doc(db, 'workers', currentUser.photoURL), { location: loc }).catch((err: unknown) => log.error('Failed to update location', err));
       }
     };
 
@@ -78,7 +80,7 @@ const FieldWorker = () => {
       await logout();
       navigate('/login');
     } catch (error) {
-      console.error("Logout failed", error);
+      console.error('Logout failed', error);
     }
   };
 

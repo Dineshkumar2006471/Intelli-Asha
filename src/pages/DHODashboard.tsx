@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { generateFullDashboardData } from '../services/aiAgent';
+import type { AIBrief, DashboardMetrics, PHCBreakdown } from '../types';
 import { onVisitsSnapshot, onFlaggedVisitsSnapshot } from '../services/db';
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import Sidebar from '../components/Sidebar';
@@ -7,7 +8,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
 // Fix Leaflet's default icon issue with Webpack/Vite
-delete L.Icon.Default.prototype._getIconUrl;
+delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -15,19 +16,19 @@ L.Icon.Default.mergeOptions({
 });
 
 const DHODashboard = () => {
-  const [metrics, setMetrics] = useState({
-    total_ashas: '-',
-    total_beneficiaries: '-',
-    surveys_completed: '-',
-    high_risk_cases: '-',
-    data_quality_score: '-',
-    disbursement_ready: '-'
+  const [metrics, setMetrics] = useState<DashboardMetrics>({
+    total_ashas: 0,
+    total_beneficiaries: 0,
+    surveys_completed: 0,
+    high_risk_cases: 0,
+    data_quality_score: 0,
+    disbursement_ready: 0
   });
 
   const [loading, setLoading] = useState(true);
   const [locationName, setLocationName] = useState('Your District');
-  const [aiBrief, setAiBrief] = useState(null);
-  const [phcs, setPhcs] = useState([]);
+  const [aiBrief, setAiBrief] = useState<AIBrief | null>(null);
+  const [phcs, setPhcs] = useState<PHCBreakdown[]>([]);
   const [isEditingLocation, setIsEditingLocation] = useState(false);
   const [manualLocation, setManualLocation] = useState('');
   const [liveVisitCount, setLiveVisitCount] = useState(0);
@@ -47,7 +48,7 @@ const DHODashboard = () => {
     };
   }, []);
 
-  const handleManualLocationSubmit = (e) => {
+  const handleManualLocationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualLocation.trim()) return;
     setIsEditingLocation(false);
@@ -82,12 +83,12 @@ const DHODashboard = () => {
     });
   };
   // Default fallback (Mathura), overridden by real geolocation
-  const [mapCenter, setMapCenter] = useState([27.4924, 77.6737]);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([27.4924, 77.6737]);
   const [workers, setWorkers] = useState([
-    { id: 1, name: "Sunita (Block A)", pos: [27.49, 77.67], status: "active", offset: 0 },
-    { id: 2, name: "Geeta (Block B)", pos: [27.51, 77.68], status: "flagged", offset: 1 },
-    { id: 3, name: "Pooja (Block C)", pos: [27.48, 77.65], status: "active", offset: 2 },
-    { id: 4, name: "Meena (Block D)", pos: [27.50, 77.66], status: "active", offset: 3 },
+    { id: 1, name: "Sunita (Block A)", pos: [27.49, 77.67] as [number, number], status: "active", offset: 0 },
+    { id: 2, name: "Geeta (Block B)", pos: [27.51, 77.68] as [number, number], status: "flagged", offset: 1 },
+    { id: 3, name: "Pooja (Block C)", pos: [27.48, 77.65] as [number, number], status: "active", offset: 2 },
+    { id: 4, name: "Meena (Block D)", pos: [27.50, 77.66] as [number, number], status: "active", offset: 3 },
   ]);
 
   // Detect user's real location
@@ -100,10 +101,10 @@ const DHODashboard = () => {
           setMapCenter([lat, lng]);
           // Scatter workers around the user's real location
           setWorkers([
-            { id: 1, name: "Sunita (Block A)", pos: [lat + 0.005, lng - 0.008], status: "active", offset: 0 },
-            { id: 2, name: "Geeta (Block B)", pos: [lat - 0.006, lng + 0.010], status: "flagged", offset: 1 },
-            { id: 3, name: "Pooja (Block C)", pos: [lat + 0.010, lng + 0.005], status: "active", offset: 2 },
-            { id: 4, name: "Meena (Block D)", pos: [lat - 0.003, lng - 0.012], status: "active", offset: 3 },
+            { id: 1, name: "Sunita (Block A)", pos: [lat + 0.005, lng - 0.008] as [number, number], status: "active", offset: 0 },
+            { id: 2, name: "Geeta (Block B)", pos: [lat - 0.006, lng + 0.010] as [number, number], status: "flagged", offset: 1 },
+            { id: 3, name: "Pooja (Block C)", pos: [lat + 0.010, lng + 0.005] as [number, number], status: "active", offset: 2 },
+            { id: 4, name: "Meena (Block D)", pos: [lat - 0.003, lng - 0.012] as [number, number], status: "active", offset: 3 },
           ]);
           // Reverse geocode to get city name from coordinates
           fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`)
@@ -157,21 +158,19 @@ const DHODashboard = () => {
         const time = Date.now() / 5000 + w.offset;
         return {
           ...w,
-          pos: [w.pos[0] + Math.sin(time) * 0.0002, w.pos[1] + Math.cos(time) * 0.0002]
+          pos: [w.pos[0] + Math.sin(time) * 0.0002, w.pos[1] + Math.cos(time) * 0.0002] as [number, number]
         };
       }));
     }, 2000);
     return () => clearInterval(interval);
   }, []);
-  const formatCurrency = (value) => {
-    if (value === '-') return '-';
+  const formatCurrency = (value: number) => {
     if (value >= 1000000) return `₹${(value / 1000000).toFixed(1)}M`;
     if (value >= 1000) return `₹${(value / 1000).toFixed(1)}k`;
     return `₹${value}`;
   };
 
-  const formatNumber = (value) => {
-    if (value === '-') return '-';
+  const formatNumber = (value: number) => {
     if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
     return value.toString();
   };
@@ -233,7 +232,7 @@ const DHODashboard = () => {
           {/* KPI 1 */}
           <div className="bg-surface-container-lowest border border-border-default rounded-lg p-4">
             <div className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Total ASHAs</div>
-            <div className="font-headline-kpi text-headline-kpi text-on-surface">{metrics.total_ashas !== '-' ? metrics.total_ashas.toLocaleString() : '-'}</div>
+            <div className="font-headline-kpi text-headline-kpi text-on-surface">{metrics.total_ashas.toLocaleString()}</div>
             <div className="flex items-center gap-1 mt-2 text-verified-green">
               <span className="material-symbols-outlined text-[16px]" style={{fontVariationSettings: "'FILL' 0"}}>trending_up</span>
               <span className="font-label-sm text-label-sm">98% Active</span>
@@ -250,7 +249,7 @@ const DHODashboard = () => {
           {/* KPI 3 */}
           <div className="bg-surface-container-lowest border border-border-default rounded-lg p-4">
             <div className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Surveys Completed</div>
-            <div className="font-headline-kpi text-headline-kpi text-on-surface">{liveVisitCount > 0 ? formatNumber(metrics.surveys_completed !== '-' ? metrics.surveys_completed + liveVisitCount : liveVisitCount) : formatNumber(metrics.surveys_completed)}</div>
+            <div className="font-headline-kpi text-headline-kpi text-on-surface">{liveVisitCount > 0 ? formatNumber(metrics.surveys_completed + liveVisitCount) : formatNumber(metrics.surveys_completed)}</div>
             <div className="flex items-center gap-1 mt-2 text-verified-green">
               <span className="material-symbols-outlined text-[16px]" style={{fontVariationSettings: "'FILL' 0"}}>trending_up</span>
               <span className="font-label-sm text-label-sm">{liveVisitCount > 0 ? `+${liveVisitCount} live today` : '+15% vs Last Wk'}</span>
@@ -259,7 +258,7 @@ const DHODashboard = () => {
           {/* KPI 4 */}
           <div className="bg-surface-container-lowest border border-border-default rounded-lg p-4">
             <div className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">High Risk Cases</div>
-            <div className="font-headline-kpi text-headline-kpi text-at-risk-red">{liveFlaggedCount > 0 ? (metrics.high_risk_cases !== '-' ? metrics.high_risk_cases + liveFlaggedCount : liveFlaggedCount) : metrics.high_risk_cases}</div>
+            <div className="font-headline-kpi text-headline-kpi text-at-risk-red">{liveFlaggedCount > 0 ? (metrics.high_risk_cases + liveFlaggedCount) : metrics.high_risk_cases}</div>
             <div className="flex items-center gap-1 mt-2 text-at-risk-red bg-at-risk-bg px-2 py-0.5 rounded-full w-fit">
               <span className="material-symbols-outlined text-[14px]" style={{fontVariationSettings: "'FILL' 0"}}>warning</span>
               <span className="font-label-sm text-label-sm">{liveFlaggedCount > 0 ? `${liveFlaggedCount} flagged live` : 'Needs Review'}</span>
@@ -268,7 +267,7 @@ const DHODashboard = () => {
           {/* KPI 5 */}
           <div className="bg-surface-container-lowest border border-border-default rounded-lg p-4">
             <div className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Data Quality Score</div>
-            <div className="font-headline-kpi text-headline-kpi text-on-surface">{metrics.data_quality_score}{metrics.data_quality_score !== '-' ? '%' : ''}</div>
+            <div className="font-headline-kpi text-headline-kpi text-on-surface">{metrics.data_quality_score}%</div>
             <div className="flex items-center gap-1 mt-2 text-verified-green">
               <span className="material-symbols-outlined text-[16px]" style={{fontVariationSettings: "'FILL' 0"}}>check_circle</span>
               <span className="font-label-sm text-label-sm">Excellent</span>
@@ -444,7 +443,7 @@ const DHODashboard = () => {
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan="6" className="p-8 text-center text-on-surface-variant animate-pulse">Loading localized PHC data...</td>
+                    <td colSpan={6} className="p-8 text-center text-on-surface-variant animate-pulse">Loading localized PHC data...</td>
                   </tr>
                 )}
               </tbody>

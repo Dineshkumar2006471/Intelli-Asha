@@ -1,9 +1,37 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { processVisitVoiceNote } from '../services/aiAgent';
 import { saveVisit } from '../services/db';
 import Sidebar from '../components/Sidebar';
+import type { VisitData, GeoAnchor } from '../types';
+
+// Web Speech API type augmentation
+interface SpeechRecognitionInstance extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition?: new () => SpeechRecognitionInstance;
+    webkitSpeechRecognition?: new () => SpeechRecognitionInstance;
+  }
+}
+
+interface SpeechRecognitionEvent {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionErrorEvent {
+  error: string;
+}
 
 const LogVisit = () => {
   const { currentUser } = useAuth();
@@ -12,33 +40,38 @@ const LogVisit = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [transcription, setTranscription] = useState('');
-  const [structuredData, setStructuredData] = useState(null);
-  const [error, setError] = useState(null);
+  const [structuredData, setStructuredData] = useState<VisitData | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
-  const recognitionRef = useRef(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
   useEffect(() => {
     // Initialize SpeechRecognition
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = true;
-      recognitionRef.current.interimResults = true;
-      recognitionRef.current.lang = 'en-IN'; // Configurable for native languages later
+    const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognitionCtor) {
+      const recognition = new SpeechRecognitionCtor();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-IN';
 
-      recognitionRef.current.onresult = (event) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         let currentTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; ++i) {
-          currentTranscript += event.results[i][0].transcript;
+          const resultItem = event.results[i];
+          if (resultItem && resultItem[0]) {
+            currentTranscript += resultItem[0].transcript;
+          }
         }
         setTranscription(currentTranscript);
       };
 
-      recognitionRef.current.onerror = (event) => {
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error', event.error);
         setIsRecording(false);
         setError('Microphone error: ' + event.error);
       };
+
+      recognitionRef.current = recognition;
     } else {
       setError('Speech Recognition API is not supported in this browser.');
     }
@@ -65,8 +98,9 @@ const LogVisit = () => {
     try {
       const data = await processVisitVoiceNote(transcription);
       setStructuredData(data);
-    } catch (err) {
-      setError(err.message || 'Failed to process voice note with AI.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to process voice note with AI.';
+      setError(message);
       console.error(err);
     } finally {
       setIsProcessing(false);
@@ -77,11 +111,34 @@ const LogVisit = () => {
     if (!structuredData) return;
     
     setIsProcessing(true);
+
+    const captureLocation = (): Promise<GeoAnchor | null> => new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve(null);
+      } else {
+        navigator.geolocation.getCurrentPosition(
+          (position) => resolve({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          }),
+          (geoErr) => {
+            console.warn('Geolocation error', geoErr);
+            resolve(null);
+          },
+          { enableHighAccuracy: true, timeout: 5000 }
+        );
+      }
+    });
+
     try {
+      const geoAnchor = await captureLocation();
+
       await saveVisit({
         ...structuredData,
-        rawTranscription: transcription
-      }, currentUser.photoURL);
+        rawTranscription: transcription,
+        geoAnchor: geoAnchor ?? null
+      }, currentUser?.photoURL ?? '');
       // Navigate back to Field Worker home after successful submission
       navigate('/app/field');
     } catch (err) {
@@ -172,21 +229,15 @@ const LogVisit = () => {
               </div>
               <div className="space-y-1">
                 <span className="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Status</span>
-                <div className={`inline-flex items-center px-3 py-1.5 rounded-full ${structuredData.anomaliesFound ? 'bg-error/10 text-error' : 'bg-verified-bg text-verified-green'}`} role="status">
+                <div className={`inline-flex items-center px-3 py-1.5 rounded-full bg-surface-container-high text-on-surface`} role="status">
                   <span className="material-symbols-outlined text-[16px] mr-1.5" style={{fontVariationSettings: "'FILL' 1"}} aria-hidden="true">
-                    {structuredData.anomaliesFound ? 'warning' : 'check_circle'}
+                    pending
                   </span>
                   <span className="font-label-sm text-label-sm uppercase">
-                    {structuredData.anomaliesFound ? 'Flagged' : 'Verified'}
+                    Pending Verification
                   </span>
                 </div>
               </div>
-              {structuredData.anomaliesFound && (
-                <div className="space-y-1 md:col-span-3">
-                   <span className="block font-label-sm text-label-sm text-error uppercase tracking-wider">Anomaly Reason</span>
-                   <span className="block font-body-base text-body-base text-on-surface font-medium">{structuredData.anomalyReason}</span>
-                </div>
-              )}
             </div>
           </section>
         )}

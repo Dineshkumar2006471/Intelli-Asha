@@ -1,21 +1,25 @@
-import React from 'react';
+
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const Sidebar = ({ role = 'supervisor' }) => {
+interface SidebarProps {
+  role?: 'field-worker' | 'supervisor';
+}
+
+const Sidebar = ({ role = 'supervisor' }: SidebarProps) => {
   const { currentUser, logout } = useAuth();
   const location = useLocation();
   const displayName = currentUser?.displayName || (role === 'field-worker' ? 'ASHA Worker' : 'Supervisor');
   const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
-  const isActive = (path) => location.pathname === path;
-  const linkClass = (path) => 
+  const isActive = (path: string): boolean => location.pathname === path;
+  const linkClass = (path: string): string => 
     `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
       isActive(path) 
         ? 'bg-primary-container text-on-primary-container font-bold' 
         : 'text-on-surface-variant hover:bg-surface-container-low'
     }`;
-  const iconStyle = (path) => ({ fontVariationSettings: isActive(path) ? "'FILL' 1" : "'FILL' 0" });
+  const iconStyle = (path: string) => ({ fontVariationSettings: isActive(path) ? "'FILL' 1" : "'FILL' 0" });
 
   const fieldWorkerLinks = [
     { path: '/app/field', icon: 'home', label: 'Home' },

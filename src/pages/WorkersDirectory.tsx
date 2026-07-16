@@ -1,16 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import { db } from '../firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
+import type { WorkerProfile } from '../types';
+
+interface WorkerData extends WorkerProfile {
+  id: string;
+}
 
 const WorkersDirectory = () => {
-  const [workers, setWorkers] = useState([]);
+  const [workers, setWorkers] = useState<WorkerData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const q = query(collection(db, 'workers'));
     const unsub = onSnapshot(q, (snapshot) => {
-      const workersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const workersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WorkerData));
       // Sort in memory instead of relying on Firestore index
       workersData.sort((a, b) => {
         const timeA = a.lastActive ? new Date(a.lastActive).getTime() : 0;
@@ -130,7 +135,7 @@ const WorkersDirectory = () => {
               <div className="px-6 py-4 border-t border-border-default bg-surface-container-lowest flex items-center justify-between">
                 <span className="font-label-sm text-label-sm text-on-surface-variant">Showing {workers.length} workers</span>
                 <div className="flex gap-2">
-                  <button className="p-1 rounded text-outline hover:bg-surface-variant hover:text-on-surface disabled:opacity-50 transition-colors" disabled="">
+                  <button className="p-1 rounded text-outline hover:bg-surface-variant hover:text-on-surface disabled:opacity-50 transition-colors" disabled>
                     <span className="material-symbols-outlined">chevron_left</span>
                   </button>
                   <button className="p-1 rounded text-outline hover:bg-surface-variant hover:text-on-surface transition-colors">

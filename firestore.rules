@@ -18,8 +18,7 @@ service cloud.firestore {
     }
     match /alerts/{alertId} {
       allow read: if isWorker();
-      allow create: if isWorker() 
-        && hasFields(['severity', 'title', 'timestamp']);
+      allow create: if false; // Only backend admin SDK can create alerts
     }
     match /workers/{workerId} {
       allow read: if isWorker();
