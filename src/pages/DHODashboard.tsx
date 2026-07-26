@@ -4,12 +4,19 @@ import type { AIBrief, DashboardMetrics, PHCBreakdown } from '../types';
 import { onVisitsSnapshot, onFlaggedVisitsSnapshot } from '../services/db';
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import Sidebar from '../components/Sidebar';
+import { createLogger } from '../utils/logger';
+import { useGeolocation } from '../hooks/useGeolocation';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
+const log = createLogger('DHO_DASHBOARD');
+
 // Fix Leaflet's default icon issue with Webpack/Vite
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
+// Use type-safe property override instead of `as any`
+const DefaultIcon = L.Icon.Default;
+const proto = DefaultIcon.prototype as L.Icon.Default & { _getIconUrl?: unknown };
+delete proto._getIconUrl;
+DefaultIcon.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -33,6 +40,7 @@ const DHODashboard = () => {
   const [manualLocation, setManualLocation] = useState('');
   const [liveVisitCount, setLiveVisitCount] = useState(0);
   const [liveFlaggedCount, setLiveFlaggedCount] = useState(0);
+  const { locationName: detectedLocation, geoAnchor, loading: geoLoading } = useGeolocation({ zoom: 10, fallback: 'Mathura District' });
 
   // REAL-TIME FIRESTORE LISTENERS: These update KPIs the instant a field worker submits a visit
   useEffect(() => {
@@ -73,7 +81,7 @@ const DHODashboard = () => {
           ]);
         }
       })
-      .catch(err => console.error("Geocoding failed", err));
+      .catch(err => log.error('Geocoding failed', err));
 
     generateFullDashboardData(manualLocation).then(payload => {
       setAiBrief(payload.aiBrief);
@@ -91,65 +99,30 @@ const DHODashboard = () => {
     { id: 4, name: "Meena (Block D)", pos: [27.50, 77.66] as [number, number], status: "active", offset: 3 },
   ]);
 
-  // Detect user's real location
+  // Detect user's real location with useGeolocation hook
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          setMapCenter([lat, lng]);
-          // Scatter workers around the user's real location
-          setWorkers([
-            { id: 1, name: "Sunita (Block A)", pos: [lat + 0.005, lng - 0.008] as [number, number], status: "active", offset: 0 },
-            { id: 2, name: "Geeta (Block B)", pos: [lat - 0.006, lng + 0.010] as [number, number], status: "flagged", offset: 1 },
-            { id: 3, name: "Pooja (Block C)", pos: [lat + 0.010, lng + 0.005] as [number, number], status: "active", offset: 2 },
-            { id: 4, name: "Meena (Block D)", pos: [lat - 0.003, lng - 0.012] as [number, number], status: "active", offset: 3 },
-          ]);
-          // Reverse geocode to get city name from coordinates
-          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`)
-            .then(r => r.json())
-            .then(data => {
-              const city = data.address?.city || data.address?.town || data.address?.county || data.address?.state_district || 'Your District';
-              setLocationName(city);
-              // Fetch full dashboard data
-              generateFullDashboardData(city).then(payload => {
-                setAiBrief(payload.aiBrief);
-                setMetrics(payload.metrics);
-                setPhcs(payload.phcs);
-                setLoading(false);
-              });
-            })
-            .catch(() => {
-               generateFullDashboardData('Your District').then(payload => {
-                 setAiBrief(payload.aiBrief);
-                 setMetrics(payload.metrics);
-                 setPhcs(payload.phcs);
-                 setLoading(false);
-               });
-            });
-        },
-        () => {
-          // Geolocation denied — keep defaults
-          setLocationName('Mathura District');
-          generateFullDashboardData('Mathura District').then(payload => {
-            setAiBrief(payload.aiBrief);
-            setMetrics(payload.metrics);
-            setPhcs(payload.phcs);
-            setLoading(false);
-          });
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
-    } else {
-      generateFullDashboardData('Mathura District').then(payload => {
-        setAiBrief(payload.aiBrief);
-        setMetrics(payload.metrics);
-        setPhcs(payload.phcs);
-        setLoading(false);
-      });
+    if (geoLoading) return;
+
+    if (geoAnchor) {
+      const { lat, lng } = geoAnchor;
+      setMapCenter([lat, lng]);
+      // Scatter workers around the user's real location
+      setWorkers([
+        { id: 1, name: "Sunita (Block A)", pos: [lat + 0.005, lng - 0.008] as [number, number], status: "active", offset: 0 },
+        { id: 2, name: "Geeta (Block B)", pos: [lat - 0.006, lng + 0.010] as [number, number], status: "flagged", offset: 1 },
+        { id: 3, name: "Pooja (Block C)", pos: [lat + 0.010, lng + 0.005] as [number, number], status: "active", offset: 2 },
+        { id: 4, name: "Meena (Block D)", pos: [lat - 0.003, lng - 0.012] as [number, number], status: "active", offset: 3 },
+      ]);
     }
-  }, []);
+
+    setLocationName(detectedLocation);
+    generateFullDashboardData(detectedLocation).then(payload => {
+      setAiBrief(payload.aiBrief);
+      setMetrics(payload.metrics);
+      setPhcs(payload.phcs);
+      setLoading(false);
+    });
+  }, [detectedLocation, geoAnchor, geoLoading]);
 
   useEffect(() => {
     // Simulate real-time GPS movement

@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import { db } from '../firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
+import { createLogger } from '../utils/logger';
 import type { WorkerProfile } from '../types';
+
+const log = createLogger('WORKERS_DIR');
 
 interface WorkerData extends WorkerProfile {
   id: string;
@@ -25,7 +28,7 @@ const WorkersDirectory = () => {
       setWorkers(workersData);
       setLoading(false);
     }, (error) => {
-      console.error("Error fetching workers:", error);
+      log.error('Error fetching workers', error);
       setLoading(false); // Stop loading even on error
     });
     return () => unsub();

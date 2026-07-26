@@ -2,33 +2,18 @@ import { useEffect, useState } from 'react';
 import { onFlaggedVisitsSnapshot, onVisitsSnapshot } from '../services/db';
 import type { Visit } from '../types';
 import Sidebar from '../components/Sidebar';
+import { useGeolocation } from '../hooks/useGeolocation';
 
 const SupervisorReports = () => {
   const [flaggedVisits, setFlaggedVisits] = useState<Visit[]>([]);
   const [allVisits, setAllVisits] = useState<Visit[]>([]);
-  const [locationName, setLocationName] = useState('Rampur District');
+  const { locationName } = useGeolocation({ zoom: 10, fallback: 'Rampur District' });
   const [terminalLines, setTerminalLines] = useState<{ text: string; color: string }[]>([]);
 
   useEffect(() => {
     // REAL-TIME LISTENERS: These fire automatically whenever a field worker submits a new visit
     const unsubVisits = onVisitsSnapshot(setAllVisits);
     const unsubFlagged = onFlaggedVisitsSnapshot(setFlaggedVisits);
-
-    // Get location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&zoom=10`)
-            .then(r => r.json())
-            .then(data => {
-              const city = data.address?.city || data.address?.town || data.address?.county || data.address?.state_district || 'Your District';
-              setLocationName(city);
-            })
-            .catch(() => setLocationName('Your District'));
-        },
-        () => setLocationName('Rampur District')
-      );
-    }
 
     return () => {
       unsubVisits();

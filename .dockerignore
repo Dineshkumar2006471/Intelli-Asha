@@ -1,0 +1,15 @@
+node_modules
+dist
+.git
+.github
+.firebase
+*.log
+*.pdf
+*.png
+*.md
+.env
+.env.*
+!.env.example
+report_page_*
+stitch-exports
+mcp

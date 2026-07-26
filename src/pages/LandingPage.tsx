@@ -1,4 +1,3 @@
-import 'react';
 import { Link } from 'react-router-dom';
 
 const LandingPage = () => {

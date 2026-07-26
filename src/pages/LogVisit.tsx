@@ -1,97 +1,43 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { processVisitVoiceNote } from '../services/aiAgent';
 import { saveVisit } from '../services/db';
 import Sidebar from '../components/Sidebar';
-import type { VisitData, GeoAnchor } from '../types';
+import { createLogger } from '../utils/logger';
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
+import { useGeolocation } from '../hooks/useGeolocation';
+import type { VisitData } from '../types';
 
-// Web Speech API type augmentation
-interface SpeechRecognitionInstance extends EventTarget {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  start(): void;
-  stop(): void;
-  onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition?: new () => SpeechRecognitionInstance;
-    webkitSpeechRecognition?: new () => SpeechRecognitionInstance;
-  }
-}
-
-interface SpeechRecognitionEvent {
-  resultIndex: number;
-  results: SpeechRecognitionResultList;
-}
-
-interface SpeechRecognitionErrorEvent {
-  error: string;
-}
+const log = createLogger('LOG_VISIT');
 
 const LogVisit = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   
-  const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [transcription, setTranscription] = useState('');
   const [structuredData, setStructuredData] = useState<VisitData | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const { isRecording, transcription, error: speechError, isSupported: speechSupported, startRecording, stopRecording } = useSpeechRecognition('en-IN');
+  const { geoAnchor } = useGeolocation({ zoom: 14 });
 
   useEffect(() => {
-    // Initialize SpeechRecognition
-    const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognitionCtor) {
-      const recognition = new SpeechRecognitionCtor();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = 'en-IN';
-
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
-        let currentTranscript = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          const resultItem = event.results[i];
-          if (resultItem && resultItem[0]) {
-            currentTranscript += resultItem[0].transcript;
-          }
-        }
-        setTranscription(currentTranscript);
-      };
-
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.error('Speech recognition error', event.error);
-        setIsRecording(false);
-        setError('Microphone error: ' + event.error);
-      };
-
-      recognitionRef.current = recognition;
-    } else {
-      setError('Speech Recognition API is not supported in this browser.');
-    }
-  }, []);
+    if (speechError) setError(speechError);
+    else if (!speechSupported) setError('Speech Recognition API is not supported in this browser.');
+  }, [speechError, speechSupported]);
 
   const toggleRecording = () => {
     if (isRecording) {
-      recognitionRef.current?.stop();
-      setIsRecording(false);
-      handleProcessVoiceNote();
+      stopRecording();
     } else {
-      setTranscription('');
       setStructuredData(null);
       setError(null);
-      recognitionRef.current?.start();
-      setIsRecording(true);
+      startRecording();
     }
   };
 
-  const handleProcessVoiceNote = async () => {
+  const handleProcessVoiceNote = useCallback(async () => {
     if (!transcription.trim()) return;
     
     setIsProcessing(true);
@@ -101,39 +47,24 @@ const LogVisit = () => {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to process voice note with AI.';
       setError(message);
-      console.error(err);
+      log.error('AI processing failed', err);
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [transcription]);
+
+  useEffect(() => {
+    if (!isRecording && transcription.trim() && !structuredData && !isProcessing) {
+      handleProcessVoiceNote();
+    }
+  }, [isRecording, transcription, structuredData, isProcessing, handleProcessVoiceNote]);
 
   const handleSubmit = async () => {
     if (!structuredData) return;
     
     setIsProcessing(true);
 
-    const captureLocation = (): Promise<GeoAnchor | null> => new Promise((resolve) => {
-      if (!navigator.geolocation) {
-        resolve(null);
-      } else {
-        navigator.geolocation.getCurrentPosition(
-          (position) => resolve({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            accuracy: position.coords.accuracy
-          }),
-          (geoErr) => {
-            console.warn('Geolocation error', geoErr);
-            resolve(null);
-          },
-          { enableHighAccuracy: true, timeout: 5000 }
-        );
-      }
-    });
-
     try {
-      const geoAnchor = await captureLocation();
-
       await saveVisit({
         ...structuredData,
         rawTranscription: transcription,
@@ -143,7 +74,7 @@ const LogVisit = () => {
       navigate('/app/field');
     } catch (err) {
       setError('Failed to save visit to database.');
-      console.error(err);
+      log.error('Failed to save visit', err);
       setIsProcessing(false);
     }
   };

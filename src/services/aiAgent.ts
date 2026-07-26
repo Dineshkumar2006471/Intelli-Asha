@@ -131,7 +131,18 @@ export async function generateFullDashboardData(locationName: string): Promise<D
     }
 
     log.info('Dashboard data generated for location', { locationName });
-    return JSON.parse(text) as DashboardData;
+    const parsed = JSON.parse(text) as Partial<DashboardData>;
+
+    // Runtime validation — ensure critical fields exist
+    if (!parsed.aiBrief || !parsed.metrics || !Array.isArray(parsed.phcs)) {
+      throw new Error('Malformed dashboard data: missing aiBrief, metrics, or phcs');
+    }
+
+    if (typeof parsed.metrics.total_ashas !== 'number' || typeof parsed.metrics.data_quality_score !== 'number') {
+      throw new Error('Malformed dashboard metrics: expected numeric values');
+    }
+
+    return parsed as DashboardData;
   } catch (error) {
     log.error('Analytics Agent failed — using fallback data', error);
 

@@ -6,6 +6,7 @@ import { db } from '../firebase';
 import { collection, query, where, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import type { Visit } from '../types';
 import { createLogger } from '../utils/logger';
+import { useGeolocation } from '../hooks/useGeolocation';
 
 const log = createLogger('FIELD_WORKER');
 
@@ -34,53 +35,20 @@ const FieldWorker = () => {
     return () => unsub();
   }, [currentUser]);
 
-  const [locationName, setLocationName] = useState('Detecting location...');
+  const { locationName, loading: geoLoading } = useGeolocation({ zoom: 14, fallback: 'Unknown Block' });
 
   useEffect(() => {
-    const updateLocationInDb = (loc: string): void => {
-      setLocationName(loc);
-      if (currentUser?.photoURL) {
-        updateDoc(doc(db, 'workers', currentUser.photoURL), { location: loc }).catch((err: unknown) => log.error('Failed to update location', err));
-      }
-    };
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          // Use proper headers to prevent Nominatim from blocking the request
-          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=14`, {
-            headers: {
-              'User-Agent': 'IntelliASHA-Agent/1.0 (Contact: contact@intelliasha.gov)'
-            }
-          })
-            .then(r => r.json())
-            .then(data => {
-              const block = data.address?.suburb || data.address?.village || data.address?.town || data.address?.city || 'Unknown Block';
-              const district = data.address?.state_district || data.address?.county || 'Unknown District';
-              updateLocationInDb(`${block} PHC, ${district}`);
-            })
-            .catch((err) => {
-              console.error('Nominatim fetch failed:', err);
-              updateLocationInDb('GPS Acquired, Location Unknown');
-            });
-        },
-        (err) => {
-          console.error('Geolocation failed:', err.message);
-          updateLocationInDb('Location Access Denied');
-        },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-      );
-    } else {
-      updateLocationInDb('Geolocation not supported');
+    if (!geoLoading && currentUser?.photoURL) {
+      updateDoc(doc(db, 'workers', currentUser.photoURL), { location: locationName }).catch((err: unknown) => log.error('Failed to update location', err));
     }
-  }, [currentUser]);
+  }, [geoLoading, locationName, currentUser]);
 
   const handleLogout = async () => {
     try {
       await logout();
       navigate('/login');
     } catch (error) {
-      console.error('Logout failed', error);
+      log.error('Logout failed', error);
     }
   };
 

@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { getFunctions } from 'firebase/functions';
 import { createLogger } from './utils/logger';
@@ -17,15 +17,16 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-export const db = getFirestore(app);
+/**
+ * Firestore with persistent local cache for offline support in rural areas.
+ * Uses the modern `persistentLocalCache` API (replaces deprecated `enableIndexedDbPersistence`).
+ * Multi-tab persistence is enabled by default for safe concurrent usage.
+ */
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+});
+
 export const auth = getAuth(app);
 export const functions = getFunctions(app);
 
-// Enable offline persistence for rural areas with poor connectivity
-enableIndexedDbPersistence(db).catch((err: { code: string }) => {
-  if (err.code === 'failed-precondition') {
-    log.warn('Multiple tabs open — persistence can only be enabled in one tab at a time.');
-  } else if (err.code === 'unimplemented') {
-    log.warn('This browser does not support IndexedDB persistence.');
-  }
-});
+log.info('Firebase initialized with persistent offline cache');
