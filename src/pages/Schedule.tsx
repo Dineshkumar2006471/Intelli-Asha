@@ -5,6 +5,9 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase';
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import type { Visit } from '../types';
+import { createLogger } from '../utils/logger';
+
+const log = createLogger('SCHEDULE');
 
 /**
  * Schedule Page — Follow-up visit calendar derived from real Firestore data.
@@ -34,76 +37,119 @@ const FOLLOW_UP_RULES: Record<string, { days: number; reason: string; icon: stri
   'default': { days: 30, reason: 'Monthly routine follow-up', icon: 'calendar_today' },
 };
 
+const STATUS_STYLE = {
+  overdue: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-600', dot: 'bg-red-500', label: 'OVERDUE' },
+  today: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-600', dot: 'bg-amber-500', label: 'TODAY' },
+  upcoming: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-600', dot: 'bg-blue-500', label: 'UPCOMING' },
+};
+
 const Schedule = () => {
   const { currentUser } = useAuth();
   const [visits, setVisits] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
   useEffect(() => {
     if (!currentUser) return;
+
+    log.info('Initializing real-time visit listener for schedule');
     const visitsRef = collection(db, 'visits');
     const q = query(visitsRef, where('workerId', '==', currentUser.photoURL), orderBy('timestamp', 'desc'));
-    const unsub = onSnapshot(q, (snap) => {
-      setVisits(snap.docs.map(d => ({ id: d.id, ...d.data() }) as Visit));
-      setLoading(false);
-    }, () => setLoading(false));
+    
+    const unsub = onSnapshot(q, 
+      (snap) => {
+        try {
+          const fetchedVisits = snap.docs.map(d => ({ id: d.id, ...d.data() }) as Visit);
+          setVisits(fetchedVisits);
+          setError(null);
+        } catch (err) {
+          log.error('Error parsing visits data', err);
+          setError('Failed to process visit data.');
+        } finally {
+          setLoading(false);
+        }
+      }, 
+      (err) => {
+        log.error('Firestore listener error in Schedule', err);
+        setError('Connection lost. Please check your network.');
+        setLoading(false);
+      }
+    );
+
     return () => unsub();
   }, [currentUser]);
 
-  // Compute scheduled follow-ups from actual visit data
+  // Compute scheduled follow-ups from actual visit data with robust error handling
   const scheduledVisits = useMemo((): ScheduledVisit[] => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    if (!visits.length) return [];
 
-    // Group visits by household — take most recent visit per household
-    const latestByHousehold = new Map<string, Visit>();
-    for (const v of visits) {
-      const key = v.householdName || 'Unknown';
-      if (!latestByHousehold.has(key)) latestByHousehold.set(key, v);
-    }
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-    const scheduled: ScheduledVisit[] = [];
-    for (const [, visit] of latestByHousehold) {
-      if (!visit.timestamp) continue;
-      const visitDate = new Date(visit.timestamp.seconds * 1000);
+      // Group visits by household — take most recent visit per household
+      const latestByHousehold = new Map<string, Visit>();
+      for (const v of visits) {
+        const key = v.householdName || 'Unknown';
+        if (!latestByHousehold.has(key)) {
+          latestByHousehold.set(key, v);
+        }
+      }
 
-      // Determine follow-up rule
-      let rule = FOLLOW_UP_RULES['default'];
-      const vt = (visit.visitType || '').toLowerCase();
-      if (vt.includes('hbnc') || vt.includes('newborn')) rule = FOLLOW_UP_RULES['HBNC'] || rule;
-      else if (vt.includes('immuniz')) rule = FOLLOW_UP_RULES['Immunization'] || rule;
-      else if (visit.status === 'Severe Acute Malnutrition') rule = FOLLOW_UP_RULES['Severe Acute Malnutrition'] || rule;
-      else if (visit.status === 'Underweight') rule = FOLLOW_UP_RULES['Underweight'] || rule;
+      const scheduled: ScheduledVisit[] = [];
+      for (const [, visit] of latestByHousehold) {
+        if (!visit.timestamp || !visit.timestamp.seconds) continue;
 
-      const dueDate = new Date(visitDate);
-      dueDate.setDate(dueDate.getDate() + rule.days);
-      dueDate.setHours(0, 0, 0, 0);
+        const visitDate = new Date(visit.timestamp.seconds * 1000);
+        if (isNaN(visitDate.getTime())) {
+          log.warn(`Invalid timestamp for visit ${visit.id}`);
+          continue;
+        }
 
-      const diffDays = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      let status: 'overdue' | 'today' | 'upcoming' = 'upcoming';
-      if (diffDays < 0) status = 'overdue';
-      else if (diffDays === 0) status = 'today';
+        // Determine follow-up rule safely
+        let rule = FOLLOW_UP_RULES['default']!;
+        const vt = (visit.visitType || '').toLowerCase();
+        
+        if (vt.includes('hbnc') || vt.includes('newborn')) rule = FOLLOW_UP_RULES['HBNC'] || rule;
+        else if (vt.includes('immuniz')) rule = FOLLOW_UP_RULES['Immunization'] || rule;
+        else if (visit.status === 'Severe Acute Malnutrition') rule = FOLLOW_UP_RULES['Severe Acute Malnutrition'] || rule;
+        else if (visit.status === 'Underweight') rule = FOLLOW_UP_RULES['Underweight'] || rule;
 
-      scheduled.push({
-        householdName: visit.householdName || 'Unknown',
-        childName: visit.childName || '-',
-        dueDate,
-        type: visit.visitType || 'General',
-        reason: rule.reason,
-        status,
-        icon: rule.icon,
+        const dueDate = new Date(visitDate);
+        dueDate.setDate(dueDate.getDate() + rule.days);
+        dueDate.setHours(0, 0, 0, 0);
+
+        const diffTime = dueDate.getTime() - today.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        let status: 'overdue' | 'today' | 'upcoming' = 'upcoming';
+        if (diffDays < 0) status = 'overdue';
+        else if (diffDays === 0) status = 'today';
+
+        scheduled.push({
+          householdName: visit.householdName || 'Unknown',
+          childName: visit.childName || '-',
+          dueDate,
+          type: visit.visitType || 'General',
+          reason: rule.reason,
+          status,
+          icon: rule.icon,
+        });
+      }
+
+      // Sort: overdue first, then today, then upcoming
+      scheduled.sort((a, b) => {
+        const order = { overdue: 0, today: 1, upcoming: 2 };
+        if (order[a.status] !== order[b.status]) return order[a.status] - order[b.status];
+        return a.dueDate.getTime() - b.dueDate.getTime();
       });
+
+      return scheduled;
+    } catch (err) {
+      log.error('Error computing schedule', err);
+      return [];
     }
-
-    // Sort: overdue first, then today, then upcoming
-    scheduled.sort((a, b) => {
-      const order = { overdue: 0, today: 1, upcoming: 2 };
-      if (order[a.status] !== order[b.status]) return order[a.status] - order[b.status];
-      return a.dueDate.getTime() - b.dueDate.getTime();
-    });
-
-    return scheduled;
   }, [visits]);
 
   const overdueCount = scheduledVisits.filter(s => s.status === 'overdue').length;
@@ -112,33 +158,35 @@ const Schedule = () => {
 
   // Simple calendar grid for the current month
   const calendarDays = useMemo(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    try {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    const days: { day: number; isToday: boolean; visits: ScheduledVisit[] }[] = [];
-    for (let i = 0; i < firstDay; i++) days.push({ day: 0, isToday: false, visits: [] });
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dateObj = new Date(year, month, d);
-      dateObj.setHours(0, 0, 0, 0);
-      const isToday = d === now.getDate();
-      const dayVisits = scheduledVisits.filter(sv => {
-        const svDate = new Date(sv.dueDate);
-        svDate.setHours(0, 0, 0, 0);
-        return svDate.getTime() === dateObj.getTime();
-      });
-      days.push({ day: d, isToday, visits: dayVisits });
+      const days: { day: number; isToday: boolean; visits: ScheduledVisit[] }[] = [];
+      for (let i = 0; i < firstDay; i++) days.push({ day: 0, isToday: false, visits: [] });
+      
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateObj = new Date(year, month, d);
+        dateObj.setHours(0, 0, 0, 0);
+        const isToday = d === now.getDate();
+        
+        const dayVisits = scheduledVisits.filter(sv => {
+          const svDate = new Date(sv.dueDate);
+          svDate.setHours(0, 0, 0, 0);
+          return svDate.getTime() === dateObj.getTime();
+        });
+        
+        days.push({ day: d, isToday, visits: dayVisits });
+      }
+      return days;
+    } catch (err) {
+      log.error('Error computing calendar days', err);
+      return [];
     }
-    return days;
   }, [scheduledVisits]);
-
-  const STATUS_STYLE = {
-    overdue: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-600', dot: 'bg-red-500', label: 'OVERDUE' },
-    today: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-600', dot: 'bg-amber-500', label: 'TODAY' },
-    upcoming: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-600', dot: 'bg-blue-500', label: 'UPCOMING' },
-  };
 
   return (
     <div className="min-h-screen bg-background-subtle flex">
@@ -166,6 +214,14 @@ const Schedule = () => {
         </header>
 
         <div className="px-6 md:px-10 py-6">
+          {/* Error Banner */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg text-sm flex items-center gap-2 border border-red-200">
+              <span className="material-symbols-outlined text-[20px]">error</span>
+              <span>{error}</span>
+            </div>
+          )}
+
           {/* Summary Cards */}
           <div className="grid grid-cols-3 gap-4 mb-8">
             <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
@@ -184,13 +240,19 @@ const Schedule = () => {
 
           {viewMode === 'list' ? (
             /* List View */
-            <div className="bg-surface rounded-xl border border-border-default overflow-hidden">
-              <div className="p-5 border-b border-border-default">
-                <h2 className="font-title-md text-[18px] text-on-surface font-semibold">Scheduled Follow-ups</h2>
-                <p className="font-label-sm text-[12px] text-secondary mt-1">Auto-generated from your visit history using NHM follow-up protocols</p>
+            <div className="bg-surface rounded-xl border border-border-default overflow-hidden shadow-sm">
+              <div className="p-5 border-b border-border-default flex justify-between items-center">
+                <div>
+                  <h2 className="font-title-md text-[18px] text-on-surface font-semibold">Scheduled Follow-ups</h2>
+                  <p className="font-label-sm text-[12px] text-secondary mt-1">Auto-generated from your visit history using NHM follow-up protocols</p>
+                </div>
               </div>
+              
               {loading ? (
-                <div className="p-12 text-center text-secondary animate-pulse">Computing schedule...</div>
+                <div className="p-12 text-center text-secondary flex flex-col items-center">
+                  <div className="w-8 h-8 border-4 border-primary-container border-t-primary rounded-full animate-spin mb-4"></div>
+                  <p>Computing schedule...</p>
+                </div>
               ) : scheduledVisits.length === 0 ? (
                 <div className="p-12 text-center">
                   <span className="material-symbols-outlined text-[48px] text-on-surface-variant block mb-3">event_busy</span>
@@ -202,7 +264,7 @@ const Schedule = () => {
                   {scheduledVisits.map((sv, idx) => {
                     const style = STATUS_STYLE[sv.status];
                     return (
-                      <div key={idx} className={`flex items-center gap-4 p-5 hover:bg-surface-container-lowest transition-colors`}>
+                      <div key={`${sv.householdName}-${idx}`} className={`flex items-center gap-4 p-5 hover:bg-surface-container-lowest transition-colors`}>
                         <div className={`w-10 h-10 rounded-full ${style.bg} flex items-center justify-center shrink-0`}>
                           <span className={`material-symbols-outlined ${style.text} text-[20px]`}>{sv.icon}</span>
                         </div>
@@ -232,7 +294,7 @@ const Schedule = () => {
             </div>
           ) : (
             /* Calendar View */
-            <div className="bg-surface rounded-xl border border-border-default overflow-hidden">
+            <div className="bg-surface rounded-xl border border-border-default overflow-hidden shadow-sm">
               <div className="p-5 border-b border-border-default">
                 <h2 className="font-title-md text-[18px] text-on-surface font-semibold">
                   {new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
@@ -259,7 +321,7 @@ const Schedule = () => {
                             {cell.visits.slice(0, 2).map((v, vi) => {
                               const s = STATUS_STYLE[v.status];
                               return (
-                                <div key={vi} className={`${s.bg} rounded px-1 py-0.5`}>
+                                <div key={vi} className={`${s.bg} rounded px-1 py-0.5`} title={v.reason}>
                                   <span className={`${s.text} font-label-sm text-[9px] truncate block`}>{v.householdName}</span>
                                 </div>
                               );
