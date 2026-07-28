@@ -1,14 +1,25 @@
 <div align="center">
-  <img src="public/logo-ia.png" alt="IntelliASHA Logo" width="150" />
+  <img src="public/logo-ia.png" alt="IntelliASHA Logo" width="180" />
   
   # IntelliASHA 
-  **An Agentic Nervous System for Rural Healthcare**
+  ### An Agentic Nervous System for Rural Healthcare
 
-  [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-  [![AI Agent Builder Series 2026](https://img.shields.io/badge/Hackathon-AI_Agent_Builder_Series_2026-ea4335)](https://developers.google.com/)
-  [![Powered by Gemini](https://img.shields.io/badge/Powered_by-Gemini_2.5_Flash-4285F4)](https://deepmind.google/technologies/gemini/)
-  [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript)](https://www.typescriptlang.org/)
-  [![Tested with Vitest](https://img.shields.io/badge/Tested_with-Vitest-729B1B?logo=vitest)](https://vitest.dev/)
+  <a href="https://intelliasha.web.app/"><img src="https://img.shields.io/badge/🚀_Live_Demo-View_Deployment-4285F4?style=for-the-badge" alt="Live Deployment" /></a>
+
+  <br />
+
+  [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+  [![AI Agent Builder Series 2026](https://img.shields.io/badge/Hackathon-AI_Agent_Builder_Series_2026-ea4335?style=flat-square)](https://developers.google.com/)
+  [![Powered by Gemini](https://img.shields.io/badge/Powered_by-Gemini_2.5_Flash-4285F4?style=flat-square)](https://deepmind.google/technologies/gemini/)
+  [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+  
+  <br />
+
+  <a href="https://intelliasha.web.app/">
+    <img src="hero.png" alt="IntelliASHA Hero Preview" width="100%" style="border-radius: 12px; border: 1px solid #eaeaea; box-shadow: 0 10px 30px rgba(0,0,0,0.1);" />
+  </a>
+
+  <br /><br />
 
   *IntelliASHA transforms the last mile of public health from paper-based, delayed reporting into a fully autonomous, real-time disease surveillance network powered by a swarm of Edge AI agents.*
 </div>

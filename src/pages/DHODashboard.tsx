@@ -185,7 +185,7 @@ const DHODashboard = () => {
       <main className="flex-1 h-screen overflow-y-auto bg-surface-container-lowest p-0 md:p-6 lg:p-10 space-y-8">
         {/* Dashboard Header */}
         <div className="relative w-full rounded-lg overflow-hidden border border-border-default h-[280px]">
-          <img alt="Health Center Briefing Context" className="w-full h-full object-cover object-top" src="https://lh3.googleusercontent.com/aida/AP1WRLsjzD35p6Y4msSwEgK3s2kMXtF0gaPcD2WB5S372FsHONKpxLbo8nCn0sigm22t5MHwX_U9rvgDwajiTOxjGprbgbNmFSoj_CjGMofmk4sYNsg1EWuIXMK2ESggaCCTmXB7E-gJ3m43SXwbSTvaRrY1XdhlEAbJjz8N2XjNv0_ulg5wqVXe9HGOhGztPru_AYJd9iOdnNG3g0_DiYdUv1iTVk81YRWEdNrLWI7sx2qXGzo-1fFQPlrmMg" />
+          <img alt="Health Center Briefing Context" className="w-full h-full object-cover object-top" src="/images/health-center-briefing.png" />
           <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/70 to-transparent flex flex-col justify-end p-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 w-full max-w-max-width mx-auto">
               <div>

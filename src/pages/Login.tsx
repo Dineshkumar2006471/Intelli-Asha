@@ -50,7 +50,7 @@ const Login = () => {
     <div className="h-screen w-full bg-surface text-text-primary font-body-base antialiased flex overflow-hidden">
       {/* Left Side Image */}
       <div className="hidden lg:block w-1/2 relative h-full bg-neutral-900">
-        <img alt="ASHA Worker in the field" className="absolute inset-0 w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBj1FYf-fw3O_VikyiZk46FoJACs0ogLKG2GqZwGz4_Qx2J4HepaczQaTQRC37aWt6MaqFB2FR9H2ABkyi6nNZfqmt9X9qaSRHEMGUeW75bdTeQXiezSr5WzoymRGePldojGqXXl4mDqAWcfTk4kyxielk2lRdFfR2aJ2QEsY5MQT4GOdD-bVSRqA-BcZFiO1AwPves9zxtsaZz7f0rft0m2V8HlCZMFI18e9hrUjon3gvO7wWNn7K9xNeG-_eSKNDaEuoOzDtC_Us" />
+        <img alt="ASHA Worker in the field" className="absolute inset-0 w-full h-full object-cover" src="/images/asha-field-worker.png" />
       </div>
 
       {/* Right Side Content */}

@@ -14,20 +14,20 @@ const Sidebar = ({ role = 'supervisor' }: SidebarProps) => {
 
   const isActive = (path: string): boolean => location.pathname === path;
   const linkClass = (path: string): string => 
-    `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+    `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors border-2 ${
       isActive(path) 
-        ? 'bg-primary-container text-on-primary-container font-bold' 
-        : 'text-on-surface-variant hover:bg-surface-container-low'
+        ? 'border-primary text-primary font-bold bg-transparent' 
+        : 'border-transparent text-on-surface-variant hover:bg-surface-container-low'
     }`;
   const iconStyle = (path: string) => ({ fontVariationSettings: isActive(path) ? "'FILL' 1" : "'FILL' 0" });
 
   const fieldWorkerLinks = [
     { path: '/app/field', icon: 'home', label: 'Home' },
     { path: '/app/log-visit', icon: 'mic', label: 'Log a Visit' },
-    { path: '#route', icon: 'route', label: 'Route' },
-    { path: '#records', icon: 'folder', label: 'Records' },
-    { path: '#earnings', icon: 'payments', label: 'Earnings' },
-    { path: '#schedule', icon: 'calendar_today', label: 'Schedule' },
+    { path: '/app/route', icon: 'route', label: 'Route' },
+    { path: '/app/records', icon: 'folder', label: 'Records' },
+    { path: '/app/earnings', icon: 'payments', label: 'Earnings' },
+    { path: '/app/schedule', icon: 'calendar_today', label: 'Schedule' },
   ];
 
   const supervisorLinks = [
@@ -35,7 +35,7 @@ const Sidebar = ({ role = 'supervisor' }: SidebarProps) => {
     { path: '/dashboard/dho', icon: 'map', label: 'Coverage Map' },
     { path: '/dashboard/supervisor/directory', icon: 'groups', label: 'Workers' },
     { path: '/dashboard/supervisor/alerts', icon: 'notifications_active', label: 'Alerts' },
-    { path: '#reports', icon: 'summarize', label: 'Reports' },
+    { path: '/dashboard/supervisor/reports', icon: 'summarize', label: 'Reports' },
     { path: '#settings', icon: 'settings', label: 'Settings' },
   ];
 
@@ -43,14 +43,11 @@ const Sidebar = ({ role = 'supervisor' }: SidebarProps) => {
 
   return (
     <nav className="hidden md:flex flex-col h-screen w-64 border-r border-border-default bg-surface py-6 px-4 z-40 shrink-0">
-      {/* Logo + Role */}
+      {/* Logo */}
       <div className="flex items-center gap-3 mb-8">
-        <img src="/logo-ia.png" alt="IntelliASHA Logo" className="h-10 w-auto object-contain" />
-        <div className="overflow-hidden">
-          <p className="font-label-sm text-label-sm text-on-surface-variant truncate">
-            {role === 'field-worker' ? 'Field Worker' : 'Supervisor'}
-          </p>
-        </div>
+        <Link to="/">
+          <img src="/logo-ia.png" alt="IntelliASHA Logo" className="h-10 w-auto object-contain cursor-pointer" />
+        </Link>
       </div>
 
       {/* Nav Links */}

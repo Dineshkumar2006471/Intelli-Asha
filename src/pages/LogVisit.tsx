@@ -18,6 +18,18 @@ const LogVisit = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [structuredData, setStructuredData] = useState<VisitData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
   
   const { isRecording, transcription, error: speechError, isSupported: speechSupported, startRecording, stopRecording } = useSpeechRecognition('en-IN');
   const { geoAnchor } = useGeolocation({ zoom: 14 });
@@ -44,6 +56,18 @@ const LogVisit = () => {
     try {
       const data = await processVisitVoiceNote(transcription);
       setStructuredData(data);
+      
+      // USP Feature: Native Audio Feedback
+      // Speak back the parsed data to the worker for confirmation
+      if ('speechSynthesis' in window) {
+        const textToSpeak = `Data extracted. Household ${data.householdName || 'Unknown'}, Child ${data.childName || 'Unknown'}, Weight ${data.weight || 'Unknown'}. Status is ${data.status}.`;
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        // Try to find an Indian English or Hindi voice if available
+        const voices = window.speechSynthesis.getVoices();
+        const indianVoice = voices.find(v => v.lang.includes('en-IN') || v.lang.includes('hi-IN'));
+        if (indianVoice) utterance.voice = indianVoice;
+        window.speechSynthesis.speak(utterance);
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to process voice note with AI.';
       setError(message);
@@ -98,6 +122,14 @@ const LogVisit = () => {
         {error && (
           <div className="p-4 bg-red-100 text-red-700 rounded-lg text-sm">
             {error}
+          </div>
+        )}
+
+        {/* USP Feature: Offline Sync Indicator */}
+        {!isOnline && (
+          <div className="p-4 bg-amber-100 text-amber-800 rounded-lg text-sm flex items-center gap-2 border border-amber-200">
+            <span className="material-symbols-outlined text-[20px]">cloud_off</span>
+            <span><strong>You are offline.</strong> Don't worry, you can still log visits. They will sync automatically when you reconnect.</span>
           </div>
         )}
 
@@ -182,8 +214,8 @@ const LogVisit = () => {
                 disabled={isProcessing}
                 className="w-full md:w-auto min-w-[240px] bg-primary-container text-on-primary font-title-sm text-title-sm py-3 px-8 rounded-lg shadow-sm hover:bg-primary transition-colors flex justify-center items-center active:scale-[0.98] disabled:opacity-50"
               >
-                <span>{isProcessing ? 'Saving...' : 'Confirm & Submit'}</span>
-                {!isProcessing && <span className="material-symbols-outlined ml-2" style={{fontVariationSettings: "'FILL' 0"}}>send</span>}
+                <span>{isProcessing ? 'Saving...' : (!isOnline ? 'Save Offline' : 'Confirm & Submit')}</span>
+                {!isProcessing && <span className="material-symbols-outlined ml-2" style={{fontVariationSettings: "'FILL' 0"}}>{!isOnline ? 'save' : 'send'}</span>}
               </button>
             </div>
           </div>

@@ -143,31 +143,31 @@ const FieldWorker = () => {
 
             {/* Quick Actions Grid */}
             <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4" role="group" aria-label="Quick Actions">
-              <a aria-label="View Route" className="bg-surface-container-lowest border border-border-default rounded-lg p-6 flex flex-col items-center justify-center gap-2 hover:bg-surface-container-low transition-colors shadow-sm" href="#">
+              <Link to="/app/route" aria-label="View Route" className="bg-surface-container-lowest border border-border-default rounded-lg p-6 flex flex-col items-center justify-center gap-2 hover:bg-surface-container-low transition-colors shadow-sm">
                 <div className="bg-secondary-container p-3 rounded-full">
                   <span className="material-symbols-outlined text-on-secondary-container" style={{fontVariationSettings: "'FILL' 1"}} aria-hidden="true">route</span>
                 </div>
                 <span className="font-title-sm text-title-sm text-on-surface">Route</span>
-              </a>
-              <a aria-label="View Records" className="bg-surface-container-lowest border border-border-default rounded-lg p-6 flex flex-col items-center justify-center gap-2 hover:bg-surface-container-low transition-colors shadow-sm" href="#">
+              </Link>
+              <Link to="/app/records" aria-label="View Records" className="bg-surface-container-lowest border border-border-default rounded-lg p-6 flex flex-col items-center justify-center gap-2 hover:bg-surface-container-low transition-colors shadow-sm">
                 <div className="bg-secondary-container p-3 rounded-full">
                   <span className="material-symbols-outlined text-on-secondary-container" style={{fontVariationSettings: "'FILL' 1"}} aria-hidden="true">folder</span>
                 </div>
                 <span className="font-title-sm text-title-sm text-on-surface">Records</span>
-              </a>
-              <a aria-label="View Earnings" className="bg-surface-container-lowest border border-border-default rounded-lg p-6 flex flex-col items-center justify-center gap-2 hover:bg-surface-container-low transition-colors shadow-sm" href="#">
+              </Link>
+              <Link to="/app/earnings" aria-label="View Earnings" className="bg-surface-container-lowest border border-border-default rounded-lg p-6 flex flex-col items-center justify-center gap-2 hover:bg-surface-container-low transition-colors shadow-sm">
                 <div className="bg-secondary-container p-3 rounded-full">
                   <span className="material-symbols-outlined text-on-secondary-container" style={{fontVariationSettings: "'FILL' 1"}} aria-hidden="true">payments</span>
                 </div>
                 <span className="font-title-sm text-title-sm text-on-surface">Earnings</span>
-              </a>
-              <a aria-label="View Alerts" className="bg-flagged-bg border border-border-default rounded-lg p-6 flex flex-col items-center justify-center gap-2 hover:bg-surface-container-low transition-colors shadow-sm relative" href="#">
+              </Link>
+              <Link to="/app/schedule" aria-label="View Schedule" className="bg-surface-container-lowest border border-border-default rounded-lg p-6 flex flex-col items-center justify-center gap-2 hover:bg-surface-container-low transition-colors shadow-sm relative">
                 <div className="absolute top-2 right-2 w-3 h-3 bg-flagged-amber rounded-full" aria-hidden="true"></div>
-                <div className="bg-flagged-amber/20 p-3 rounded-full">
-                  <span className="material-symbols-outlined text-flagged-amber" style={{fontVariationSettings: "'FILL' 1"}} aria-hidden="true">warning</span>
+                <div className="bg-primary/10 p-3 rounded-full">
+                  <span className="material-symbols-outlined text-primary" style={{fontVariationSettings: "'FILL' 1"}} aria-hidden="true">calendar_today</span>
                 </div>
-                <span className="font-title-sm text-title-sm text-on-surface">Alerts</span>
-              </a>
+                <span className="font-title-sm text-title-sm text-on-surface">Schedule</span>
+              </Link>
             </div>
           </div>
 
