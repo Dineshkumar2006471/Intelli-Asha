@@ -71,10 +71,10 @@ const Schedule = () => {
       // Determine follow-up rule
       let rule = FOLLOW_UP_RULES['default'];
       const vt = (visit.visitType || '').toLowerCase();
-      if (vt.includes('hbnc') || vt.includes('newborn')) rule = FOLLOW_UP_RULES['HBNC'];
-      else if (vt.includes('immuniz')) rule = FOLLOW_UP_RULES['Immunization'];
-      else if (visit.status === 'Severe Acute Malnutrition') rule = FOLLOW_UP_RULES['Severe Acute Malnutrition'];
-      else if (visit.status === 'Underweight') rule = FOLLOW_UP_RULES['Underweight'];
+      if (vt.includes('hbnc') || vt.includes('newborn')) rule = FOLLOW_UP_RULES['HBNC'] || rule;
+      else if (vt.includes('immuniz')) rule = FOLLOW_UP_RULES['Immunization'] || rule;
+      else if (visit.status === 'Severe Acute Malnutrition') rule = FOLLOW_UP_RULES['Severe Acute Malnutrition'] || rule;
+      else if (visit.status === 'Underweight') rule = FOLLOW_UP_RULES['Underweight'] || rule;
 
       const dueDate = new Date(visitDate);
       dueDate.setDate(dueDate.getDate() + rule.days);
