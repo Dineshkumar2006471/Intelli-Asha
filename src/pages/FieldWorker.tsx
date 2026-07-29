@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase';
 import { collection, query, where, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
@@ -10,8 +10,7 @@ import { useGeolocation } from '../hooks/useGeolocation';
 const log = createLogger('FIELD_WORKER');
 
 const FieldWorker = () => {
-  const { currentUser, logout } = useAuth();
-  const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [visits, setVisits] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -42,14 +41,7 @@ const FieldWorker = () => {
     }
   }, [geoLoading, locationName, currentUser]);
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      log.error('Logout failed', error);
-    }
-  };
+
 
   const displayName = currentUser?.displayName || 'ASHA Worker';
   const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
