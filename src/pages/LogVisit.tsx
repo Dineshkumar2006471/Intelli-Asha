@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { processVisitVoiceNote } from '../services/aiAgent';
 import { saveVisit } from '../services/db';
-import Sidebar from '../components/Sidebar';
 import { createLogger } from '../utils/logger';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -104,10 +103,9 @@ const LogVisit = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background-subtle flex">
-      <Sidebar role="field-worker" />
-
-      <main className="flex-1 h-screen overflow-y-auto bg-surface-container-lowest">
+    <div className="flex flex-col h-full w-full">
+      
+      <main className="flex-1 h-full overflow-y-auto bg-surface-container-lowest">
         <header className="bg-surface-container-lowest flex justify-between items-center px-margin-tablet lg:px-margin-desktop py-6 border-b border-border-default sticky top-0 z-50">
           <div className="flex items-center space-x-4">
             <Link to="/app/field" aria-label="Go back" className="text-on-surface-variant hover:text-on-surface transition-colors p-2 -ml-2 rounded-full hover:bg-surface-container-low">

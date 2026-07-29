@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { onVisitsSnapshot } from '../services/db';
 import type { Visit } from '../types';
-import Sidebar from '../components/Sidebar';
 
 const Reports = () => {
   const [visits, setVisits] = useState<Visit[]>([]);
@@ -16,9 +15,8 @@ const Reports = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background-subtle flex">
-      <Sidebar role="supervisor" />
-      <main className="flex-1 p-6 md:p-10 h-screen overflow-y-auto bg-surface-container-lowest">
+    <div className="flex flex-col h-full w-full">
+            <main className="flex-1 p-6 md:p-10 h-screen overflow-y-auto bg-surface-container-lowest">
         <header className="mb-8">
           <h1 className="font-display-landing text-[32px] text-on-surface">Reports</h1>
           <p className="font-body-base text-secondary mt-2">Real-time health reporting data.</p>

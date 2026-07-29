@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { onFlaggedVisitsSnapshot, onVisitsSnapshot } from '../services/db';
 import type { Visit } from '../types';
-import Sidebar from '../components/Sidebar';
 import { useGeolocation } from '../hooks/useGeolocation';
 
 const SupervisorReports = () => {
@@ -52,12 +51,11 @@ const SupervisorReports = () => {
   }, [locationName]);
 
   return (
-    <div className="min-h-screen bg-background-subtle flex">
+    <div className="flex flex-col h-full w-full">
       {/* Shared Sidebar */}
-      <Sidebar role="supervisor" />
-
+      
       {/* Main Content Area */}
-      <main className="flex-1 h-screen overflow-y-auto bg-surface-container-lowest p-0 md:p-6 lg:p-10">
+      <main className="flex-1 h-full overflow-y-auto bg-surface-container-lowest p-0 md:p-6 lg:p-10">
         {/* Mobile Header */}
         <header className="md:hidden flex justify-between items-center px-4 py-3 bg-surface border-b border-border-default shrink-0 mb-4">
           <div className="flex items-center gap-2">

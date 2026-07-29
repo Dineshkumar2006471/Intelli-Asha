@@ -3,7 +3,6 @@ import { generateFullDashboardData } from '../services/aiAgent';
 import type { AIBrief, DashboardMetrics, PHCBreakdown } from '../types';
 import { onVisitsSnapshot, onFlaggedVisitsSnapshot } from '../services/db';
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
-import Sidebar from '../components/Sidebar';
 import { createLogger } from '../utils/logger';
 import { useGeolocation } from '../hooks/useGeolocation';
 import 'leaflet/dist/leaflet.css';
@@ -178,11 +177,10 @@ const DHODashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background-subtle flex">
+    <div className="flex flex-col h-full w-full">
       {/* Shared Sidebar */}
-      <Sidebar role="supervisor" />
-
-      <main className="flex-1 h-screen overflow-y-auto bg-surface-container-lowest p-0 md:p-6 lg:p-10 space-y-8">
+      
+      <main className="flex-1 h-full overflow-y-auto bg-surface-container-lowest p-0 md:p-6 lg:p-10 space-y-8">
         {/* Dashboard Header */}
         <div className="relative w-full rounded-lg overflow-hidden border border-border-default h-[280px]">
           <img alt="Health Center Briefing Context" className="w-full h-full object-cover object-top" src="/images/health-center-briefing.png" />

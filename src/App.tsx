@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SkipToContent } from './components/SkipToContent';
 import ProtectedRoute from './components/ProtectedRoute';
+import AppLayout from './components/AppLayout';
 
 // Lazy-loaded pages — code-split for optimal initial bundle size
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -44,18 +45,18 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<Login />} />
 
-              {/* Protected Routes */}
-              <Route path="/app/field" element={<ProtectedRoute><FieldWorker /></ProtectedRoute>} />
-              <Route path="/app/log-visit" element={<ProtectedRoute><LogVisit /></ProtectedRoute>} />
-              <Route path="/app/route" element={<ProtectedRoute><SmartRoute /></ProtectedRoute>} />
-              <Route path="/app/records" element={<ProtectedRoute><Records /></ProtectedRoute>} />
-              <Route path="/app/earnings" element={<ProtectedRoute><Earnings /></ProtectedRoute>} />
-              <Route path="/app/schedule" element={<ProtectedRoute><Schedule /></ProtectedRoute>} />
-              <Route path="/dashboard/supervisor" element={<ProtectedRoute><SupervisorReports /></ProtectedRoute>} />
-              <Route path="/dashboard/supervisor/directory" element={<ProtectedRoute><WorkersDirectory /></ProtectedRoute>} />
-              <Route path="/dashboard/supervisor/alerts" element={<ProtectedRoute><Alerts /></ProtectedRoute>} />
-              <Route path="/dashboard/supervisor/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-              <Route path="/dashboard/dho" element={<ProtectedRoute><DHODashboard /></ProtectedRoute>} />
+              {/* Protected Routes wrapped in AppLayout */}
+              <Route path="/app/field" element={<ProtectedRoute><AppLayout><FieldWorker /></AppLayout></ProtectedRoute>} />
+              <Route path="/app/log-visit" element={<ProtectedRoute><AppLayout><LogVisit /></AppLayout></ProtectedRoute>} />
+              <Route path="/app/route" element={<ProtectedRoute><AppLayout><SmartRoute /></AppLayout></ProtectedRoute>} />
+              <Route path="/app/records" element={<ProtectedRoute><AppLayout><Records /></AppLayout></ProtectedRoute>} />
+              <Route path="/app/earnings" element={<ProtectedRoute><AppLayout><Earnings /></AppLayout></ProtectedRoute>} />
+              <Route path="/app/schedule" element={<ProtectedRoute><AppLayout><Schedule /></AppLayout></ProtectedRoute>} />
+              <Route path="/dashboard/supervisor" element={<ProtectedRoute><AppLayout><SupervisorReports /></AppLayout></ProtectedRoute>} />
+              <Route path="/dashboard/supervisor/directory" element={<ProtectedRoute><AppLayout><WorkersDirectory /></AppLayout></ProtectedRoute>} />
+              <Route path="/dashboard/supervisor/alerts" element={<ProtectedRoute><AppLayout><Alerts /></AppLayout></ProtectedRoute>} />
+              <Route path="/dashboard/supervisor/reports" element={<ProtectedRoute><AppLayout><Reports /></AppLayout></ProtectedRoute>} />
+              <Route path="/dashboard/dho" element={<ProtectedRoute><AppLayout><DHODashboard /></AppLayout></ProtectedRoute>} />
 
               {/* 404 Catch-all */}
               <Route path="*" element={<NotFound />} />

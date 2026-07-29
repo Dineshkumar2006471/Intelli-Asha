@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import Sidebar from '../components/Sidebar';
 import { db } from '../firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import { createLogger } from '../utils/logger';
@@ -35,10 +34,9 @@ const WorkersDirectory = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background-subtle flex">
+    <div className="flex flex-col h-full w-full">
       {/* Shared Sidebar */}
-      <Sidebar role="supervisor" />
-
+      
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
         <div className="flex-shrink-0 px-gutter py-6 border-b border-border-default bg-surface">

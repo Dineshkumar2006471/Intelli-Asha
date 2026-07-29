@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 
 const LandingPage = () => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-surface font-body-base">
       {/* ─── Sticky Header ─── */}
@@ -15,10 +18,33 @@ const LandingPage = () => {
             <a className="text-secondary font-title-sm text-[14px] hover:text-primary transition-colors" href="#benefits">Benefits</a>
             <a className="text-secondary font-title-sm text-[14px] hover:text-primary transition-colors" href="#difference">Why Us</a>
           </nav>
-          <Link to="/login" className="bg-primary text-on-primary font-label-md text-label-md px-5 py-2.5 rounded-lg hover:bg-surface-tint transition-all duration-200 shadow-sm hover:shadow-md">
-            Get Started
-          </Link>
+          <div className="hidden md:block">
+            <Link to="/login" className="bg-primary text-on-primary font-label-md text-label-md px-5 py-2.5 rounded-lg hover:bg-surface-tint transition-all duration-200 shadow-sm hover:shadow-md">
+              Get Started
+            </Link>
+          </div>
+          {/* Mobile Hamburger Button */}
+          <button 
+            className="md:hidden p-2 text-on-surface-variant focus:outline-none" 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle mobile menu"
+          >
+            <span className="material-symbols-outlined text-2xl">{isMobileMenuOpen ? 'close' : 'menu'}</span>
+          </button>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <nav className="md:hidden absolute top-full left-0 w-full bg-surface border-b border-border-default shadow-lg py-4 px-gutter flex flex-col gap-4 z-40">
+            <a className="text-on-surface font-title-sm text-[16px] py-2 border-b border-border-default" href="#" onClick={() => setIsMobileMenuOpen(false)}>Home</a>
+            <a className="text-secondary font-title-sm text-[16px] py-2 border-b border-border-default" href="#innovation" onClick={() => setIsMobileMenuOpen(false)}>Innovation</a>
+            <a className="text-secondary font-title-sm text-[16px] py-2 border-b border-border-default" href="#benefits" onClick={() => setIsMobileMenuOpen(false)}>Benefits</a>
+            <a className="text-secondary font-title-sm text-[16px] py-2 border-b border-border-default" href="#difference" onClick={() => setIsMobileMenuOpen(false)}>Why Us</a>
+            <Link to="/login" className="bg-primary text-on-primary text-center font-label-md text-label-md px-5 py-3 rounded-lg hover:bg-surface-tint transition-all mt-2" onClick={() => setIsMobileMenuOpen(false)}>
+              Get Started
+            </Link>
+          </nav>
+        )}
       </header>
 
       {/* ─── Hero Section (Ref-5 Clean Layout) ─── */}

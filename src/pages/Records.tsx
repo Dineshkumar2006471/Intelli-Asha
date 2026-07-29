@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase';
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
@@ -33,9 +32,8 @@ const Records = () => {
   const verifiedCount = totalVisits - flaggedCount;
 
   return (
-    <div className="min-h-screen bg-background-subtle flex">
-      <Sidebar role="field-worker" />
-      <main className="flex-1 h-screen overflow-y-auto bg-surface-container-lowest">
+    <div className="flex flex-col h-full w-full">
+            <main className="flex-1 h-full overflow-y-auto bg-surface-container-lowest">
         {/* Header */}
         <header className="flex justify-between items-center px-6 md:px-10 py-6 border-b border-border-default bg-surface sticky top-0 z-30">
           <div className="flex items-center gap-4">

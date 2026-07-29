@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import Sidebar from '../components/Sidebar';
 import { db } from '../firebase';
 import { collection, query, where, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import type { Visit } from '../types';
@@ -56,37 +55,18 @@ const FieldWorker = () => {
   const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (
-    <div className="min-h-screen bg-background-subtle flex">
-      
-      {/* Shared Sidebar */}
-      <Sidebar role="field-worker" />
-
-      {/* Main Content */}
-      <main className="flex-1 h-screen overflow-y-auto bg-surface-container-lowest">
+    <div className="flex flex-col h-full w-full">
+      <main className="flex-1 h-full overflow-y-auto bg-surface-container-lowest">
         
-        {/* Mobile Header */}
-        <header className="md:hidden fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-surface shadow-sm">
-          <div>
-            <h1 className="font-headline-kpi-mobile text-headline-kpi-mobile text-primary">Good morning, {displayName}</h1>
-            <p className="font-label-md text-label-md text-on-surface-variant">Block: {locationName}</p>
-          </div>
-          <div className="flex gap-4">
-            <button className="text-primary active:opacity-80 active:scale-95 transition-transform">
-              <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 0"}}>notifications</span>
-            </button>
-            <button onClick={handleLogout} className="text-primary active:opacity-80 active:scale-95 transition-transform">
-              <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 0"}}>logout</span>
-            </button>
-          </div>
-        </header>
+        {/* Page Content */}
 
-        {/* Desktop Header */}
-        <header className="hidden md:flex justify-between items-center px-10 py-6 border-b border-border-default bg-surface">
+        {/* Unified Header */}
+        <header className="flex flex-col md:flex-row md:justify-between md:items-center px-6 md:px-10 py-6 border-b border-border-default bg-surface">
           <div>
             <h1 className="font-title-xl text-title-xl text-on-surface font-bold">Good morning, {displayName}</h1>
             <p className="font-body-base text-body-base text-on-surface-variant mt-1">Block: {locationName} · Field Worker Dashboard</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-4">
             <button className="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors">
               <span className="material-symbols-outlined">notifications</span>
             </button>
@@ -102,7 +82,7 @@ const FieldWorker = () => {
           </div>
         </header>
 
-        <div className="pt-[90px] md:pt-0 px-6 md:px-10 pb-24 md:pb-10">
+        <div className="px-6 md:px-10 pb-10">
           {/* KPI Cards Row */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
             <div className="bg-verified-bg border border-border-default rounded-lg p-5 flex flex-col gap-1 shadow-sm">
@@ -232,26 +212,6 @@ const FieldWorker = () => {
           </div>
         </div>
       </main>
-      
-      {/* Mobile Bottom Nav Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 w-full bg-surface border-t border-border-default flex justify-around items-center py-2 z-50 pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_3px_rgba(0,0,0,0.05)]">
-        <button className="flex flex-col items-center p-2 text-primary">
-          <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>home</span>
-          <span className="font-label-sm text-label-sm mt-1">Home</span>
-        </button>
-        <button className="flex flex-col items-center p-2 text-on-surface-variant hover:text-primary transition-colors">
-          <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 0"}}>calendar_today</span>
-          <span className="font-label-sm text-label-sm mt-1">Schedule</span>
-        </button>
-        <button className="flex flex-col items-center p-2 text-on-surface-variant hover:text-primary transition-colors">
-          <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 0"}}>groups</span>
-          <span className="font-label-sm text-label-sm mt-1">Community</span>
-        </button>
-        <button className="flex flex-col items-center p-2 text-on-surface-variant hover:text-primary transition-colors">
-          <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 0"}}>person</span>
-          <span className="font-label-sm text-label-sm mt-1">Profile</span>
-        </button>
-      </nav>
     </div>
   );
 };

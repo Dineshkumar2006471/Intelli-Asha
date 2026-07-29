@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { onAlertsSnapshot } from '../services/db';
 import type { Alert } from '../types';
-import Sidebar from '../components/Sidebar';
 
 const Alerts = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -24,12 +23,11 @@ const Alerts = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background-subtle flex">
+    <div className="flex flex-col h-full w-full">
       {/* Shared Sidebar */}
-      <Sidebar role="supervisor" />
-
+      
       {/* Main Content */}
-      <main className="flex-1 h-screen overflow-y-auto bg-surface-container-lowest p-0 md:p-6 lg:p-10">
+      <main className="flex-1 h-full overflow-y-auto bg-surface-container-lowest p-0 md:p-6 lg:p-10">
         <header className="mb-8">
           <h1 className="font-title-xl text-title-xl text-on-surface font-bold">Alerts & Notifications</h1>
           <p className="font-body-base text-body-base text-on-surface-variant mt-1">Monitor and triage field activity exceptions.</p>
