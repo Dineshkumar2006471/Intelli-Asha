@@ -1,7 +1,6 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useSpeechRecognition } from '../useSpeechRecognition';
-import { httpsCallable } from 'firebase/functions';
 
 vi.mock('firebase/functions', async (importOriginal) => {
   const actual = await importOriginal<typeof import('firebase/functions')>();
@@ -16,7 +15,6 @@ describe('useSpeechRecognition hook', () => {
   let mockGetUserMedia: any;
   let mockMediaRecorderStart: any;
   let mockMediaRecorderStop: any;
-  const mockHttpsCallable = vi.mocked(httpsCallable);
 
   beforeEach(() => {
     mockGetUserMedia = vi.fn().mockResolvedValue({
@@ -41,7 +39,7 @@ describe('useSpeechRecognition hook', () => {
       onstop: any = null;
       state = 'inactive';
       
-      constructor(stream: any, options: any) {
+      constructor(_stream: any, _options: any) {
         // mock constructor
       }
     }

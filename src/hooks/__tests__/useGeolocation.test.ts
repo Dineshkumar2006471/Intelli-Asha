@@ -71,7 +71,7 @@ describe('useGeolocation hook', () => {
         }]
       }
     });
-    mockHttpsCallable.mockReturnValue(mockFunction);
+    mockHttpsCallable.mockReturnValue(mockFunction as any);
 
     const { result } = renderHook(() => useGeolocation({ zoom: 10 }));
 

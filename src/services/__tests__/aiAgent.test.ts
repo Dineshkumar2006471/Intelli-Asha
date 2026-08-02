@@ -31,7 +31,7 @@ describe('processVisitVoiceNote', () => {
         }
       }
     });
-    mockHttpsCallable.mockReturnValue(mockFunction);
+    mockHttpsCallable.mockReturnValue(mockFunction as any);
   });
 
   it('should extract structured data from a valid transcription', async () => {
@@ -61,7 +61,7 @@ describe('processVisitVoiceNote', () => {
         }
       }
     });
-    mockHttpsCallable.mockReturnValue(mockFunction);
+    mockHttpsCallable.mockReturnValue(mockFunction as any);
 
     const result = await processVisitVoiceNote('Visited Kumar household');
 
