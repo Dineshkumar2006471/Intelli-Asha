@@ -10,7 +10,7 @@ describe('validateEnv', () => {
     vi.stubEnv('VITE_FIREBASE_STORAGE_BUCKET', 'test.appspot.com');
     vi.stubEnv('VITE_FIREBASE_MESSAGING_SENDER_ID', '123456');
     vi.stubEnv('VITE_FIREBASE_APP_ID', '1:123:web:abc');
-    vi.stubEnv('VITE_GEMINI_API_KEY', 'test-gemini-key');
+    vi.stubEnv('VITE_GOOGLE_MAPS_API_KEY', 'test-maps-key');
   });
 
   afterEach(() => {
@@ -21,9 +21,9 @@ describe('validateEnv', () => {
     expect(() => validateEnv()).not.toThrow();
   });
 
-  it('should throw when VITE_GEMINI_API_KEY is missing', () => {
-    vi.stubEnv('VITE_GEMINI_API_KEY', '');
-    expect(() => validateEnv()).toThrow('VITE_GEMINI_API_KEY');
+  it('should throw when VITE_GOOGLE_MAPS_API_KEY is missing', () => {
+    vi.stubEnv('VITE_GOOGLE_MAPS_API_KEY', '');
+    expect(() => validateEnv()).toThrow('VITE_GOOGLE_MAPS_API_KEY');
   });
 
   it('should throw when multiple vars are missing', () => {

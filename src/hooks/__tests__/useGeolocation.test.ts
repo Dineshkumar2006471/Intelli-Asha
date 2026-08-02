@@ -1,14 +1,23 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useGeolocation } from '../useGeolocation';
+import { httpsCallable } from 'firebase/functions';
+
+vi.mock('firebase/functions', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('firebase/functions')>();
+  return {
+    ...actual,
+    getFunctions: vi.fn(),
+    httpsCallable: vi.fn(),
+  };
+});
 
 describe('useGeolocation hook', () => {
   const mockGetCurrentPosition = vi.fn();
-  const mockFetch = vi.fn();
+  const mockHttpsCallable = vi.mocked(httpsCallable);
 
   beforeEach(() => {
     vi.resetAllMocks();
-    global.fetch = mockFetch;
     
     Object.defineProperty(global.navigator, 'geolocation', {
       value: {
@@ -52,10 +61,17 @@ describe('useGeolocation hook', () => {
       });
     });
 
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ address: { city: 'New Delhi' } }),
+    const mockFunction = vi.fn().mockResolvedValue({
+      data: {
+        success: true,
+        data: [{
+          address_components: [
+            { types: ['locality'], long_name: 'New Delhi' }
+          ]
+        }]
+      }
     });
+    mockHttpsCallable.mockReturnValue(mockFunction);
 
     const { result } = renderHook(() => useGeolocation({ zoom: 10 }));
 

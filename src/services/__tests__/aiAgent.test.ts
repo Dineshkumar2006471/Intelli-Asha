@@ -1,35 +1,37 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { processVisitVoiceNote } from '../aiAgent';
+import { httpsCallable } from 'firebase/functions';
 
-const { mockGenerateContent } = vi.hoisted(() => ({
-  mockGenerateContent: vi.fn(),
-}));
-
-// Mock the @google/genai module
-vi.mock('@google/genai', () => {
+vi.mock('firebase/functions', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('firebase/functions')>();
   return {
-    GoogleGenAI: vi.fn().mockImplementation(function(this: any) {
-      this.models = {
-        generateContent: mockGenerateContent,
-      };
-    }),
+    ...actual,
+    getFunctions: vi.fn(),
+    httpsCallable: vi.fn(),
+    connectFunctionsEmulator: vi.fn(),
   };
 });
 
 describe('processVisitVoiceNote', () => {
+  const mockHttpsCallable = vi.mocked(httpsCallable);
+
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGenerateContent.mockResolvedValue({
-      text: JSON.stringify({
-        householdName: 'Sharma',
-        childName: 'Rahul',
-        childAge: '3 years',
-        weight: '12kg',
-        status: 'Normal',
-        visitType: 'Routine Checkup',
-        immunisation: 'Polio Booster',
-      }),
+    const mockFunction = vi.fn().mockResolvedValue({
+      data: {
+        success: true,
+        data: {
+          householdName: 'Sharma',
+          childName: 'Rahul',
+          childAge: '3 years',
+          weight: '12kg',
+          status: 'Normal',
+          visitType: 'Routine Checkup',
+          immunisation: 'Polio Booster',
+        }
+      }
     });
+    mockHttpsCallable.mockReturnValue(mockFunction);
   });
 
   it('should extract structured data from a valid transcription', async () => {
@@ -49,13 +51,17 @@ describe('processVisitVoiceNote', () => {
   });
 
   it('should return proper defaults for missing optional fields', async () => {
-    mockGenerateContent.mockResolvedValueOnce({
-      text: JSON.stringify({
-        householdName: 'Kumar',
-        status: 'Unknown',
-        visitType: 'General Visit',
-      }),
+    const mockFunction = vi.fn().mockResolvedValueOnce({
+      data: {
+        success: true,
+        data: {
+          householdName: 'Kumar',
+          status: 'Unknown',
+          visitType: 'General Visit',
+        }
+      }
     });
+    mockHttpsCallable.mockReturnValue(mockFunction);
 
     const result = await processVisitVoiceNote('Visited Kumar household');
 
