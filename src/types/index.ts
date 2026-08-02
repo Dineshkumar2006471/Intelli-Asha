@@ -39,6 +39,7 @@ export interface VisitData {
   status: HealthStatus;
   visitType: string;
   immunisation: string;
+  audioUrl?: string | null;
 }
 
 /** A visit document as stored in the `visits` Firestore collection. */
@@ -56,8 +57,18 @@ export interface Visit extends VisitData {
 }
 
 // ---------------------------------------------------------------------------
-// Alerts
+// Alerts & Logs
 // ---------------------------------------------------------------------------
+
+/** An agent execution log from the agent_logs collection. */
+export interface AgentLog {
+  id: string;
+  agent: string;
+  action: string;
+  status: 'info' | 'warning' | 'error' | 'success';
+  timestamp: Timestamp | null;
+  metadata?: Record<string, unknown>;
+}
 
 /** Severity levels for supervisor alerts. */
 export type AlertSeverity = 'high' | 'medium' | 'low';

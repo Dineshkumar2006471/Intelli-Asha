@@ -1,5 +1,7 @@
 {
-  "projects": {},
+  "projects": {
+    "default": "kavach-hackathon-500511"
+  },
   "targets": {},
   "etags": {}
 }

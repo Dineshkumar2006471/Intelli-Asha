@@ -1,86 +1,62 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { db } from '../firebase';
-import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
-import type { Visit } from '../types';
+import { app } from '../firebase';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
-/**
- * ASHA Worker Earnings — Task-Based Incentive (TBI) Calculator
- *
- * Real-world context: ASHA workers earn through government-defined TBIs.
- * This page calculates earnings dynamically based on verified visit data
- * stored in Firestore — NOT hardcoded numbers.
- *
- * Official TBI rates (approximate, as per NHM guidelines):
- * - Institutional delivery facilitation: ₹600
- * - Immunization (full): ₹100
- * - Antenatal care registration: ₹200
- * - Home-based newborn care (HBNC): ₹250
- * - General health visit: ₹50
- */
-
-const TBI_RATES: Record<string, { label: string; rate: number; icon: string }> = {
-  'Institutional Delivery': { label: 'Institutional Delivery', rate: 600, icon: 'local_hospital' },
-  'Immunization': { label: 'Immunization', rate: 100, icon: 'vaccines' },
-  'Antenatal Care': { label: 'Antenatal Registration', rate: 200, icon: 'pregnant_woman' },
-  'HBNC': { label: 'Newborn Care (HBNC)', rate: 250, icon: 'child_care' },
-  'General Visit': { label: 'General Health Visit', rate: 50, icon: 'home_health' },
-};
-
-interface EarningLine {
-  type: string;
-  count: number;
+interface IncentiveBreakdown {
+  visitType: string;
+  totalCount: number;
+  verifiedCount: number;
+  flaggedCount: number;
   rate: number;
-  total: number;
-  icon: string;
+  grossAmount: number;
+  deduction: number;
+  netAmount: number;
+}
+
+interface IncentiveResult {
+  workerId: string;
+  workerName: string;
+  period: string;
+  breakdown: IncentiveBreakdown[];
+  totalGross: number;
+  totalDeductions: number;
+  netDisbursement: number;
+  totalVisits: number;
+  verifiedVisits: number;
+  flaggedVisits: number;
+  ghostReportingRisk: string;
+  recommendation: string;
+  anomalyPatterns: string[];
 }
 
 const Earnings = () => {
   const { currentUser } = useAuth();
-  const [visits, setVisits] = useState<Visit[]>([]);
+  const [incentiveData, setIncentiveData] = useState<IncentiveResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!currentUser) return;
-    const visitsRef = collection(db, 'visits');
-    const q = query(visitsRef, where('workerId', '==', currentUser.photoURL), orderBy('timestamp', 'desc'));
-    const unsub = onSnapshot(q, (snap) => {
-      setVisits(snap.docs.map(d => ({ id: d.id, ...d.data() }) as Visit));
-      setLoading(false);
-    }, () => setLoading(false));
-    return () => unsub();
-  }, [currentUser]);
-
-  // Calculate earnings breakdown from real visit data
-  const earningsBreakdown: EarningLine[] = Object.entries(TBI_RATES).map(([key, config]) => {
-    const matchingVisits = visits.filter(v => {
-      const vt = (v.visitType || 'General Visit').toLowerCase();
-      return vt.includes(key.toLowerCase()) || (key === 'General Visit' && !Object.keys(TBI_RATES).some(k => k !== 'General Visit' && vt.includes(k.toLowerCase())));
-    });
-    return {
-      type: config.label,
-      count: matchingVisits.length,
-      rate: config.rate,
-      total: matchingVisits.length * config.rate,
-      icon: config.icon,
+    if (!currentUser?.photoURL) return;
+    
+    const fetchIncentives = async () => {
+      try {
+        const functions = getFunctions(app, 'asia-south1');
+        const calculateIncentive = httpsCallable<{ workerId: string }, IncentiveResult>(functions, 'calculateIncentive');
+        
+        const response = await calculateIncentive({ workerId: currentUser.photoURL! });
+        setIncentiveData(response.data);
+      } catch (err: unknown) {
+        console.error('Failed to fetch incentives', err);
+        setError('Failed to fetch incentive data from server.');
+      } finally {
+        setLoading(false);
+      }
     };
-  }).filter(e => e.count > 0);
-
-  // If no specific visit types matched, show all visits as General
-  if (earningsBreakdown.length === 0 && visits.length > 0) {
-    earningsBreakdown.push({
-      type: 'General Health Visit',
-      count: visits.length,
-      rate: 50,
-      total: visits.length * 50,
-      icon: 'home_health',
-    });
-  }
-
-  const totalEarned = earningsBreakdown.reduce((sum, e) => sum + e.total, 0);
-  const verifiedVisits = visits.filter(v => !v.anomaliesFound).length;
-  const pendingVisits = visits.filter(v => v.anomaliesFound).length;
+    
+    fetchIncentives();
+  }, [currentUser]);
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -103,26 +79,46 @@ const Earnings = () => {
           <div className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-8 text-white mb-8 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
             <div className="relative z-10">
-              <p className="font-label-md text-[13px] text-white/80 uppercase tracking-wider mb-2">Total Earnings This Month</p>
-              <p className="font-display-hero text-[48px] font-bold leading-none mb-4">₹{totalEarned.toLocaleString('en-IN')}</p>
+              <p className="font-label-md text-[13px] text-white/80 uppercase tracking-wider mb-2">Total Estimated Earnings</p>
+              <p className="font-display-hero text-[48px] font-bold leading-none mb-4">
+                ₹{incentiveData?.netDisbursement?.toLocaleString('en-IN') || 0}
+              </p>
               <div className="flex gap-6 mt-4">
                 <div>
-                  <p className="font-headline-kpi text-[22px] font-bold">{verifiedVisits}</p>
+                  <p className="font-headline-kpi text-[22px] font-bold">{incentiveData?.verifiedVisits || 0}</p>
                   <p className="font-label-sm text-[11px] text-white/70 uppercase">Verified Visits</p>
                 </div>
                 <div className="w-px bg-white/30"></div>
                 <div>
-                  <p className="font-headline-kpi text-[22px] font-bold">{pendingVisits}</p>
-                  <p className="font-label-sm text-[11px] text-white/70 uppercase">Pending Review</p>
+                  <p className="font-headline-kpi text-[22px] font-bold">{incentiveData?.flaggedVisits || 0}</p>
+                  <p className="font-label-sm text-[11px] text-white/70 uppercase">Flagged / Pending</p>
                 </div>
                 <div className="w-px bg-white/30"></div>
                 <div>
-                  <p className="font-headline-kpi text-[22px] font-bold">{visits.length}</p>
+                  <p className="font-headline-kpi text-[22px] font-bold">{incentiveData?.totalVisits || 0}</p>
                   <p className="font-label-sm text-[11px] text-white/70 uppercase">Total Visits</p>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* AI Risk Assessment */}
+          {incentiveData && incentiveData.flaggedVisits > 0 && (
+            <div className="mb-8 bg-surface border border-error/20 rounded-xl overflow-hidden">
+              <div className="bg-error/10 p-4 border-b border-error/20 flex gap-3 items-center">
+                <span className="material-symbols-outlined text-error">warning</span>
+                <h3 className="font-title-sm text-error font-bold">Payouts Withheld for Review</h3>
+              </div>
+              <div className="p-4">
+                <p className="font-body-base text-on-surface-variant mb-2">
+                  ₹{incentiveData.totalDeductions.toLocaleString('en-IN')} has been temporarily withheld pending supervisor review.
+                </p>
+                <div className="bg-surface-container-low p-3 rounded text-sm text-on-surface-variant font-data-mono">
+                  <strong>AI Analysis:</strong> {incentiveData.recommendation}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Earnings Breakdown Table */}
           <div className="bg-surface rounded-xl border border-border-default overflow-hidden">
@@ -132,7 +128,9 @@ const Earnings = () => {
             </div>
             {loading ? (
               <div className="p-12 text-center text-secondary animate-pulse">Calculating earnings...</div>
-            ) : earningsBreakdown.length === 0 ? (
+            ) : error ? (
+              <div className="p-12 text-center text-error">{error}</div>
+            ) : !incentiveData || incentiveData.breakdown.length === 0 ? (
               <div className="p-12 text-center">
                 <span className="material-symbols-outlined text-[48px] text-on-surface-variant block mb-3">payments</span>
                 <p className="text-secondary font-title-md text-[16px]">No earnings yet this month.</p>
@@ -143,32 +141,29 @@ const Earnings = () => {
                 <thead className="bg-surface-container-low border-b border-border-default">
                   <tr>
                     <th className="p-4 font-label-sm text-[11px] text-secondary uppercase tracking-wider">Service Type</th>
-                    <th className="p-4 font-label-sm text-[11px] text-secondary uppercase tracking-wider text-center">Visits</th>
+                    <th className="p-4 font-label-sm text-[11px] text-secondary uppercase tracking-wider text-center">Verified</th>
+                    <th className="p-4 font-label-sm text-[11px] text-secondary uppercase tracking-wider text-center">Flagged</th>
                     <th className="p-4 font-label-sm text-[11px] text-secondary uppercase tracking-wider text-right">Rate</th>
-                    <th className="p-4 font-label-sm text-[11px] text-secondary uppercase tracking-wider text-right">Earned</th>
+                    <th className="p-4 font-label-sm text-[11px] text-secondary uppercase tracking-wider text-right">Net Earned</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-default">
-                  {earningsBreakdown.map(line => (
-                    <tr key={line.type} className="hover:bg-surface-container-lowest transition-colors">
+                  {incentiveData.breakdown.map(line => (
+                    <tr key={line.visitType} className="hover:bg-surface-container-lowest transition-colors">
                       <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-primary text-[18px]">{line.icon}</span>
-                          </div>
-                          <span className="font-title-sm text-[14px] text-on-surface">{line.type}</span>
-                        </div>
+                        <span className="font-title-sm text-[14px] text-on-surface">{line.visitType}</span>
                       </td>
-                      <td className="p-4 font-data-mono text-[14px] text-center text-on-surface">{line.count}</td>
+                      <td className="p-4 font-data-mono text-[14px] text-center text-on-surface">{line.verifiedCount}</td>
+                      <td className="p-4 font-data-mono text-[14px] text-center text-error">{line.flaggedCount > 0 ? line.flaggedCount : '-'}</td>
                       <td className="p-4 font-data-mono text-[14px] text-right text-secondary">₹{line.rate}</td>
-                      <td className="p-4 font-data-mono text-[14px] text-right text-on-surface font-bold">₹{line.total.toLocaleString('en-IN')}</td>
+                      <td className="p-4 font-data-mono text-[14px] text-right text-on-surface font-bold">₹{line.netAmount.toLocaleString('en-IN')}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot className="bg-surface-container-low border-t-2 border-primary/30">
                   <tr>
-                    <td className="p-4 font-title-sm text-[14px] text-on-surface font-bold" colSpan={3}>Total Estimated Earnings</td>
-                    <td className="p-4 font-headline-kpi text-[18px] text-primary font-bold text-right">₹{totalEarned.toLocaleString('en-IN')}</td>
+                    <td className="p-4 font-title-sm text-[14px] text-on-surface font-bold" colSpan={4}>Total Net Disbursement</td>
+                    <td className="p-4 font-headline-kpi text-[18px] text-primary font-bold text-right">₹{incentiveData.netDisbursement.toLocaleString('en-IN')}</td>
                   </tr>
                 </tfoot>
               </table>

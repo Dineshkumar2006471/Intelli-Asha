@@ -1,36 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createLogger } from '../utils/logger';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { app } from '../firebase';
 import type { GeoAnchor } from '../types';
 
 const log = createLogger('GEOLOCATION');
+const functions = getFunctions(app, 'asia-south1');
 
 interface GeolocationState {
-  /** Resolved location name (e.g., "Block Name PHC, District") */
   locationName: string;
-  /** Raw GPS coordinates, null if unavailable */
   geoAnchor: GeoAnchor | null;
-  /** Whether geolocation is still being resolved */
   loading: boolean;
-  /** Error message if geolocation failed */
   error: string | null;
 }
 
 interface UseGeolocationOptions {
-  /** Nominatim zoom level: 10 = city/district, 14 = suburb/village */
   zoom?: number;
-  /** Fallback name when geolocation is denied or unavailable */
   fallback?: string;
 }
 
-/**
- * Custom hook that consolidates all geolocation + reverse-geocoding logic.
- * Replaces duplicated Nominatim code across FieldWorker, DHODashboard, and SupervisorReports.
- *
- * @example
- * ```tsx
- * const { locationName, geoAnchor, loading } = useGeolocation({ zoom: 14, fallback: 'Unknown Block' });
- * ```
- */
 export function useGeolocation(options: UseGeolocationOptions = {}): GeolocationState {
   const { zoom = 10, fallback = 'Your District' } = options;
 
@@ -42,44 +30,48 @@ export function useGeolocation(options: UseGeolocationOptions = {}): Geolocation
   const reverseGeocode = useCallback(
     async (lat: number, lng: number): Promise<string> => {
       try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=${zoom}`,
-          {
-            headers: {
-              'User-Agent': 'IntelliASHA-Agent/1.0 (Contact: contact@intelliasha.gov)',
-            },
-          }
-        );
+        const geocode = httpsCallable<{ lat: number; lng: number }, { success: boolean; data: any[] }>(functions, 'geocode');
+        const response = await geocode({ lat, lng });
 
-        if (!response.ok) {
-          throw new Error(`Nominatim returned ${response.status}`);
+        if (!response.data.success || !response.data.data || response.data.data.length === 0) {
+          throw new Error('No results from Google Maps Geocoding');
         }
 
-        const data = await response.json();
-
+        const results = response.data.data;
+        
+        // Find appropriate component based on zoom level
         if (zoom >= 14) {
-          // Village/suburb level — for field workers
-          const block =
-            data.address?.suburb ??
-            data.address?.village ??
-            data.address?.town ??
-            data.address?.city ??
-            'Unknown Block';
-          const district =
-            data.address?.state_district ??
-            data.address?.county ??
-            'Unknown District';
+          // Field worker level
+          let block = 'Unknown Block';
+          let district = 'Unknown District';
+          
+          for (const result of results) {
+            for (const component of result.address_components) {
+              if (component.types.includes('sublocality') || component.types.includes('locality')) {
+                block = component.long_name;
+              }
+              if (component.types.includes('administrative_area_level_3') || component.types.includes('administrative_area_level_2')) {
+                district = component.long_name;
+              }
+            }
+            if (block !== 'Unknown Block' && district !== 'Unknown District') break;
+          }
           return `${block} PHC, ${district}`;
         }
 
-        // City/district level — for dashboards
-        return (
-          data.address?.city ??
-          data.address?.town ??
-          data.address?.county ??
-          data.address?.state_district ??
-          fallback
-        );
+        // Dashboard level
+        let city = fallback;
+        for (const result of results) {
+          for (const component of result.address_components) {
+            if (component.types.includes('administrative_area_level_2') || component.types.includes('locality')) {
+              city = component.long_name;
+              break;
+            }
+          }
+          if (city !== fallback) break;
+        }
+        
+        return city;
       } catch (err) {
         log.warn('Reverse geocoding failed', err);
         return 'GPS Acquired, Location Unknown';

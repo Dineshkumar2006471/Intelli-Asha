@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import type { ConfirmationResult } from 'firebase/auth';
 
 const Login = () => {
   const [activeTab, setActiveTab] = useState('field-worker');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [workerName, setWorkerName] = useState('');
+  const [otp, setOtp] = useState('');
+  const [showOtpInput, setShowOtpInput] = useState(false);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  const { loginAsFieldWorker, loginWithGoogle, currentUser } = useAuth();
+  const { sendOTP, verifyOTP, loginWithGoogle, currentUser } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,16 +23,38 @@ const Login = () => {
     }
   }, [currentUser, navigate]);
 
-  const handleFieldWorkerLogin = async (e: React.FormEvent) => {
+  const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!workerName.trim() || phoneNumber.length !== 10) {
+      setError('Please enter a valid name and 10-digit phone number.');
+      return;
+    }
     setError('');
     setIsLoading(true);
     try {
-      await loginAsFieldWorker(workerName.trim(), phoneNumber.trim());
+      const result = await sendOTP(phoneNumber.trim(), 'recaptcha-container');
+      setConfirmationResult(result);
+      setShowOtpInput(true);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to send OTP. Ensure phone auth is enabled in Firebase Console.';
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!confirmationResult || !otp) return;
+    setError('');
+    setIsLoading(true);
+    try {
+      await verifyOTP(confirmationResult, otp, workerName.trim(), phoneNumber.trim());
       navigate('/app/field');
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Login failed';
+      const message = err instanceof Error ? err.message : 'Invalid OTP';
       setError(message);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -100,34 +126,69 @@ const Login = () => {
                       <p className="font-body-base text-body-base text-secondary">Sign in to start logging visits.</p>
                     </div>
 
-                    <form className="space-y-4" onSubmit={handleFieldWorkerLogin}>
-                      <div>
-                        <label className="block font-label-md text-label-md text-on-surface-variant mb-1" htmlFor="workerName">Full Name</label>
-                        <input 
-                          className="block w-full px-3 py-3 font-body-base text-body-base bg-surface border-[1.5px] border-border-strong rounded focus:ring-0 focus:border-primary-container outline-none transition-colors" 
-                          id="workerName" name="workerName" placeholder="e.g. Sunita Devi" required type="text"
-                          value={workerName} onChange={(e) => setWorkerName(e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <label className="block font-label-md text-label-md text-on-surface-variant mb-1" htmlFor="phone">Phone Number</label>
-                        <div className="relative">
-                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 font-body-base text-body-base text-secondary">+91</span>
+                    {!showOtpInput ? (
+                      <form className="space-y-4" onSubmit={handleSendOTP}>
+                        <div>
+                          <label className="block font-label-md text-label-md text-on-surface-variant mb-1" htmlFor="workerName">Full Name</label>
                           <input 
-                            className="block w-full pl-12 pr-3 py-3 font-body-base text-body-base bg-surface border-[1.5px] border-border-strong rounded focus:ring-0 focus:border-primary-container outline-none transition-colors" 
-                            id="phone" name="phone" pattern="[0-9]{10}" placeholder="Enter 10-digit number" required type="tel"
-                            value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)}
+                            className="block w-full px-3 py-3 font-body-base text-body-base bg-surface border-[1.5px] border-border-strong rounded focus:ring-0 focus:border-primary-container outline-none transition-colors" 
+                            id="workerName" name="workerName" placeholder="e.g. Sunita Devi" required type="text"
+                            value={workerName} onChange={(e) => setWorkerName(e.target.value)}
+                            disabled={isLoading}
                           />
                         </div>
-                      </div>
-                      <button 
-                        className="w-full bg-primary-container hover:bg-surface-tint text-on-primary font-title-sm text-title-sm py-3 rounded-lg transition-colors duration-150 disabled:opacity-50" 
-                        type="submit"
-                        disabled={isLoading}
-                      >
-                        {isLoading ? 'Signing in...' : 'Sign In'}
-                      </button>
-                    </form>
+                        <div>
+                          <label className="block font-label-md text-label-md text-on-surface-variant mb-1" htmlFor="phone">Phone Number</label>
+                          <div className="relative">
+                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 font-body-base text-body-base text-secondary">+91</span>
+                            <input 
+                              className="block w-full pl-12 pr-3 py-3 font-body-base text-body-base bg-surface border-[1.5px] border-border-strong rounded focus:ring-0 focus:border-primary-container outline-none transition-colors" 
+                              id="phone" name="phone" pattern="[0-9]{10}" placeholder="Enter 10-digit number" required type="tel"
+                              value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)}
+                              disabled={isLoading}
+                            />
+                          </div>
+                        </div>
+                        <div id="recaptcha-container"></div>
+                        <button 
+                          className="w-full bg-primary-container hover:bg-surface-tint text-on-primary font-title-sm text-title-sm py-3 rounded-lg transition-colors duration-150 disabled:opacity-50" 
+                          type="submit"
+                          disabled={isLoading}
+                        >
+                          {isLoading ? 'Sending OTP...' : 'Send OTP'}
+                        </button>
+                      </form>
+                    ) : (
+                      <form className="space-y-4" onSubmit={handleVerifyOTP}>
+                        <div>
+                          <label className="block font-label-md text-label-md text-on-surface-variant mb-1" htmlFor="otp">Enter OTP</label>
+                          <input 
+                            className="block w-full px-3 py-3 font-body-base text-body-base bg-surface border-[1.5px] border-border-strong rounded focus:ring-0 focus:border-primary-container outline-none transition-colors tracking-widest text-center text-lg" 
+                            id="otp" name="otp" pattern="[0-9]{6}" placeholder="------" required type="text" maxLength={6}
+                            value={otp} onChange={(e) => setOtp(e.target.value)}
+                            disabled={isLoading} autoFocus
+                          />
+                          <p className="font-label-sm text-secondary mt-2 text-center">
+                            OTP sent to +91 {phoneNumber}
+                          </p>
+                        </div>
+                        <button 
+                          className="w-full bg-primary-container hover:bg-surface-tint text-on-primary font-title-sm text-title-sm py-3 rounded-lg transition-colors duration-150 disabled:opacity-50" 
+                          type="submit"
+                          disabled={isLoading}
+                        >
+                          {isLoading ? 'Verifying...' : 'Verify & Login'}
+                        </button>
+                        <button 
+                          className="w-full text-secondary font-label-md text-label-md hover:text-on-surface mt-2" 
+                          type="button"
+                          onClick={() => setShowOtpInput(false)}
+                          disabled={isLoading}
+                        >
+                          Back to Edit Phone
+                        </button>
+                      </form>
+                    )}
                   </div>
                 )}
 

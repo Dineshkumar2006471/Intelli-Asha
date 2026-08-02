@@ -56,7 +56,7 @@ const Sidebar = ({ role = 'supervisor', isOpen = false, onClose }: SidebarProps)
       {/* Mobile Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity"
+          className={`fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity ${role === 'field-worker' ? 'hidden' : ''}`}
           onClick={onClose}
           aria-hidden="true"
         />
@@ -64,9 +64,9 @@ const Sidebar = ({ role = 'supervisor', isOpen = false, onClose }: SidebarProps)
 
       {/* Sidebar Navigation */}
       <nav 
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-surface border-r border-border-default py-6 px-4 flex flex-col h-screen shrink-0 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-surface border-r border-border-default py-6 px-4 flex-col h-screen shrink-0 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
+          role === 'field-worker' ? 'hidden md:flex' : 'flex'
+        } ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
         {/* Logo */}
         <div className="flex items-center justify-between mb-8">

@@ -1,54 +1,39 @@
-import { useEffect, useState } from 'react';
-import { onFlaggedVisitsSnapshot, onVisitsSnapshot } from '../services/db';
-import type { Visit } from '../types';
-import { useGeolocation } from '../hooks/useGeolocation';
-
+import { useEffect, useState, useRef } from 'react';
+import { onFlaggedVisitsSnapshot, onVisitsSnapshot, onAgentLogsSnapshot } from '../services/db';
+import type { Visit, AgentLog } from '../types';
 const SupervisorReports = () => {
   const [flaggedVisits, setFlaggedVisits] = useState<Visit[]>([]);
   const [allVisits, setAllVisits] = useState<Visit[]>([]);
-  const { locationName } = useGeolocation({ zoom: 10, fallback: 'Rampur District' });
-  const [terminalLines, setTerminalLines] = useState<{ text: string; color: string }[]>([]);
+  const [agentLogs, setAgentLogs] = useState<AgentLog[]>([]);
+  const terminalEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // REAL-TIME LISTENERS: These fire automatically whenever a field worker submits a new visit
     const unsubVisits = onVisitsSnapshot(setAllVisits);
     const unsubFlagged = onFlaggedVisitsSnapshot(setFlaggedVisits);
+    const unsubLogs = onAgentLogsSnapshot(logs => setAgentLogs(logs.reverse()));
 
     return () => {
       unsubVisits();
       unsubFlagged();
+      unsubLogs();
     };
   }, []);
 
-  // Terminal Animation Effect
+  // Auto-scroll terminal
   useEffect(() => {
-    const sequence = [
-      { text: `[SYSTEM] Initializing IntelliASHA Multi-Agent Network...`, color: 'text-[#3FB950]', delay: 500 },
-      { text: `[SYSTEM] Google ADK connected. Models loaded: gemini-2.5-flash.`, color: 'text-[#8B949E]', delay: 1500 },
-      { text: `[ANALYTICS_AGENT] Connecting to NDHM_Disease_Surveillance_MCP...`, color: 'text-[#8B949E]', delay: 2500 },
-      { text: `[MCP_SERVER] Fetched live outbreak risk for ${locationName}: MODERATE (Dengue)`, color: 'text-[#8B949E]', delay: 4000 },
-      { text: `[VERIFICATION_AGENT] Standing by for incoming field data.`, color: 'text-[#58A6FF]', delay: 5000 },
-      { text: `[VERIFICATION_AGENT] Received new visit payload (ID: ${Math.random().toString(36).substring(2, 8)})...`, color: 'text-[#8B949E]', delay: 7000 },
-      { text: `[VERIFICATION_AGENT] Extracting geo-anchors. Cross-referencing audio timestamp.`, color: 'text-[#8B949E]', delay: 8500 },
-      { text: `[VERIFICATION_AGENT] Visit VERIFIED. Confidence: ${Math.floor(Math.random()*(99-92+1)+92)}%.`, color: 'text-[#3FB950]', delay: 9500 },
-      { text: `[VERIFICATION_AGENT] Received new visit payload (ID: ${Math.random().toString(36).substring(2, 8)})...`, color: 'text-[#8B949E]', delay: 12000 },
-      { text: `[VERIFICATION_AGENT] ANOMALY DETECTED. Reason: Discrepancy in beneficiary count.`, color: 'text-[#F85149]', delay: 14000 },
-      { text: `[ALERT_AGENT] Dispatching high-priority alert to Supervisor Dashboard.`, color: 'text-[#D29922]', delay: 15000 },
-      { text: `[VERIFICATION_AGENT] Standing by...`, color: 'text-[#58A6FF]', delay: 16000 },
-    ];
+    terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [agentLogs]);
 
-    const timeouts: ReturnType<typeof setTimeout>[] = [];
-    setTerminalLines([]); // reset on location change
 
-    sequence.forEach(({ text, color, delay }) => {
-      const timeoutId = setTimeout(() => {
-        setTerminalLines(prev => [...prev, { text, color }]);
-      }, delay);
-      timeouts.push(timeoutId);
-    });
-
-    return () => timeouts.forEach(clearTimeout);
-  }, [locationName]);
+  const getLogColor = (status: string) => {
+    switch(status) {
+      case 'success': return 'text-[#3FB950]';
+      case 'warning': return 'text-[#D29922]';
+      case 'error': return 'text-[#F85149]';
+      default: return 'text-[#58A6FF]';
+    }
+  };
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -186,13 +171,20 @@ const SupervisorReports = () => {
               <span className="font-data-mono text-xs text-[#8B949E]">A2A Network Active</span>
             </div>
           </div>
-          <div className="p-4 font-data-mono text-sm h-48 overflow-y-auto space-y-2 flex flex-col justify-end">
-            {terminalLines.map((line, index) => (
-              <p key={index} className={`${line.color} animate-fade-in`}>{line.text}</p>
-            ))}
-            {terminalLines.length < 12 && (
-              <p className="text-[#8B949E] animate-pulse">_</p>
+          <div className="p-4 font-data-mono text-sm h-48 overflow-y-auto space-y-2 flex flex-col justify-start">
+            {agentLogs.length === 0 ? (
+              <p className="text-[#8B949E] animate-pulse">Waiting for agent activity...</p>
+            ) : (
+              agentLogs.map((log) => (
+                <div key={log.id} className={`${getLogColor(log.status)} animate-fade-in flex gap-3`}>
+                  <span className="text-[#8B949E] shrink-0">
+                    {log.timestamp ? new Date(log.timestamp.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) : '...'}
+                  </span>
+                  <span>[{log.agent.toUpperCase()}] {log.action}</span>
+                </div>
+              ))
             )}
+            <div ref={terminalEndRef} />
           </div>
         </div>
       </main>

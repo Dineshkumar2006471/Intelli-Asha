@@ -16,9 +16,15 @@ vi.mock('firebase/auth', () => ({
     callback(null);
     return vi.fn(); // unsubscribe
   },
-  signInAnonymously: vi.fn().mockResolvedValue({
-    user: { uid: 'anon-123', displayName: null, photoURL: null },
+  signInWithPhoneNumber: vi.fn().mockResolvedValue({
+    confirm: vi.fn().mockResolvedValue({
+      user: { uid: 'anon-123', displayName: null, photoURL: null },
+    })
   }),
+  RecaptchaVerifier: vi.fn().mockImplementation(() => ({
+    render: vi.fn(),
+    clear: vi.fn(),
+  })),
   signInWithPopup: vi.fn().mockResolvedValue({
     user: { uid: 'google-456', displayName: 'Test Admin' },
   }),
@@ -82,7 +88,7 @@ describe('AuthContext', () => {
     spy.mockRestore();
   });
 
-  it('should provide loginAsFieldWorker, loginWithGoogle, and logout functions', () => {
+  it('should provide sendOTP, verifyOTP, loginWithGoogle, and logout functions', () => {
     let contextValue: ReturnType<typeof useAuth> | null = null;
 
     function ContextCapture() {
@@ -97,7 +103,8 @@ describe('AuthContext', () => {
     );
 
     expect(contextValue).not.toBeNull();
-    expect(typeof contextValue!.loginAsFieldWorker).toBe('function');
+    expect(typeof contextValue!.sendOTP).toBe('function');
+    expect(typeof contextValue!.verifyOTP).toBe('function');
     expect(typeof contextValue!.loginWithGoogle).toBe('function');
     expect(typeof contextValue!.logout).toBe('function');
   });

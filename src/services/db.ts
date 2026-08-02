@@ -1,8 +1,10 @@
-import { db, functions } from '../firebase';
+import { db, functions, storage } from '../firebase';
 import { httpsCallable } from 'firebase/functions';
 import {
   collection,
   addDoc,
+  doc,
+  setDoc,
   getDocs,
   query,
   where,
@@ -12,7 +14,8 @@ import {
   onSnapshot,
   type Unsubscribe,
 } from 'firebase/firestore';
-import type { Visit, VisitData, Alert, GeoAnchor, DashboardMetrics } from '../types';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import type { Visit, VisitData, Alert, GeoAnchor, DashboardMetrics, AgentLog } from '../types';
 import { createLogger } from '../utils/logger';
 
 const log = createLogger('DB');
@@ -23,7 +26,7 @@ const log = createLogger('DB');
 
 /** Saves a completed visit to Firestore. Alerts are created by the backend Verification Agent. */
 export async function saveVisit(
-  visitData: VisitData & { rawTranscription: string; geoAnchor: GeoAnchor | null },
+  visitData: VisitData & { rawTranscription: string; geoAnchor: GeoAnchor | null; audioUrl?: string | null },
   userId: string
 ): Promise<string> {
   try {
@@ -75,6 +78,23 @@ export function onVisitsSnapshot(callback: (visits: Visit[]) => void): Unsubscri
     },
     (error) => {
       log.error('Real-time visits listener error', error);
+      callback([]);
+    }
+  );
+}
+
+/** Subscribes to the latest 50 agent logs across the network. */
+export function onAgentLogsSnapshot(callback: (logs: AgentLog[]) => void): Unsubscribe {
+  const logsRef = collection(db, 'agent_logs');
+  const q = query(logsRef, orderBy('timestamp', 'desc'), limit(50));
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const logs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as AgentLog);
+      callback(logs);
+    },
+    (error) => {
+      log.error('Real-time agent logs listener error', error);
       callback([]);
     }
   );
@@ -188,5 +208,37 @@ export async function fetchDHOAnalytics(): Promise<DashboardMetrics> {
       data_quality_score: 94,
       disbursement_ready: 4200000,
     };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// FCM Token Management
+// ---------------------------------------------------------------------------
+
+export async function saveFCMToken(userId: string, token: string): Promise<void> {
+  try {
+    const workerRef = doc(db, 'workers', userId);
+    await setDoc(workerRef, { fcmToken: token, updatedAt: serverTimestamp() }, { merge: true });
+    log.info('FCM Token saved for worker', { userId });
+  } catch (error) {
+    log.error('Failed to save FCM token', error);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Cloud Storage (Audio Logs)
+// ---------------------------------------------------------------------------
+
+export async function uploadAudioLog(audioBlob: Blob, userId: string): Promise<string | null> {
+  try {
+    const filename = `audio_logs/${userId}/${Date.now()}.webm`;
+    const storageRef = ref(storage, filename);
+    await uploadBytes(storageRef, audioBlob);
+    const downloadUrl = await getDownloadURL(storageRef);
+    log.info('Audio log uploaded to Cloud Storage', { url: downloadUrl });
+    return downloadUrl;
+  } catch (error) {
+    log.error('Failed to upload audio log', error);
+    return null;
   }
 }

@@ -2,6 +2,8 @@ import { initializeApp } from 'firebase/app';
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { getFunctions } from 'firebase/functions';
+import { getMessaging, isSupported } from 'firebase/messaging';
+import { getStorage } from 'firebase/storage';
 import { createLogger } from './utils/logger';
 
 const log = createLogger('FIREBASE');
@@ -15,7 +17,7 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 
 /**
  * Firestore with persistent local cache for offline support in rural areas.
@@ -28,5 +30,15 @@ export const db = initializeFirestore(app, {
 
 export const auth = getAuth(app);
 export const functions = getFunctions(app);
+export const storage = getStorage(app);
+
+// Messaging is only supported in context with a secure origin (HTTPS/localhost)
+export const messaging = async () => {
+  const supported = await isSupported();
+  if (supported) {
+    return getMessaging(app);
+  }
+  return null;
+};
 
 log.info('Firebase initialized with persistent offline cache');

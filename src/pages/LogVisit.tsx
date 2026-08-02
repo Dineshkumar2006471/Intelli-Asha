@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { processVisitVoiceNote } from '../services/aiAgent';
-import { saveVisit } from '../services/db';
+import { saveVisit, uploadAudioLog } from '../services/db';
 import { createLogger } from '../utils/logger';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -30,7 +30,16 @@ const LogVisit = () => {
     };
   }, []);
   
-  const { isRecording, transcription, error: speechError, isSupported: speechSupported, startRecording, stopRecording } = useSpeechRecognition('en-IN');
+  const { 
+    isRecording, 
+    isProcessingAudio, 
+    transcription, 
+    audioBlob,
+    error: speechError, 
+    isSupported: speechSupported, 
+    startRecording, 
+    stopRecording 
+  } = useSpeechRecognition('en-IN');
   const { geoAnchor } = useGeolocation({ zoom: 14 });
 
   useEffect(() => {
@@ -77,20 +86,28 @@ const LogVisit = () => {
   }, [transcription]);
 
   useEffect(() => {
-    if (!isRecording && transcription.trim() && !structuredData && !isProcessing) {
+    if (!isRecording && !isProcessingAudio && transcription.trim() && !structuredData && !isProcessing) {
       handleProcessVoiceNote();
     }
-  }, [isRecording, transcription, structuredData, isProcessing, handleProcessVoiceNote]);
+  }, [isRecording, isProcessingAudio, transcription, structuredData, isProcessing, handleProcessVoiceNote]);
 
   const handleSubmit = async () => {
-    if (!structuredData) return;
+    if (!structuredData || !currentUser) return;
     
     setIsProcessing(true);
 
     try {
+      let audioUrl = null;
+      if (audioBlob) {
+        // Phone number is in photoURL for anonymous auth field workers
+        const workerId = currentUser.photoURL || currentUser.uid;
+        audioUrl = await uploadAudioLog(audioBlob, workerId);
+      }
+
       await saveVisit({
         ...structuredData,
         rawTranscription: transcription,
+        audioUrl: audioUrl,
         geoAnchor: geoAnchor ?? null
       }, currentUser?.photoURL ?? '');
       // Navigate back to Field Worker home after successful submission
@@ -155,7 +172,8 @@ const LogVisit = () => {
 
           <div className="min-h-[48px] flex flex-col items-center justify-center w-full max-w-2xl" aria-live="polite" aria-atomic="true">
             {isRecording && <p className="font-title-md text-title-md text-primary animate-pulse mb-2">Listening...</p>}
-            {isProcessing && <p className="font-title-md text-title-md text-primary animate-pulse mb-2">Understanding with Gemini AI...</p>}
+            {isProcessingAudio && <p className="font-title-md text-title-md text-primary animate-pulse mb-2">Transcribing audio (Google Speech-to-Text)...</p>}
+            {isProcessing && !isProcessingAudio && <p className="font-title-md text-title-md text-primary animate-pulse mb-2">Understanding with Gemini AI...</p>}
             
             {transcription && (
               <p className="font-title-sm text-title-sm text-on-surface-variant text-center bg-surface-container-low p-4 rounded-lg w-full shadow-sm">

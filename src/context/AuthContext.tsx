@@ -1,11 +1,13 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import {
   onAuthStateChanged,
-  signInAnonymously,
   signInWithPopup,
   GoogleAuthProvider,
   signOut,
   updateProfile,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  type ConfirmationResult,
   type User,
   type UserCredential,
 } from 'firebase/auth';
@@ -17,7 +19,8 @@ const log = createLogger('AUTH');
 
 interface AuthContextValue {
   currentUser: User | null;
-  loginAsFieldWorker: (displayName: string, phoneNumber: string) => Promise<UserCredential>;
+  sendOTP: (phoneNumber: string, recaptchaContainerId: string) => Promise<ConfirmationResult>;
+  verifyOTP: (confirmationResult: ConfirmationResult, otp: string, displayName: string, phoneNumber: string) => Promise<UserCredential>;
   loginWithGoogle: () => Promise<UserCredential>;
   logout: () => Promise<void>;
 }
@@ -41,8 +44,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  async function loginAsFieldWorker(displayName: string, phoneNumber: string): Promise<UserCredential> {
-    const result = await signInAnonymously(auth);
+  async function sendOTP(phoneNumber: string, recaptchaContainerId: string): Promise<ConfirmationResult> {
+    const recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainerId, {
+      size: 'invisible',
+    });
+    
+    // Ensure phone number starts with +91 if not present
+    const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`;
+    
+    log.info('Sending OTP to', { formattedPhone });
+    return signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier);
+  }
+
+  async function verifyOTP(
+    confirmationResult: ConfirmationResult, 
+    otp: string, 
+    displayName: string, 
+    phoneNumber: string
+  ): Promise<UserCredential> {
+    const result = await confirmationResult.confirm(otp);
     await updateProfile(result.user, { displayName, photoURL: phoneNumber });
 
     // Save worker profile to Firestore so Supervisor can see them
@@ -57,8 +77,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       { merge: true }
     );
 
-    log.info('Field worker signed in', { displayName, phoneNumber });
-    // Force a state refresh so displayName and phone are immediately available
+    log.info('Field worker verified OTP and signed in', { displayName, phoneNumber });
     setCurrentUser({ ...result.user, displayName, photoURL: phoneNumber } as User);
     return result;
   }
@@ -85,7 +104,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const value: AuthContextValue = {
     currentUser,
-    loginAsFieldWorker,
+    sendOTP,
+    verifyOTP,
     loginWithGoogle,
     logout,
   };

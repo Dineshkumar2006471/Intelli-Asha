@@ -1,30 +1,76 @@
 rules_version = '2';
 service cloud.firestore {
-    // Helper functions for schema validation
-    function hasFields(requiredFields) {
-      return request.resource.data.keys().hasAll(requiredFields);
-    }
-    
-    function isWorker() {
+  match /databases/{database}/documents {
+
+    // ─── Helpers ───────────────────────────────────────────────────────
+    function isAuthenticated() {
       return request.auth != null;
     }
 
-  match /databases/{database}/documents {
+    // Supervisors / DHOs sign in with Google; field workers use Phone OTP.
+    function isSupervisor() {
+      return isAuthenticated()
+        && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+
+    function isOwner(field) {
+      return isAuthenticated()
+        && resource.data[field] == request.auth.uid;
+    }
+
+    // ─── Visits ────────────────────────────────────────────────────────
+    // Workers can read their own visits; supervisors can read all.
+    // Only authenticated users may create visits for themselves.
+    // Updates are restricted to Cloud Functions (Verification Agent).
     match /visits/{visitId} {
-      allow read: if isWorker();
-      allow create: if isWorker() 
-        && hasFields(['workerId', 'householdName', 'status', 'timestamp'])
-        && request.resource.data.workerId is string;
+      allow read:   if isOwner('workerId') || isSupervisor();
+      allow create: if isAuthenticated()
+                    && request.resource.data.workerId == request.auth.uid;
+      allow update: if false; // Cloud Functions only
+      allow delete: if false;
     }
+
+    // ─── Alerts ────────────────────────────────────────────────────────
+    // Created exclusively by the Alert Agent (Cloud Function).
+    // Supervisors can read and update status (mark as read / dismissed).
     match /alerts/{alertId} {
-      allow read: if isWorker();
-      allow create: if false; // Only backend admin SDK can create alerts
+      allow read:   if isSupervisor();
+      allow update: if isSupervisor()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['status']);
+      allow create, delete: if false; // Cloud Functions only
     }
+
+    // ─── Workers ───────────────────────────────────────────────────────
+    // Any authenticated user can read worker profiles (needed for display).
+    // A worker can only write to their own profile document.
     match /workers/{workerId} {
-      allow read: if isWorker();
-      // In production, this should be: if request.auth.uid == workerId
-      allow write: if isWorker()
-        && (request.resource.data.keys().hasAny(['phone', 'role', 'location', 'lastActive']));
+      allow read:  if isAuthenticated();
+      allow write: if isAuthenticated()
+                   && request.auth.uid == workerId;
+    }
+
+    // ─── Agent Logs ────────────────────────────────────────────────────
+    // Written by Cloud Functions. Readable by supervisors for the
+    // live agent-activity terminal on the Supervisor Dashboard.
+    match /agent_logs/{logId} {
+      allow read:  if isSupervisor();
+      allow write: if false; // Cloud Functions only
+    }
+
+    // ─── A2A Tasks ─────────────────────────────────────────────────────
+    // Inter-agent task queue. Fully managed by Cloud Functions.
+    // Supervisors may read for observability.
+    match /a2a_tasks/{taskId} {
+      allow read:  if isSupervisor();
+      allow write: if false; // Cloud Functions only
+    }
+
+    // ─── FCM Tokens ────────────────────────────────────────────────────
+    // Each user stores their own push notification token.
+    match /fcm_tokens/{userId} {
+      allow read, write: if isAuthenticated()
+                         && request.auth.uid == userId;
     }
   }
 }

@@ -1,0 +1,127 @@
+{
+  "name": "IntelliASHA Agent Network",
+  "description": "Multi-agent AI system for ASHA worker visit verification, disease surveillance, and health incentive reconciliation in India's public health infrastructure.",
+  "url": "https://intelliasha.web.app",
+  "version": "1.0.0",
+  "provider": {
+    "organization": "IntelliASHA × AI House × Google for Developers",
+    "contact": "bingitechs@gmail.com"
+  },
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": true,
+    "stateTransitionHistory": true
+  },
+  "agents": [
+    {
+      "name": "field-agent",
+      "description": "Processes ASHA worker voice transcriptions (Hindi, Telugu, Tamil, Bengali, Kannada, English) into structured health visit data using Gemini 2.5 Flash. Supports offline-first data capture with automatic sync.",
+      "capabilities": ["voice-processing", "multilingual-extraction", "visit-classification", "data-validation"],
+      "inputModes": ["text"],
+      "outputModes": ["structured-json"],
+      "skills": [
+        {
+          "name": "process-voice-note",
+          "description": "Extract structured health visit data from voice transcription",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "transcription": { "type": "string", "description": "Raw voice transcription text" }
+            },
+            "required": ["transcription"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "verification-agent",
+      "description": "Autonomous visit verification agent. Performs geo-accuracy checks, visit duration validation, household frequency analysis, data completeness verification, and Gemini-powered medical plausibility assessment.",
+      "capabilities": ["geo-validation", "duration-check", "frequency-analysis", "medical-plausibility", "anomaly-detection"],
+      "inputModes": ["event"],
+      "outputModes": ["structured-json"],
+      "trigger": "firestore:visits/{visitId}",
+      "skills": [
+        {
+          "name": "verify-visit",
+          "description": "Run multi-dimensional verification on a submitted field visit",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "visitId": { "type": "string" },
+              "visitData": { "type": "object" },
+              "geoAnchor": { "type": "object" }
+            },
+            "required": ["visitId", "visitData"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "alert-agent",
+      "description": "Receives anomaly reports from Verification Agent via A2A task queue. Classifies alert severity using Gemini, creates supervisor alerts, sends FCM push notifications, and runs scheduled zero-visit zone detection.",
+      "capabilities": ["severity-classification", "push-notification", "zero-visit-detection", "a2a-task-handler"],
+      "inputModes": ["a2a-task", "schedule"],
+      "outputModes": ["notification", "structured-json"],
+      "skills": [
+        {
+          "name": "create-alert",
+          "description": "Create and classify a supervisor alert from an anomaly detection"
+        },
+        {
+          "name": "zero-visit-scan",
+          "description": "Detect workers with no visits in 48 hours"
+        }
+      ]
+    },
+    {
+      "name": "analytics-agent",
+      "description": "Generates AI-powered district health intelligence by combining real Firestore visit data with Gemini 2.5 Flash analysis and Google Search grounding. Produces weekly briefs, PHC breakdowns, and outbreak risk scoring.",
+      "capabilities": ["data-aggregation", "ai-brief-generation", "trend-analysis", "outbreak-scoring"],
+      "inputModes": ["text"],
+      "outputModes": ["structured-json"],
+      "skills": [
+        {
+          "name": "generate-dashboard",
+          "description": "Generate full district health dashboard with AI brief and metrics"
+        }
+      ]
+    },
+    {
+      "name": "incentive-agent",
+      "description": "Calculates NHM-compliant Task-Based Incentive disbursements. Performs ghost reporting detection using visit pattern analysis, deducts flagged visits, and generates audit-ready disbursement reports with Gemini-powered risk assessment.",
+      "capabilities": ["tbi-calculation", "ghost-detection", "reconciliation", "risk-assessment"],
+      "inputModes": ["text"],
+      "outputModes": ["structured-json"],
+      "skills": [
+        {
+          "name": "calculate-incentive",
+          "description": "Calculate TBI disbursement for an ASHA worker with ghost reporting detection"
+        }
+      ]
+    }
+  ],
+  "interAgentCommunication": {
+    "protocol": "a2a-firestore",
+    "taskCollection": "a2a_tasks",
+    "flows": [
+      {
+        "source": "field-agent",
+        "target": "verification-agent",
+        "trigger": "firestore:visits/{visitId}",
+        "description": "Field Agent saves visit → triggers Verification Agent automatically"
+      },
+      {
+        "source": "verification-agent",
+        "target": "alert-agent",
+        "trigger": "a2a-task:CREATE_ALERT",
+        "description": "Verification Agent creates A2A task → Alert Agent processes"
+      },
+      {
+        "source": "analytics-agent",
+        "target": "incentive-agent",
+        "trigger": "callable",
+        "description": "Analytics Agent can delegate TBI calculations to Incentive Agent"
+      }
+    ]
+  }
+}

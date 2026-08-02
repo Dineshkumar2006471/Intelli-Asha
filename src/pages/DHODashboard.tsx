@@ -2,24 +2,13 @@ import { useEffect, useState } from 'react';
 import { generateFullDashboardData } from '../services/aiAgent';
 import type { AIBrief, DashboardMetrics, PHCBreakdown } from '../types';
 import { onVisitsSnapshot, onFlaggedVisitsSnapshot } from '../services/db';
-import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
+import GoogleMap from '../components/GoogleMap';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { app } from '../firebase';
 import { createLogger } from '../utils/logger';
 import { useGeolocation } from '../hooks/useGeolocation';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
 
 const log = createLogger('DHO_DASHBOARD');
-
-// Fix Leaflet's default icon issue with Webpack/Vite
-// Use type-safe property override instead of `as any`
-const DefaultIcon = L.Icon.Default;
-const proto = DefaultIcon.prototype as L.Icon.Default & { _getIconUrl?: unknown };
-delete proto._getIconUrl;
-DefaultIcon.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
 
 const DHODashboard = () => {
   const [metrics, setMetrics] = useState<DashboardMetrics>({
@@ -65,13 +54,13 @@ const DHODashboard = () => {
     setPhcs([]);
 
     // Forward geocode to get coordinates for the map
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(manualLocation)}`)
-      .then(r => r.json())
-      .then(data => {
-        if (data && data.length > 0) {
-          const lat = parseFloat(data[0].lat);
-          const lng = parseFloat(data[0].lon);
-          setMapCenter([lat, lng]);
+    const geocode = httpsCallable<{ address: string }, { success: boolean; data: any[] }>(getFunctions(app, 'asia-south1'), 'geocode');
+    
+    geocode({ address: manualLocation })
+      .then(response => {
+        if (response.data.success && response.data.data && response.data.data.length > 0) {
+          const lat = response.data.data[0].geometry.location.lat;
+          const lng = response.data.data[0].geometry.location.lng;
           setWorkers([
             { id: 1, name: "Sunita (Block A)", pos: [lat + 0.005, lng - 0.008], status: "active", offset: 0 },
             { id: 2, name: "Geeta (Block B)", pos: [lat - 0.006, lng + 0.010], status: "flagged", offset: 1 },
@@ -89,8 +78,7 @@ const DHODashboard = () => {
       setLoading(false);
     });
   };
-  // Default fallback (Mathura), overridden by real geolocation
-  const [mapCenter, setMapCenter] = useState<[number, number]>([27.4924, 77.6737]);
+  // Workers scattered around user's location for the map
   const [workers, setWorkers] = useState([
     { id: 1, name: "Sunita (Block A)", pos: [27.49, 77.67] as [number, number], status: "active", offset: 0 },
     { id: 2, name: "Geeta (Block B)", pos: [27.51, 77.68] as [number, number], status: "flagged", offset: 1 },
@@ -104,7 +92,6 @@ const DHODashboard = () => {
 
     if (geoAnchor) {
       const { lat, lng } = geoAnchor;
-      setMapCenter([lat, lng]);
       // Scatter workers around the user's real location
       setWorkers([
         { id: 1, name: "Sunita (Block A)", pos: [lat + 0.005, lng - 0.008] as [number, number], status: "active", offset: 0 },
@@ -292,21 +279,15 @@ const DHODashboard = () => {
               </div>
             </div>
             <div className="flex-grow bg-surface-variant relative min-h-[450px]">
-              <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%', position: 'absolute', top: 0, left: 0, zIndex: 0 }} key={mapCenter.join(',')}>
-                <TileLayer
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  attribution='&copy; OpenStreetMap contributors'
-                />
-                <Circle center={mapCenter} radius={2000} pathOptions={{ color: '#005bbf', fillColor: '#005bbf', fillOpacity: 0.1 }} />
-                {workers.map(w => (
-                  <Marker key={w.id} position={w.pos}>
-                    <Popup>
-                      <strong>{w.name}</strong><br />
-                      Status: {w.status === 'active' ? 'Verified Visits' : 'Needs Review'}
-                    </Popup>
-                  </Marker>
-                ))}
-              </MapContainer>
+              <GoogleMap 
+                markers={workers.map(w => ({
+                  id: String(w.id),
+                  lat: w.pos[0],
+                  lng: w.pos[1],
+                  status: w.status as 'active' | 'flagged' | 'inactive',
+                  title: w.name
+                }))} 
+              />
               <div className="absolute bottom-4 right-4 bg-surface-container-lowest p-2 rounded shadow-sm border border-border-default flex flex-col gap-2 z-10">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-verified-green"></div>

@@ -180,13 +180,21 @@ IntelliASHA is purpose-built to maximize the capabilities of the Google AI and C
    ```
    *(Ensure your `firebase.ts` is populated with your Firebase project config).*
 
-4. **Verify Build & Tests (Optional but Recommended):**
+4. **Seed Demo Data (For Judging / Demo):**
+   ```bash
+   cd functions
+   npm install
+   npx tsx src/scripts/seedDemoData.ts
+   cd ..
+   ```
+
+5. **Verify Build & Tests (Optional but Recommended):**
    ```bash
    npm run test
    npm run build
    ```
 
-5. **Start the Development Server:**
+6. **Start the Development Server:**
    ```bash
    npm run dev
    ```

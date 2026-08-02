@@ -1,178 +1,184 @@
-import { GoogleGenAI } from '@google/genai';
-import type { VisitData, DashboardData } from '../types';
+/**
+ * IntelliASHA — AI Agent Service (Frontend)
+ *
+ * Thin client that calls the server-side agents via Firebase Cloud Functions.
+ * No Gemini API key is loaded on the client — all LLM processing happens
+ * server-side in the agent Cloud Functions.
+ *
+ * Agents called:
+ *  • processVoiceNote  — Field Agent (voice → structured data)
+ *  • generateAnalytics — Analytics Agent (district dashboard)
+ *  • calculateIncentive — Incentive Agent (TBI calculation)
+ */
+
+import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions';
+import { app } from '../firebase';
 import { createLogger } from '../utils/logger';
+import type { VisitData, DashboardData } from '../types';
 
-const log = createLogger('FIELD_AGENT');
+const log = createLogger('AI_AGENT_SERVICE');
 
-const ai = new GoogleGenAI({
-  apiKey: import.meta.env.VITE_GEMINI_API_KEY,
-});
+// ─── Cloud Functions Instance ───────────────────────────────────────────
 
-const RETRY_COUNT = 3;
-const RETRY_DELAY_MS = 1000;
+const functions = getFunctions(app, 'asia-south1');
 
-const delay = (ms: number): Promise<void> => new Promise((res) => setTimeout(res, ms));
+// Connect to emulator in development
+if (import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === 'true') {
+  connectFunctionsEmulator(functions, 'localhost', 5001);
+}
+
+// ─── Field Agent: Voice → Structured Data ───────────────────────────────
 
 /**
- * Processes raw voice transcription through Gemini to extract structured visit data.
- * Implements exponential backoff retry logic for resilience.
+ * Process an ASHA worker's voice transcription into structured visit data.
+ * Calls the server-side Field Agent Cloud Function.
+ *
+ * @param transcription - Raw text from speech recognition
+ * @returns Structured visit data extracted by Gemini
  */
 export async function processVisitVoiceNote(
-  transcription: string,
-  attempt = 1
+  transcription: string
 ): Promise<VisitData> {
+  log.info('Sending transcription to Field Agent', { length: transcription.length });
+
+  const processVoiceNote = httpsCallable<
+    { transcription: string },
+    { success: boolean; data: VisitData }
+  >(functions, 'processVoiceNote');
+
   try {
-    // Sanitize transcription to prevent basic prompt injection
-    const sanitizedInput = transcription.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const result = await processVoiceNote({ transcription });
 
-    const prompt = `
-      You are an AI assistant helping a health worker (ASHA) log a household visit in rural India.
-      Extract the structured data from the transcription.
-      
-      Transcription: "${sanitizedInput}"
-    `;
+    if (!result.data.success || !result.data.data) {
+      throw new Error('Field Agent returned unsuccessful response');
+    }
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: 'OBJECT',
-          properties: {
-            householdName: { type: 'STRING', nullable: true },
-            childName: { type: 'STRING', nullable: true },
-            childAge: { type: 'STRING', nullable: true },
-            weight: { type: 'STRING', nullable: true },
-            status: {
-              type: 'STRING',
-              enum: ['Normal', 'Underweight', 'Severe Acute Malnutrition', 'Unknown'],
-            },
-            visitType: { type: 'STRING' },
-            immunisation: { type: 'STRING', nullable: true },
-          },
-          required: ['householdName', 'status', 'visitType'],
-        },
-      },
+    log.info('Field Agent extraction complete', {
+      household: result.data.data.householdName,
+      status: result.data.data.status,
     });
 
-    const resultText = response.text;
-    if (!resultText) {
-      throw new Error('Empty response from Gemini API');
-    }
-
-    const parsedData = JSON.parse(resultText) as Partial<VisitData>;
-
-    log.info('Voice note processed successfully', { household: parsedData.householdName });
-
-    return {
-      householdName: parsedData.householdName ?? 'Unknown',
-      childName: parsedData.childName ?? '-',
-      childAge: parsedData.childAge ?? '-',
-      weight: parsedData.weight ?? '-',
-      status: parsedData.status ?? 'Unknown',
-      visitType: parsedData.visitType ?? 'General Visit',
-      immunisation: parsedData.immunisation ?? '-',
-    };
+    return result.data.data;
   } catch (error) {
-    log.error(`Gemini API error (attempt ${attempt}/${RETRY_COUNT})`, error);
+    log.error('Field Agent call failed', error);
 
-    if (attempt < RETRY_COUNT) {
-      await delay(RETRY_DELAY_MS * attempt);
-      return processVisitVoiceNote(transcription, attempt + 1);
-    }
-
-    throw new Error(
-      `AI processing failed after ${RETRY_COUNT} attempts. Check your network or API quota.`
-    );
+    // Return a fallback structure so the UI doesn't break
+    return {
+      householdName: 'Processing Error',
+      childName: 'Unknown',
+      childAge: 'Unknown',
+      weight: 'Unknown',
+      status: 'Unknown',
+      visitType: 'General Visit',
+      immunisation: 'Unknown',
+    };
   }
 }
 
+// ─── Analytics Agent: Dashboard Data ────────────────────────────────────
+
 /**
- * Generates a full AI-powered dashboard payload for the DHO using Gemini with Google Search grounding.
- * Falls back to randomised realistic data if the API call fails.
+ * Generate full dashboard data for the DHO Analytics view.
+ * Calls the server-side Analytics Agent Cloud Function.
+ *
+ * @param locationName - District or region name
+ * @returns Dashboard payload with AI brief, metrics, and PHC breakdown
  */
-export async function generateFullDashboardData(locationName: string): Promise<DashboardData> {
+export async function generateFullDashboardData(
+  locationName: string
+): Promise<DashboardData> {
+  log.info('Requesting analytics from Analytics Agent', { location: locationName });
+
+  const generateAnalytics = httpsCallable<
+    { locationName: string },
+    { success: boolean; data: DashboardData }
+  >(functions, 'generateAnalytics');
+
   try {
-    const prompt = `
-      You are the IntelliASHA Analytics Agent. The user is viewing the District Health Office dashboard for ${locationName}.
-      Generate a realistic, localized data payload for this specific location.
-      
-      Requirements:
-      1. AI Brief: 
-         - anomaly: a localized anomaly based on real recent news or weather in ${locationName}.
-         - recommendation: action for the DHO based on the anomaly.
-         - alert: mentioning a realistic number of high-risk cases for the region.
-      2. Metrics (CRITICAL: generate unique, plausible numbers based on the population of ${locationName}):
-         - total_ashas: realistic number (500–8000)
-         - total_beneficiaries: realistic number (10000–900000)
-         - surveys_completed: realistic number (less than beneficiaries)
-         - high_risk_cases: realistic number (50–2000)
-         - data_quality_score: realistic percentage (82–98)
-         - disbursement_ready: realistic currency amount (1000000–9000000)
-      3. PHC Breakdown (array of exactly 4 Primary Health Centers localized to ${locationName}):
-         - Each: name, block, active_ashas, surveys_wtd, status ("Optimal"|"Delayed"|"Critical"), readiness (e.g. "98%").
+    const result = await generateAnalytics({ locationName });
 
-      Output ONLY a valid JSON object.
-    `;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-        tools: [{ googleSearch: {} }],
-      },
-    });
-
-    const text = response.text;
-    if (!text) {
-      throw new Error('Empty response from Analytics Agent');
+    if (!result.data.success || !result.data.data) {
+      throw new Error('Analytics Agent returned unsuccessful response');
     }
 
-    log.info('Dashboard data generated for location', { locationName });
-    const parsed = JSON.parse(text) as Partial<DashboardData>;
-
-    // Runtime validation — ensure critical fields exist
-    if (!parsed.aiBrief || !parsed.metrics || !Array.isArray(parsed.phcs)) {
-      throw new Error('Malformed dashboard data: missing aiBrief, metrics, or phcs');
-    }
-
-    if (typeof parsed.metrics.total_ashas !== 'number' || typeof parsed.metrics.data_quality_score !== 'number') {
-      throw new Error('Malformed dashboard metrics: expected numeric values');
-    }
-
-    return parsed as DashboardData;
+    log.info('Analytics Agent response received');
+    return result.data.data;
   } catch (error) {
-    log.error('Analytics Agent failed — using fallback data', error);
+    log.error('Analytics Agent call failed — using fallback', error);
 
-    const randomAshas = Math.floor(Math.random() * 4200 + 800);
-    const randomBeneficiaries = randomAshas * Math.floor(Math.random() * 30 + 20);
-    const randomSurveys = Math.floor(randomBeneficiaries * (Math.random() * 0.6 + 0.2));
-    const randomHighRisk = Math.floor(randomSurveys * (Math.random() * 0.09 + 0.01));
-    const randomQuality = Math.floor(Math.random() * 23 + 75);
-    const randomDisbursement = Math.floor(Math.random() * 8_000_000 + 1_000_000);
-
+    // Fallback data so the dashboard still renders
     return {
       aiBrief: {
-        anomaly: `Anomaly Detected: Minor uptick in respiratory issues reported in ${locationName} clinics today.`,
-        recommendation: `Recommendation: Ensure field workers in ${locationName} have updated protocols.`,
-        alert: `Alert: ${randomHighRisk} potential high-risk cases identified in ${locationName}.`,
+        anomaly: 'Anomaly Detection: Unable to reach Analytics Agent. Showing cached data.',
+        recommendation: 'Recommendation: Please refresh once connectivity is restored.',
+        alert: 'Alert: Analytics service temporarily unavailable.',
       },
       metrics: {
-        total_ashas: randomAshas,
-        total_beneficiaries: randomBeneficiaries,
-        surveys_completed: randomSurveys,
-        high_risk_cases: randomHighRisk,
-        data_quality_score: randomQuality,
-        disbursement_ready: randomDisbursement,
+        total_ashas: 0,
+        total_beneficiaries: 0,
+        surveys_completed: 0,
+        high_risk_cases: 0,
+        data_quality_score: 0,
+        disbursement_ready: 0,
       },
-      phcs: [
-        { name: `Central ${locationName} CHC`, block: 'Central', active_ashas: Math.floor(randomAshas * 0.3), surveys_wtd: Math.floor(randomSurveys * 0.3), status: 'Optimal', readiness: '98%' },
-        { name: `North ${locationName} PHC`, block: 'North', active_ashas: Math.floor(randomAshas * 0.2), surveys_wtd: Math.floor(randomSurveys * 0.15), status: 'Delayed', readiness: '72%' },
-        { name: `South ${locationName} PHC`, block: 'South', active_ashas: Math.floor(randomAshas * 0.25), surveys_wtd: Math.floor(randomSurveys * 0.25), status: 'Optimal', readiness: '95%' },
-        { name: `East ${locationName} PHC`, block: 'East', active_ashas: Math.floor(randomAshas * 0.25), surveys_wtd: Math.floor(randomSurveys * 0.3), status: 'Critical', readiness: '54%' },
-      ],
+      phcs: [],
     };
+  }
+}
+
+// ─── Incentive Agent: TBI Calculation ───────────────────────────────────
+
+export interface IncentiveResult {
+  workerId: string;
+  workerName: string;
+  period: string;
+  breakdown: Array<{
+    visitType: string;
+    totalCount: number;
+    verifiedCount: number;
+    flaggedCount: number;
+    rate: number;
+    grossAmount: number;
+    deduction: number;
+    netAmount: number;
+  }>;
+  totalGross: number;
+  totalDeductions: number;
+  netDisbursement: number;
+  totalVisits: number;
+  verifiedVisits: number;
+  flaggedVisits: number;
+  ghostReportingRisk: string;
+  recommendation: string;
+  anomalyPatterns: string[];
+}
+
+/**
+ * Calculate NHM-compliant TBI disbursement for an ASHA worker.
+ * Calls the server-side Incentive Agent Cloud Function.
+ */
+export async function calculateWorkerIncentive(
+  workerId?: string,
+  periodStart?: string,
+  periodEnd?: string
+): Promise<IncentiveResult> {
+  log.info('Requesting incentive calculation from Incentive Agent', { workerId });
+
+  const calculateIncentive = httpsCallable<
+    { workerId?: string; periodStart?: string; periodEnd?: string },
+    { success: boolean; data: IncentiveResult }
+  >(functions, 'calculateIncentive');
+
+  try {
+    const result = await calculateIncentive({ workerId, periodStart, periodEnd });
+
+    if (!result.data.success || !result.data.data) {
+      throw new Error('Incentive Agent returned unsuccessful response');
+    }
+
+    return result.data.data;
+  } catch (error) {
+    log.error('Incentive Agent call failed', error);
+    throw error;
   }
 }
