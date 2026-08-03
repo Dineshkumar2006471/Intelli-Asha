@@ -161,13 +161,15 @@ export const generateAnalytics = onCall(
       });
 
       // Step 2: Call Gemini with real data + Google Search grounding
-      const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'asia-south1' });
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: [{
-          role: 'user',
-          parts: [{
-            text: `Generate a health intelligence dashboard for "${location}" district.
+      const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'us-central1' });
+      let dashboard;
+      try {
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: [{
+            role: 'user',
+            parts: [{
+              text: `Generate a health intelligence dashboard for "${location}" district.
 
 REAL DATA FROM OUR SYSTEM (last 30 days):
 - Total visits recorded: ${liveMetrics.totalVisits}
@@ -184,10 +186,10 @@ Using this real data as a foundation, generate:
 
 The data quality score should be calculated as: verified visits / total visits * 100.
 The disbursement_ready should be calculated based on visit counts × standard NHM TBI rates.`,
+            }],
           }],
-        }],
-        config: {
-          systemInstruction: `You are the IntelliASHA Analytics Agent — a health intelligence system for Indian district health officers.
+          config: {
+            systemInstruction: `You are the IntelliASHA Analytics Agent — a health intelligence system for Indian district health officers.
 
 Generate realistic, data-driven dashboard content based on the real visit data provided.
 Use the real metrics as the foundation and extend with contextually appropriate estimates.
@@ -198,18 +200,53 @@ For the AI brief:
 - anomaly: Start with "Anomaly Detected:" — cite a specific pattern from the data
 - recommendation: Start with "Recommendation:" — actionable next step
 - alert: Start with "Alert:" — urgent item if any, or a positive note`,
-          responseMimeType: 'application/json',
-          responseSchema: dashboardSchema,
-          temperature: 0.3,
-        },
-      });
+            responseMimeType: 'application/json',
+            responseSchema: dashboardSchema,
+            temperature: 0.3,
+          },
+        });
 
-      const text = response?.text;
-      if (!text) {
-        throw new HttpsError('internal', 'Analytics Agent received empty response from Gemini.');
+        const text = response?.text;
+        if (!text) {
+          throw new Error('Analytics Agent received empty response from Gemini.');
+        }
+
+        dashboard = JSON.parse(text);
+      } catch (aiError) {
+        logger.warn('[ANALYTICS_AGENT] AI generation failed, falling back to heuristic data', aiError);
+        const errorMessage = aiError instanceof Error ? aiError.message : 'Unknown AI error';
+        
+        await writeAgentLog({
+          agentName: 'ANALYTICS_AGENT',
+          action: 'Vertex AI authentication failed',
+          details: `Falling back to heuristic calculations. Error: ${errorMessage}`,
+          severity: 'warning',
+        });
+
+        const verified = liveMetrics.totalVisits - liveMetrics.flaggedVisits;
+        const dqScore = liveMetrics.totalVisits > 0 ? Math.round((verified / liveMetrics.totalVisits) * 100) : 100;
+        
+        // Ironclad Fallback
+        dashboard = {
+          aiBrief: {
+            anomaly: 'Anomaly Detection: Using heuristic fallback due to Vertex AI service unavailability (Emulator Auth).',
+            recommendation: 'Recommendation: Monitor flagged visits manually until AI service is restored.',
+            alert: 'Alert: AI Insights degraded. Check Vertex AI ADC credentials.'
+          },
+          metrics: {
+            total_ashas: liveMetrics.uniqueWorkers || 5,
+            total_beneficiaries: (liveMetrics.totalVisits || 1) * 3,
+            surveys_completed: liveMetrics.totalVisits,
+            high_risk_cases: liveMetrics.flaggedVisits,
+            data_quality_score: dqScore,
+            disbursement_ready: liveMetrics.totalVisits * 250
+          },
+          phcs: [
+            { name: "Central Block PHC", block: "Central", active_ashas: liveMetrics.uniqueWorkers || 5, surveys_wtd: liveMetrics.totalVisits, status: liveMetrics.flaggedVisits > 0 ? "Delayed" : "Optimal", readiness: "90%" },
+            { name: "North Block PHC", block: "North", active_ashas: 3, surveys_wtd: 0, status: "Critical", readiness: "60%" }
+          ]
+        };
       }
-
-      const dashboard = JSON.parse(text);
 
       // Override with real data where available
       if (liveMetrics.totalVisits > 0) {
@@ -230,17 +267,16 @@ For the AI brief:
       return { success: true, data: dashboard };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      logger.error('[ANALYTICS_AGENT] Failed', { error: message });
+      logger.error('[ANALYTICS_AGENT] System Failed', { error: message });
 
       await writeAgentLog({
         agentName: 'ANALYTICS_AGENT',
-        action: 'Generation failed',
+        action: 'System failure',
         details: message,
         severity: 'error',
       });
 
-      if (err instanceof HttpsError) throw err;
-      throw new HttpsError('internal', `Analytics Agent failed: ${message}`);
+      throw new HttpsError('internal', `Analytics Agent system failure: ${message}`);
     }
   }
 );

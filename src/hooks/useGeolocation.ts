@@ -1,11 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createLogger } from '../utils/logger';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { app } from '../firebase';
 import type { GeoAnchor } from '../types';
 
 const log = createLogger('GEOLOCATION');
-const functions = getFunctions(app, 'asia-south1');
 
 interface GeolocationState {
   locationName: string;
@@ -30,51 +27,75 @@ export function useGeolocation(options: UseGeolocationOptions = {}): Geolocation
   const reverseGeocode = useCallback(
     async (lat: number, lng: number): Promise<string> => {
       try {
-        const geocode = httpsCallable<{ lat: number; lng: number }, { success: boolean; data: any[] }>(functions, 'geocode');
-        const response = await geocode({ lat, lng });
+        const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
+        const response = await fetch(url);
+        const data = await response.json();
 
-        if (!response.data.success || !response.data.data || response.data.data.length === 0) {
+        if (!response.ok || data.status !== 'OK' || !data.results || data.results.length === 0) {
           throw new Error('No results from Google Maps Geocoding');
         }
 
-        const results = response.data.data;
+        const results = data.results;
         
         // Find appropriate component based on zoom level
         if (zoom >= 14) {
           // Field worker level
-          let block = 'Unknown Block';
-          let district = 'Unknown District';
+          let block = '';
+          let district = '';
           
           for (const result of results) {
             for (const component of result.address_components) {
               if (component.types.includes('sublocality') || component.types.includes('locality')) {
-                block = component.long_name;
+                if (!block) block = component.long_name;
               }
               if (component.types.includes('administrative_area_level_3') || component.types.includes('administrative_area_level_2')) {
-                district = component.long_name;
+                if (!district) district = component.long_name;
               }
             }
-            if (block !== 'Unknown Block' && district !== 'Unknown District') break;
           }
+          
+          block = block || 'Local';
+          district = district || fallback;
           return `${block} PHC, ${district}`;
         }
 
-        // Dashboard level
-        let city = fallback;
+        // Dashboard level - Find the District (Admin Level 2 in India)
+        let district = '';
         for (const result of results) {
           for (const component of result.address_components) {
-            if (component.types.includes('administrative_area_level_2') || component.types.includes('locality')) {
-              city = component.long_name;
+            if (component.types.includes('administrative_area_level_2')) {
+              district = component.long_name;
               break;
             }
           }
-          if (city !== fallback) break;
+          if (district) break;
         }
         
-        return city;
+        // Fallback to locality if admin_level_2 isn't found
+        if (!district) {
+          for (const result of results) {
+            for (const component of result.address_components) {
+              if (component.types.includes('locality')) {
+                district = component.long_name;
+                break;
+              }
+            }
+            if (district) break;
+          }
+        }
+        
+        if (!district) return fallback;
+        
+        // Make sure "District" is appended nicely for the dashboard if missing
+        if (!district.toLowerCase().includes('district') && !district.toLowerCase().includes('dist')) {
+          district = `${district} District`;
+        }
+        
+        return district;
       } catch (err) {
         log.warn('Reverse geocoding failed', err);
-        return 'GPS Acquired, Location Unknown';
+        return fallback; // Return fallback (e.g. Mathura District) instead of ugly error string
       }
     },
     [zoom, fallback]

@@ -3,8 +3,6 @@ import { generateFullDashboardData } from '../services/aiAgent';
 import type { AIBrief, DashboardMetrics, PHCBreakdown } from '../types';
 import { onVisitsSnapshot, onFlaggedVisitsSnapshot } from '../services/db';
 import GoogleMap from '../components/GoogleMap';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { app } from '../firebase';
 import { createLogger } from '../utils/logger';
 import { useGeolocation } from '../hooks/useGeolocation';
 
@@ -54,19 +52,14 @@ const DHODashboard = () => {
     setPhcs([]);
 
     // Forward geocode to get coordinates for the map
-    const geocode = httpsCallable<{ address: string }, { success: boolean; data: any[] }>(getFunctions(app, 'asia-south1'), 'geocode');
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(manualLocation)}&key=${apiKey}`;
     
-    geocode({ address: manualLocation })
-      .then(response => {
-        if (response.data.success && response.data.data && response.data.data.length > 0) {
-          const lat = response.data.data[0].geometry.location.lat;
-          const lng = response.data.data[0].geometry.location.lng;
-          setWorkers([
-            { id: 1, name: "Sunita (Block A)", pos: [lat + 0.005, lng - 0.008], status: "active", offset: 0 },
-            { id: 2, name: "Geeta (Block B)", pos: [lat - 0.006, lng + 0.010], status: "flagged", offset: 1 },
-            { id: 3, name: "Pooja (Block C)", pos: [lat + 0.010, lng + 0.005], status: "active", offset: 2 },
-            { id: 4, name: "Meena (Block D)", pos: [lat - 0.003, lng - 0.012], status: "active", offset: 3 },
-          ]);
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'OK' && data.results && data.results.length > 0) {
+          // Geocoding success (optional map center logic can go here)
         }
       })
       .catch(err => log.error('Geocoding failed', err));
@@ -79,26 +72,14 @@ const DHODashboard = () => {
     });
   };
   // Workers scattered around user's location for the map
-  const [workers, setWorkers] = useState([
-    { id: 1, name: "Sunita (Block A)", pos: [27.49, 77.67] as [number, number], status: "active", offset: 0 },
-    { id: 2, name: "Geeta (Block B)", pos: [27.51, 77.68] as [number, number], status: "flagged", offset: 1 },
-    { id: 3, name: "Pooja (Block C)", pos: [27.48, 77.65] as [number, number], status: "active", offset: 2 },
-    { id: 4, name: "Meena (Block D)", pos: [27.50, 77.66] as [number, number], status: "active", offset: 3 },
-  ]);
+  const [workers, setWorkers] = useState<Array<{ id: string | number, name: string, pos: [number, number], status: string, offset?: number }>>([]);
 
   // Detect user's real location with useGeolocation hook
   useEffect(() => {
     if (geoLoading) return;
 
     if (geoAnchor) {
-      const { lat, lng } = geoAnchor;
-      // Scatter workers around the user's real location
-      setWorkers([
-        { id: 1, name: "Sunita (Block A)", pos: [lat + 0.005, lng - 0.008] as [number, number], status: "active", offset: 0 },
-        { id: 2, name: "Geeta (Block B)", pos: [lat - 0.006, lng + 0.010] as [number, number], status: "flagged", offset: 1 },
-        { id: 3, name: "Pooja (Block C)", pos: [lat + 0.010, lng + 0.005] as [number, number], status: "active", offset: 2 },
-        { id: 4, name: "Meena (Block D)", pos: [lat - 0.003, lng - 0.012] as [number, number], status: "active", offset: 3 },
-      ]);
+      // (Optional fallback) Map centers on this, but we rely on live visits for pins
     }
 
     setLocationName(detectedLocation);
@@ -111,18 +92,27 @@ const DHODashboard = () => {
   }, [detectedLocation, geoAnchor, geoLoading]);
 
   useEffect(() => {
-    // Simulate real-time GPS movement
-    const interval = setInterval(() => {
-      setWorkers(prev => prev.map(w => {
-        const time = Date.now() / 5000 + w.offset;
-        return {
-          ...w,
-          pos: [w.pos[0] + Math.sin(time) * 0.0002, w.pos[1] + Math.cos(time) * 0.0002] as [number, number]
-        };
-      }));
-    }, 2000);
-    return () => clearInterval(interval);
+    // Listen to live visits from Firestore to drop map pins
+    const unsubscribe = onVisitsSnapshot((visits) => {
+      const workerMap = new Map();
+      // Visits are ordered descending by time. First geoAnchor found for a worker is their latest known location.
+      visits.forEach(v => {
+        if (v.geoAnchor && !workerMap.has(v.workerId)) {
+          workerMap.set(v.workerId, {
+            id: v.workerId,
+            name: `Worker ${v.workerId.substring(0, 5)}`,
+            pos: [v.geoAnchor.lat, v.geoAnchor.lng] as [number, number],
+            status: v.anomaliesFound ? 'flagged' : 'active'
+          });
+        }
+      });
+      if (workerMap.size > 0) {
+        setWorkers(Array.from(workerMap.values()));
+      }
+    });
+    return () => unsubscribe();
   }, []);
+
   const formatCurrency = (value: number) => {
     if (value >= 1000000) return `₹${(value / 1000000).toFixed(1)}M`;
     if (value >= 1000) return `₹${(value / 1000).toFixed(1)}k`;
@@ -134,7 +124,10 @@ const DHODashboard = () => {
     return value.toString();
   };
 
-  const averageReadiness = phcs.length > 0 ? Math.round(phcs.reduce((acc, p) => acc + parseInt(p.readiness.replace('%', '')), 0) / phcs.length) : 0;
+  const averageReadiness = phcs.length > 0 ? Math.round(phcs.reduce((acc, p) => {
+    const val = parseInt(p.readiness.replace('%', ''));
+    return acc + (isNaN(val) ? 0 : val);
+  }, 0) / phcs.length) : 0;
   const strokeDashoffset = 251.2 - (251.2 * (averageReadiness / 100));
 
   const handleExportCSV = () => {
@@ -207,7 +200,7 @@ const DHODashboard = () => {
           {/* KPI 3 */}
           <div className="bg-surface-container-lowest border border-border-default rounded-lg p-4">
             <div className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Surveys Completed</div>
-            <div className="font-headline-kpi text-headline-kpi text-on-surface">{liveVisitCount > 0 ? formatNumber(metrics.surveys_completed + liveVisitCount) : formatNumber(metrics.surveys_completed)}</div>
+            <div className="font-headline-kpi text-headline-kpi text-on-surface">{formatNumber(metrics.surveys_completed)}</div>
             <div className="flex items-center gap-1 mt-2 text-verified-green">
               <span className="material-symbols-outlined text-[16px]" style={{fontVariationSettings: "'FILL' 0"}}>trending_up</span>
               <span className="font-label-sm text-label-sm">{liveVisitCount > 0 ? `+${liveVisitCount} live today` : '+15% vs Last Wk'}</span>
@@ -216,7 +209,7 @@ const DHODashboard = () => {
           {/* KPI 4 */}
           <div className="bg-surface-container-lowest border border-border-default rounded-lg p-4">
             <div className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">High Risk Cases</div>
-            <div className="font-headline-kpi text-headline-kpi text-at-risk-red">{liveFlaggedCount > 0 ? (metrics.high_risk_cases + liveFlaggedCount) : metrics.high_risk_cases}</div>
+            <div className="font-headline-kpi text-headline-kpi text-at-risk-red">{metrics.high_risk_cases}</div>
             <div className="flex items-center gap-1 mt-2 text-at-risk-red bg-at-risk-bg px-2 py-0.5 rounded-full w-fit">
               <span className="material-symbols-outlined text-[14px]" style={{fontVariationSettings: "'FILL' 0"}}>warning</span>
               <span className="font-label-sm text-label-sm">{liveFlaggedCount > 0 ? `${liveFlaggedCount} flagged live` : 'Needs Review'}</span>
@@ -305,16 +298,15 @@ const DHODashboard = () => {
             </div>
           </div>
           
-          {/* Right Column: AI Brief & Readiness */}
-          <div className="space-y-8">
-            {/* AI Brief Card */}
-            <div className="bg-surface-container-lowest border border-primary-fixed-dim rounded-lg p-6 relative overflow-hidden shadow-sm">
+          {/* Top Right: AI Brief Card */}
+          <div className="lg:col-span-1 flex flex-col">
+            <div className="bg-surface-container-lowest border border-primary-fixed-dim rounded-lg p-6 relative overflow-hidden shadow-sm h-full flex flex-col">
               <div className="absolute top-0 left-0 w-full h-1 bg-primary-container"></div>
               <div className="flex items-center gap-2 mb-4">
                 <span className="material-symbols-outlined text-primary-container" style={{fontVariationSettings: "'FILL' 1"}}>auto_awesome</span>
                 <h2 className="font-title-sm text-title-sm text-on-surface font-bold">AI Brief — Week of {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</h2>
               </div>
-              <div className="font-body-base text-body-base text-on-surface-variant space-y-4">
+              <div className="font-body-base text-body-base text-on-surface-variant space-y-4 flex-1">
                 {aiBrief ? (
                   <>
                     <p><strong>{aiBrief.anomaly.split(':')[0]}:</strong> {aiBrief.anomaly.split(':').slice(1).join(':')}</p>
@@ -334,9 +326,59 @@ const DHODashboard = () => {
                 <button onClick={handleViewReport} className="text-primary hover:underline">View Full Report</button>
               </div>
             </div>
-            
-            {/* Disbursement Readiness */}
-            <div className="bg-surface-container-lowest border border-border-default rounded-lg p-6 flex flex-col items-center justify-center text-center">
+          </div>
+          
+          {/* Bottom Left: PHC Breakdown Table */}
+          <div className="lg:col-span-2">
+            <section className="bg-surface-container-lowest border border-border-default rounded-lg overflow-hidden h-full flex flex-col">
+              <div className="p-6 border-b border-border-default flex justify-between items-center bg-surface-bright">
+                <h2 className="font-title-md text-title-md text-on-surface">PHC Breakdown</h2>
+                <button onClick={handleExportCSV} className="text-primary font-label-md text-label-md hover:underline flex items-center gap-1">
+                  Export CSV <span className="material-symbols-outlined text-[18px]" style={{fontVariationSettings: "'FILL' 0"}}>download</span>
+                </button>
+              </div>
+              <div className="overflow-x-auto flex-1">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-border-default bg-surface-container-low font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
+                      <th className="p-4 font-semibold">PHC Name</th>
+                      <th className="p-4 font-semibold">Block</th>
+                      <th className="p-4 font-semibold text-right">Active ASHAs</th>
+                      <th className="p-4 font-semibold text-right">Surveys (WTD)</th>
+                      <th className="p-4 font-semibold text-center">Status</th>
+                      <th className="p-4 font-semibold text-right">Readiness</th>
+                    </tr>
+                  </thead>
+                  <tbody className="font-body-base text-body-base text-on-surface divide-y divide-border-default">
+                    {phcs.length > 0 ? phcs.map((phc, i) => (
+                      <tr key={i} className="hover:bg-surface-bright transition-colors">
+                        <td className="p-4 font-medium">{phc.name}</td>
+                        <td className="p-4 text-on-surface-variant">{phc.block}</td>
+                        <td className="p-4 text-right font-data-mono text-data-mono">{phc.active_ashas}</td>
+                        <td className="p-4 text-right font-data-mono text-data-mono">{phc.surveys_wtd}</td>
+                        <td className="p-4 text-center">
+                          <span className={`inline-block px-2 py-1 rounded-full font-label-sm text-label-sm font-bold ${
+                            phc.status === 'Optimal' ? 'bg-verified-bg text-verified-green' :
+                            phc.status === 'Delayed' ? 'bg-flagged-bg text-flagged-amber' :
+                            'bg-at-risk-bg text-at-risk-red'
+                          }`}>{phc.status}</span>
+                        </td>
+                        <td className={`p-4 text-right font-data-mono text-data-mono ${phc.status === 'Delayed' ? 'text-flagged-amber' : phc.status === 'Critical' ? 'text-at-risk-red' : ''}`}>{phc.readiness}</td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td colSpan={6} className="p-8 text-center text-on-surface-variant animate-pulse">Loading localized PHC data...</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+          
+          {/* Bottom Right: Disbursement Readiness */}
+          <div className="lg:col-span-1">
+            <div className="bg-surface-container-lowest border border-border-default rounded-lg p-6 flex flex-col items-center justify-center text-center h-full">
               <h2 className="font-title-md text-title-md text-on-surface mb-6 w-full text-left">Disbursement Readiness</h2>
               <div className="relative w-48 h-48 flex items-center justify-center mb-6">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
@@ -348,7 +390,7 @@ const DHODashboard = () => {
                   <span className="font-label-sm text-label-sm text-on-surface-variant">Ready to Disburse</span>
                 </div>
               </div>
-              <button className="w-full bg-primary-container text-on-primary-container font-title-sm text-title-sm py-3 rounded-lg hover:bg-surface-tint transition-colors flex items-center justify-center gap-2">
+              <button className="w-full bg-primary-container text-on-primary-container font-title-sm text-title-sm py-3 rounded-lg hover:bg-surface-tint transition-colors flex items-center justify-center gap-2 mt-auto">
                 <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 0"}}>payments</span>
                 Initiate Disbursement
               </button>
@@ -356,52 +398,6 @@ const DHODashboard = () => {
             </div>
           </div>
         </div>
-
-        {/* PHC Breakdown Table */}
-        <section className="bg-surface-container-lowest border border-border-default rounded-lg overflow-hidden">
-          <div className="p-6 border-b border-border-default flex justify-between items-center bg-surface-bright">
-            <h2 className="font-title-md text-title-md text-on-surface">PHC Breakdown</h2>
-            <button onClick={handleExportCSV} className="text-primary font-label-md text-label-md hover:underline flex items-center gap-1">
-              Export CSV <span className="material-symbols-outlined text-[18px]" style={{fontVariationSettings: "'FILL' 0"}}>download</span>
-            </button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-border-default bg-surface-container-low font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
-                  <th className="p-4 font-semibold">PHC Name</th>
-                  <th className="p-4 font-semibold">Block</th>
-                  <th className="p-4 font-semibold text-right">Active ASHAs</th>
-                  <th className="p-4 font-semibold text-right">Surveys (WTD)</th>
-                  <th className="p-4 font-semibold text-center">Status</th>
-                  <th className="p-4 font-semibold text-right">Readiness</th>
-                </tr>
-              </thead>
-              <tbody className="font-body-base text-body-base text-on-surface divide-y divide-border-default">
-                {phcs.length > 0 ? phcs.map((phc, i) => (
-                  <tr key={i} className="hover:bg-surface-bright transition-colors">
-                    <td className="p-4 font-medium">{phc.name}</td>
-                    <td className="p-4 text-on-surface-variant">{phc.block}</td>
-                    <td className="p-4 text-right font-data-mono text-data-mono">{phc.active_ashas}</td>
-                    <td className="p-4 text-right font-data-mono text-data-mono">{phc.surveys_wtd}</td>
-                    <td className="p-4 text-center">
-                      <span className={`inline-block px-2 py-1 rounded-full font-label-sm text-label-sm font-bold ${
-                        phc.status === 'Optimal' ? 'bg-verified-bg text-verified-green' :
-                        phc.status === 'Delayed' ? 'bg-flagged-bg text-flagged-amber' :
-                        'bg-at-risk-bg text-at-risk-red'
-                      }`}>{phc.status}</span>
-                    </td>
-                    <td className={`p-4 text-right font-data-mono text-data-mono ${phc.status === 'Delayed' ? 'text-flagged-amber' : phc.status === 'Critical' ? 'text-at-risk-red' : ''}`}>{phc.readiness}</td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td colSpan={6} className="p-8 text-center text-on-surface-variant animate-pulse">Loading localized PHC data...</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
       </main>
     </div>
   );

@@ -26,6 +26,20 @@
     ],
     "rewrites": [
       {
+        "source": "/.well-known/agent.json",
+        "function": {
+          "functionId": "a2aGateway",
+          "region": "asia-south1"
+        }
+      },
+      {
+        "source": "/a2a",
+        "function": {
+          "functionId": "a2aGateway",
+          "region": "asia-south1"
+        }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

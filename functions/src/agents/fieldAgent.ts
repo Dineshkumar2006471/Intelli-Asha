@@ -125,7 +125,7 @@ export const processVoiceNote = onCall(
     });
 
     try {
-      const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'asia-south1' });
+      const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'us-central1' });
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: [
@@ -172,18 +172,36 @@ export const processVoiceNote = onCall(
       return { success: true, data: parsed };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      logger.error('[FIELD_AGENT] Processing failed', { error: message });
+      logger.error('[FIELD_AGENT] Processing failed, using IRONCLAD FALLBACK', { error: message });
 
       await writeAgentLog({
         agentName: 'FIELD_AGENT',
-        action: 'Processing failed',
+        action: 'Processing failed - Using Fallback',
         details: message,
-        severity: 'error',
+        severity: 'warning',
         relatedWorkerId: request.auth.uid,
       });
 
-      if (err instanceof HttpsError) throw err;
-      throw new HttpsError('internal', `Field Agent processing failed: ${message}`);
+      // Ironclad Fallback: Ensure visit is saved even if AI fails
+      const fallbackData = {
+        householdName: 'Unknown Household (Fallback)',
+        childName: 'Unknown Child',
+        childAge: 'Unknown',
+        weight: 'Unknown',
+        status: 'Unknown',
+        visitType: 'General Visit',
+        immunisation: 'Not mentioned',
+        followUpNeeded: true,
+        followUpReason: 'Agent processing failed. Manual review required.',
+        detectedLanguage: 'other'
+      };
+
+      // Basic heuristic
+      const lower = sanitised.toLowerCase();
+      if (lower.includes('vaccine') || lower.includes('immunisation')) fallbackData.visitType = 'Immunization';
+      else if (lower.includes('pregnant') || lower.includes('anc')) fallbackData.visitType = 'Antenatal Care';
+
+      return { success: true, data: fallbackData, isFallback: true };
     }
   }
 );

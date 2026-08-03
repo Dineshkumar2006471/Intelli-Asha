@@ -97,11 +97,16 @@ const LogVisit = () => {
     setIsProcessing(true);
 
     try {
-      let audioUrl = null;
+      // Audio upload is best-effort — don't block the visit save if storage fails
+      let audioUrl: string | null = null;
       if (audioBlob) {
-        // Phone number is in photoURL for anonymous auth field workers
-        const workerId = currentUser.photoURL || currentUser.uid;
-        audioUrl = await uploadAudioLog(audioBlob, workerId);
+        try {
+          const workerId = currentUser.photoURL || currentUser.uid;
+          audioUrl = await uploadAudioLog(audioBlob, workerId);
+        } catch (audioErr) {
+          log.error('Audio upload failed (non-blocking)', audioErr);
+          // Continue without audio — the visit data is what matters
+        }
       }
 
       await saveVisit({
@@ -113,7 +118,7 @@ const LogVisit = () => {
       // Navigate back to Field Worker home after successful submission
       navigate('/app/field');
     } catch (err) {
-      setError('Failed to save visit to database.');
+      setError('Failed to save visit to database. Please check your connection and try again.');
       log.error('Failed to save visit', err);
       setIsProcessing(false);
     }

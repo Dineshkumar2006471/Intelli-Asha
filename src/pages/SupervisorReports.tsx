@@ -26,8 +26,8 @@ const SupervisorReports = () => {
   }, [agentLogs]);
 
 
-  const getLogColor = (status: string) => {
-    switch(status) {
+  const getLogColor = (severity: string) => {
+    switch(severity) {
       case 'success': return 'text-[#3FB950]';
       case 'warning': return 'text-[#D29922]';
       case 'error': return 'text-[#F85149]';
@@ -176,11 +176,18 @@ const SupervisorReports = () => {
               <p className="text-[#8B949E] animate-pulse">Waiting for agent activity...</p>
             ) : (
               agentLogs.map((log) => (
-                <div key={log.id} className={`${getLogColor(log.status)} animate-fade-in flex gap-3`}>
-                  <span className="text-[#8B949E] shrink-0">
-                    {log.timestamp ? new Date(log.timestamp.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) : '...'}
-                  </span>
-                  <span>[{log.agent.toUpperCase()}] {log.action}</span>
+                <div key={log.id} className={`${getLogColor(log.severity)} animate-fade-in flex flex-col gap-1`}>
+                  <div className="flex gap-3">
+                    <span className="text-[#8B949E] shrink-0">
+                      {log.timestamp ? new Date(log.timestamp.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) : '...'}
+                    </span>
+                    <span>[{(log.agentName || 'SYSTEM').toUpperCase()}] {log.action}</span>
+                  </div>
+                  {log.details && (
+                    <div className="text-xs text-[#8B949E] ml-16 bg-surface-container-low p-2 rounded border border-border-default whitespace-pre-wrap">
+                      {log.details}
+                    </div>
+                  )}
                 </div>
               ))
             )}

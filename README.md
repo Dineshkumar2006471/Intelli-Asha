@@ -30,10 +30,11 @@
 - [The Problem Statement](#-the-problem-statement)
 - [Our Solution](#-our-solution)
 - [System Architecture](#-system-architecture)
-- [The Agentic Workflow](#-the-agentic-workflow)
-- [Production Readiness (99% Benchmark)](#-production-readiness)
-- [Google Ecosystem & Tech Stack](#-google-ecosystem--tech-stack)
-- [Features](#-features)
+- [Application Flow & Data Lifecycle](#-application-flow--data-lifecycle)
+- [Project Structure](#-project-structure)
+- [API & Cloud Function Endpoints](#-api--cloud-function-endpoints)
+- [Tech Stack Breakdown](#-tech-stack-breakdown)
+- [Production Readiness](#-production-readiness)
 - [Getting Started](#-getting-started)
 - [License](#-license)
 
@@ -80,6 +81,7 @@ graph TD
         E -- Anomaly Detected --> G{Alert Agent}
         H{Analytics Agent} <-->|MCP| I[(NDHM Disease DB)]
         H --> F
+        I2{Incentive Agent} -->|Computes Payouts| F
     end
 
     subgraph "Headquarters (Supervisor Dashboard)"
@@ -93,28 +95,106 @@ graph TD
     classDef agent fill:#34A853,stroke:#fff,stroke-width:2px,color:#fff;
     classDef db fill:#FBBC05,stroke:#fff,stroke-width:2px,color:#000;
     
-    class E,G,H agent;
+    class E,G,H,I2 agent;
     class F db;
 ```
 
 ---
 
-## 🤖 The Agentic Workflow
+## 🔄 Application Flow & Data Lifecycle
 
-IntelliASHA moves beyond static LLM wrappers. It utilizes a **Multi-Agent Orchestration** model where specialized agents work in tandem:
+Below is the clear flow diagram tracing a visit from the field to the supervisor.
 
-### 1. The Verification Agent
-- **Trigger:** Instantly upon a field worker submitting a voice log.
-- **Action:** Ingests raw text and GPS anchors. It parses the unstructured data into a rigid JSON schema, assesses the severity of the medical condition, and assigns a "Confidence Score" to the visit based on geolocation proximity to the assigned block.
-- **Tech:** Google Gemini 2.5 Flash via REST/SDK.
+```mermaid
+sequenceDiagram
+    actor FieldWorker as ASHA Worker
+    participant WebApp as Web Client
+    participant Geolocation as GPS API
+    participant Agent as Gemini Agent
+    participant Firestore as Firebase Database
+    actor Supervisor as DHO / Supervisor
 
-### 2. The Alert Agent
-- **Trigger:** When the Verification Agent flags a severity anomaly (e.g., Severe Malnutrition, High Fever Cluster).
-- **Action:** Bypasses standard database queues and pushes a high-priority, real-time alert directly to the Supervisor's command center terminal, recommending immediate medical deployment.
+    FieldWorker->>WebApp: Opens App & Begins Voice Log
+    WebApp->>Geolocation: Request Live GPS
+    Geolocation-->>WebApp: Returns [Lat, Lng, Accuracy]
+    FieldWorker->>WebApp: Speaks (Unstructured Audio/Text)
+    WebApp->>Agent: Sends [Text + GPS + Timestamp]
+    Agent->>Agent: Analyzes sentiment & medical severity
+    Agent->>Agent: Structures into typed JSON schema
+    Agent->>Firestore: Writes Document to 'visits' collection
+    Firestore-->>Supervisor: Live onSnapshot Trigger
+    Supervisor->>Supervisor: Dashboard updates instantly
+    alt Critical Anomaly Detected
+        Agent->>Firestore: Flags as HIGH SEVERITY
+        Firestore-->>Supervisor: Red Alert Push Notification
+    end
+```
 
-### 3. The Analytics Agent
-- **Trigger:** Scheduled cron or manual supervisor request.
-- **Action:** Connects to external data sources (like the NDHM Disease Surveillance database) using the **Model Context Protocol (MCP)**. It correlates external outbreak data (e.g., a regional Dengue spike) with live field reports to predict hot zones.
+---
+
+## 📁 Project Structure
+
+```text
+intelliasha/
+├── functions/                     # Firebase Cloud Functions (Backend)
+│   ├── src/
+│   │   ├── agents/                # AI Agent Logic (Incentive, Analysis)
+│   │   │   └── incentiveAgent.ts  # Computes worker payouts via AI
+│   │   ├── services/              # Logger and helper functions
+│   │   └── index.ts               # Cloud Function Entry Point
+│   ├── package.json
+│   └── tsconfig.json
+├── src/                           # React Frontend (Vite)
+│   ├── components/                # Reusable UI elements (Map, Charts)
+│   ├── context/                   # React Context (Auth)
+│   ├── hooks/                     # Custom hooks (Geolocation, Speech)
+│   ├── pages/                     # Main Application Views
+│   │   ├── LogVisit.tsx           # Field Worker Voice Interface
+│   │   ├── Earnings.tsx           # Worker TBI/Incentive Dashboard
+│   │   └── DHODashboard.tsx       # Supervisor Live Terminal
+│   ├── services/                  # Firebase Client Initialization
+│   └── utils/                     # Formatters & Loggers
+├── public/                        # Static assets (Logos, Icons)
+├── firestore.rules                # Database Security Constraints
+├── firestore.indexes.json         # Query Composite Indexes
+├── tailwind.config.js             # Styling System
+└── package.json                   # Web Client Dependencies
+```
+
+---
+
+## 🔌 API & Cloud Function Endpoints
+
+The system relies on Firebase Callable Functions to securely handle complex AI workflows in the cloud rather than exposing keys on the client.
+
+| Endpoint (Cloud Function) | Method | Payload | Description |
+| :--- | :--- | :--- | :--- |
+| `calculateIncentive` | `CALL` | `{ workerId, periodStart?, periodEnd? }` | Analyzes a worker's logged visits for a given period using Vertex AI (Gemini) to determine the "Ghost Reporting Risk", verifies legitimate logs, and computes Task Based Incentives (TBI) payouts. |
+| `analyzeCoverage` | `CALL` | `{ region, dateRange }` | *(Planned/MCP)* Correlates local village data against regional models to detect gaps in public health coverage. |
+
+**Frontend Database Access:**
+The React client utilizes `onSnapshot` listeners to subscribe to the `visits` and `workers` collections in Firestore. Real-time updates occur via WebSockets.
+
+---
+
+## 🛠 Tech Stack Breakdown
+
+IntelliASHA is purpose-built to maximize the capabilities of the Google AI and Cloud ecosystem:
+
+### **Frontend & Client**
+- **React 18 + Vite:** High-performance rendering engine.
+- **TypeScript Strict:** Eliminates undefined runtime errors across the entire codebase.
+- **Tailwind CSS:** Modern, responsive UI utility system.
+- **Web APIs:** `SpeechRecognition` (for voice-to-text) and `Geolocation API` (for secure device mapping).
+
+### **Backend & Cloud Infrastructure**
+- **Firebase Cloud Firestore:** Real-time NoSQL database providing instantaneous Agent-to-Agent (A2A) and Edge-to-HQ state synchronization.
+- **Firebase Authentication:** Secures field worker identities via Anonymous/Phone Auth and enforces granular Firestore Security Rules.
+- **Google Cloud Functions (Node.js 22):** Serverless backend orchestrating the multi-agent AI logic safely out of the browser.
+- **Firebase Storage:** *(Optional)* For storing raw audio blobs of ASHA worker reports.
+
+### **Artificial Intelligence (The Brains)**
+- **Google Gemini 2.5 Flash:** Used natively on the backend via `@google/genai` to perform lightning-fast inference, converting unstructured voice into structured JSON, determining medical severity, and identifying anomalies or ghost reporting risks.
 
 ---
 
@@ -122,34 +202,10 @@ IntelliASHA moves beyond static LLM wrappers. It utilizes a **Multi-Agent Orches
 
 IntelliASHA is built to strict production standards, ensuring enterprise-grade reliability, observability, and type safety:
 
-- **100% Strict TypeScript:** The entire codebase is strongly typed. All Gemini AI payloads, Firestore documents, and React components utilize generic interfaces (e.g., `DashboardMetrics`, `Visit`, `AIBrief`), eliminating runtime `undefined` errors.
-- **Automated Testing Suite:** The core logic, including AI agents and DB handlers, is heavily tested using **Vitest** and **React Testing Library** with deeply mocked AI implementations. 
-- **CI/CD Pipeline Hardening:** Configured GitHub Actions (`.github/workflows/ci.yml`) strictly enforces `npm run typecheck`, `npm run test`, and `npm run build` on every commit. No breaking changes can hit production.
-- **Resilience & Observability:** Integrated global **Error Boundaries** to prevent silent UI crashes, paired with a structured `logger` utility for robust frontend telemetry and debugging. 
-- **Graceful Offline Mode:** Using Firebase IndexedDB persistence, the app operates completely offline in rural areas without cell service, queuing up data for sync when connectivity is restored.
-
----
-
-## ⚙️ Google Ecosystem & Tech Stack
-
-IntelliASHA is purpose-built to maximize the capabilities of the Google AI and Cloud ecosystem:
-
-| Component | Google Technology | Role in Architecture |
-| :--- | :--- | :--- |
-| **Core AI Logic** | `Gemini 2.5 Flash` | Lightning-fast edge inference, converting unstructured voice into structured JSON, and powering agentic reasoning. |
-| **Database & Sync** | `Firebase Cloud Firestore` | Provides instantaneous Agent-to-Agent (A2A) and Edge-to-HQ state synchronization using real-time `onSnapshot` listeners. |
-| **Auth & Security** | `Firebase Authentication` | Secures field worker identities and enforces granular Firestore Security Rules. |
-| **Context Tooling** | `Model Context Protocol (MCP)` | Allows the Analytics Agent to securely fetch live regional data from external NDHM servers. |
-| **Frontend** | `Vite + React.js (TS)` | Highly responsive UI, utilizing native Web Speech and Geolocation APIs. |
-
----
-
-## ✨ Features
-
-- **Zero-Type Data Entry:** 100% voice-driven interface for field workers.
-- **GPS Locking:** Prevents fake reporting by silently verifying the worker's hardware GPS against their assigned jurisdiction.
-- **Live Agentic Terminal:** Supervisors can watch the AI swarm think, verify, and dispatch alerts in real-time on their dashboard.
-- **Predictive Health Mapping:** Leaflet-based geospatial maps overlaying live health metrics across rural blocks.
+- **100% Strict TypeScript:** All Gemini AI payloads, Firestore documents, and React components utilize generic interfaces (e.g., `IncentiveResult`, `Visit`), ensuring solid data contracts.
+- **Robust Error Handling:** Comprehensive `try/catch` wrapping on all Cloud Functions. If Vertex AI reaches quota or fails, mathematical fallback algorithms ensure the system continues to process data (e.g., calculating standard metrics even if AI risk analysis fails).
+- **Graceful Degradation:** Custom Geolocation hooks attempt precise District mapping via `administrative_area_level_2` but smoothly fallback to standard regions if GPS hardware is missing (ideal for desktop demos).
+- **Observability:** Custom logger implementation tracks all state transitions, AI invocations, and UI events, piping errors into a centralized system for easy debugging.
 
 ---
 
@@ -159,6 +215,7 @@ IntelliASHA is purpose-built to maximize the capabilities of the Google AI and C
 - Node.js (v20+)
 - A Firebase Project (with Firestore and Auth enabled)
 - A Google Gemini API Key
+- A Google Maps API Key (for Geolocation parsing)
 
 ### Installation
 
@@ -177,24 +234,19 @@ IntelliASHA is purpose-built to maximize the capabilities of the Google AI and C
    Create a `.env` file in the root directory and add your keys:
    ```env
    VITE_GEMINI_API_KEY=your_gemini_api_key_here
+   VITE_GOOGLE_MAPS_API_KEY=your_maps_key_here
    ```
-   *(Ensure your `firebase.ts` is populated with your Firebase project config).*
 
-4. **Seed Demo Data (For Judging / Demo):**
+4. **Deploy Backend Functions (Crucial for AI Inference):**
    ```bash
    cd functions
    npm install
-   npx tsx src/scripts/seedDemoData.ts
+   npm run build
+   npx firebase deploy --only functions
    cd ..
    ```
 
-5. **Verify Build & Tests (Optional but Recommended):**
-   ```bash
-   npm run test
-   npm run build
-   ```
-
-6. **Start the Development Server:**
+5. **Start the Development Server:**
    ```bash
    npm run dev
    ```

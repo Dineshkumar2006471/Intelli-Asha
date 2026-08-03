@@ -16,7 +16,7 @@
  */
 
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { getFirestore } from 'firebase-admin/firestore';
 import { GoogleGenAI, Type } from '@google/genai';
 import { writeAgentLog } from '../services/agentLogger';
 import * as logger from 'firebase-functions/logger';
@@ -127,14 +127,29 @@ export const calculateIncentive = onCall(
 
     try {
       // Step 1: Fetch visits for the period
+      // HACKATHON FIX: Since the composite index is still building, we fetch all visits
+      // for the worker (which only needs a basic index) and filter/sort in-memory.
       const visitsSnap = await db
         .collection('visits')
         .where('workerId', '==', targetWorkerId)
-        .where('timestamp', '>=', Timestamp.fromDate(startDate))
-        .where('timestamp', '<=', Timestamp.fromDate(endDate))
         .get();
 
-      const visits = visitsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const startMs = startDate.getTime();
+      const endMs = endDate.getTime();
+
+      const visits = visitsSnap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .filter((v: any) => {
+          if (!v.timestamp) return false;
+          // Firestore timestamp has toMillis()
+          const ms = typeof v.timestamp.toMillis === 'function' ? v.timestamp.toMillis() : Date.parse(v.timestamp);
+          return ms >= startMs && ms <= endMs;
+        })
+        .sort((a: any, b: any) => {
+          const ams = typeof a.timestamp?.toMillis === 'function' ? a.timestamp.toMillis() : Date.parse(a.timestamp);
+          const bms = typeof b.timestamp?.toMillis === 'function' ? b.timestamp.toMillis() : Date.parse(b.timestamp);
+          return bms - ams; // DESC
+        });
 
       // Step 2: Get worker profile
       const workerDoc = await db.doc(`workers/${targetWorkerId}`).get();
@@ -190,54 +205,60 @@ export const calculateIncentive = onCall(
       const flaggedVisits = totalVisits - verifiedVisits;
 
       // Step 4: Ghost reporting detection via Gemini
-      const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'asia-south1' });
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: [{
-          role: 'user',
-          parts: [{
-            text: `Analyse this ASHA worker's visit pattern for ghost reporting risk:
+      let geminiResult = {
+        ghostReportingRisk: flaggedVisits / Math.max(totalVisits, 1) > 0.25 ? 'high' : 'low',
+        recommendation: 'Automated assessment unavailable. Manual review recommended.',
+        anomalyPatterns: [] as string[],
+      };
 
-Worker: ${workerName}
-Period: ${periodLabel}
-Total visits: ${totalVisits}
-Verified: ${verifiedVisits}
-Flagged: ${flaggedVisits}
-Flagged rate: ${totalVisits > 0 ? Math.round((flaggedVisits / totalVisits) * 100) : 0}%
-Visit type breakdown: ${JSON.stringify(typeMap)}
-Gross earnings: ₹${totalGross}
-Deductions: ₹${totalDeductions}
-Net: ₹${netDisbursement}
-
-Assess ghost reporting risk and provide supervisor recommendation.`,
+      try {
+        const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'us-central1' });
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: [{
+            role: 'user',
+            parts: [{
+              text: `Analyse this ASHA worker's visit pattern for ghost reporting risk:
+  
+  Worker: ${workerName}
+  Period: ${periodLabel}
+  Total visits: ${totalVisits}
+  Verified: ${verifiedVisits}
+  Flagged: ${flaggedVisits}
+  Flagged rate: ${totalVisits > 0 ? Math.round((flaggedVisits / totalVisits) * 100) : 0}%
+  Visit type breakdown: ${JSON.stringify(typeMap)}
+  Gross earnings: ₹${totalGross}
+  Deductions: ₹${totalDeductions}
+  Net: ₹${netDisbursement}
+  
+  Assess ghost reporting risk and provide supervisor recommendation.`,
+            }],
           }],
-        }],
-        config: {
-          systemInstruction: `You are the IntelliASHA Incentive Agent. Analyse ASHA worker visit patterns for ghost reporting (fake visits to claim incentives).
-
-Risk levels:
-- LOW: flagged rate < 10%, consistent patterns, reasonable visit counts
-- MEDIUM: flagged rate 10-25%, some irregular patterns
-- HIGH: flagged rate > 25%, or suspicious duplicate patterns
-
-Be specific about anomaly patterns. Recommend approval, review, or hold.`,
-          responseMimeType: 'application/json',
-          responseSchema: incentiveSchema,
-          temperature: 0.2,
-        },
-      });
-
-      const geminiResult = response?.text
-        ? JSON.parse(response.text) as {
+          config: {
+            systemInstruction: `You are the IntelliASHA Incentive Agent. Analyse ASHA worker visit patterns for ghost reporting (fake visits to claim incentives).
+  
+  Risk levels:
+  - LOW: flagged rate < 10%, consistent patterns, reasonable visit counts
+  - MEDIUM: flagged rate 10-25%, some irregular patterns
+  - HIGH: flagged rate > 25%, or suspicious duplicate patterns
+  
+  Be specific about anomaly patterns. Recommend approval, review, or hold.`,
+            responseMimeType: 'application/json',
+            responseSchema: incentiveSchema,
+            temperature: 0.2,
+          },
+        });
+        
+        if (response?.text) {
+          geminiResult = JSON.parse(response.text) as {
             ghostReportingRisk: string;
             recommendation: string;
             anomalyPatterns: string[];
-          }
-        : {
-            ghostReportingRisk: flaggedVisits / Math.max(totalVisits, 1) > 0.25 ? 'high' : 'low',
-            recommendation: 'Automated assessment unavailable. Manual review recommended.',
-            anomalyPatterns: [],
           };
+        }
+      } catch (aiError) {
+        logger.warn('[INCENTIVE_AGENT] Vertex AI analysis failed, using fallback metrics', aiError);
+      }
 
       const result: IncentiveResult = {
         workerId: targetWorkerId,

@@ -63,9 +63,10 @@ export interface Visit extends VisitData {
 /** An agent execution log from the agent_logs collection. */
 export interface AgentLog {
   id: string;
-  agent: string;
+  agentName: string;
   action: string;
-  status: 'info' | 'warning' | 'error' | 'success';
+  details?: string;
+  severity: 'info' | 'warning' | 'error' | 'success';
   timestamp: Timestamp | null;
   metadata?: Record<string, unknown>;
 }

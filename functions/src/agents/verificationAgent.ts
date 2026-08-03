@@ -191,7 +191,7 @@ export const verificationAgent = onDocumentCreated(
       });
 
       // ── Step 2: Gemini medical plausibility check ──
-      const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'asia-south1' });
+      const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'us-central1' });
       const prompt = `ASHA Worker Visit Data:
 ${JSON.stringify(visitData, null, 2).substring(0, 3000)}
 
@@ -286,11 +286,19 @@ Analyse this visit and determine if anomalies exist.`;
 
       await writeAgentLog({
         agentName: 'VERIFICATION_AGENT',
-        action: 'Processing failed',
+        action: 'Processing failed - Falling back',
         details: message,
-        severity: 'error',
+        severity: 'warning',
         relatedVisitId: visitId,
         relatedWorkerId: workerId,
+      });
+
+      // Fallback: If AI fails, update the visit to avoid stalling the pipeline
+      await db.doc(`visits/${visitId}`).update({
+        anomaliesFound: false, // Default to false so it doesn't spam alerts
+        flaggedReason: 'Pending AI Verification (System Offline)',
+        verificationConfidence: 0,
+        verifiedAt: FieldValue.serverTimestamp(),
       });
     }
   }

@@ -72,5 +72,13 @@ service cloud.firestore {
       allow read, write: if isAuthenticated()
                          && request.auth.uid == userId;
     }
+
+    // ─── A2A Protocol Tasks ─────────────────────────────────────────────
+    // Tasks created via the Google A2A protocol gateway.
+    // Supervisors may read for observability.
+    match /a2a_protocol_tasks/{taskId} {
+      allow read:  if isSupervisor();
+      allow write: if false; // Cloud Functions (A2A Gateway) only
+    }
   }
 }

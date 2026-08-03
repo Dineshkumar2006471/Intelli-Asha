@@ -5,9 +5,7 @@ import {
   GoogleAuthProvider,
   signOut,
   updateProfile,
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
-  type ConfirmationResult,
+  signInAnonymously,
   type User,
   type UserCredential,
 } from 'firebase/auth';
@@ -19,8 +17,7 @@ const log = createLogger('AUTH');
 
 interface AuthContextValue {
   currentUser: User | null;
-  sendOTP: (phoneNumber: string, recaptchaContainerId: string) => Promise<ConfirmationResult>;
-  verifyOTP: (confirmationResult: ConfirmationResult, otp: string, displayName: string, phoneNumber: string) => Promise<UserCredential>;
+  loginFieldWorker: (displayName: string, phoneNumber: string) => Promise<UserCredential>;
   loginWithGoogle: () => Promise<UserCredential>;
   logout: () => Promise<void>;
 }
@@ -44,29 +41,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  async function sendOTP(phoneNumber: string, recaptchaContainerId: string): Promise<ConfirmationResult> {
-    const recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainerId, {
-      size: 'invisible',
-    });
+  async function loginFieldWorker(displayName: string, phoneNumber: string): Promise<UserCredential> {
+    log.info('Logging in field worker anonymously (OTP-less hackathon mode)', { displayName, phoneNumber });
     
-    // Ensure phone number starts with +91 if not present
-    const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`;
+    // Use Anonymous Auth for the hackathon to avoid SMS limits
+    const result = await signInAnonymously(auth);
     
-    log.info('Sending OTP to', { formattedPhone });
-    return signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier);
-  }
-
-  async function verifyOTP(
-    confirmationResult: ConfirmationResult, 
-    otp: string, 
-    displayName: string, 
-    phoneNumber: string
-  ): Promise<UserCredential> {
-    const result = await confirmationResult.confirm(otp);
+    // Update the anonymous profile with their actual name and phone
     await updateProfile(result.user, { displayName, photoURL: phoneNumber });
 
     // Save worker profile to Firestore so Supervisor can see them
-    // Use Firebase UID as the document key (matches security rules)
     await setDoc(
       doc(db, 'workers', result.user.uid),
       {
@@ -78,7 +62,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       { merge: true }
     );
 
-    log.info('Field worker verified OTP and signed in', { displayName, phoneNumber });
+    log.info('Field worker signed in successfully', { uid: result.user.uid });
     setCurrentUser({ ...result.user, displayName, photoURL: phoneNumber } as User);
     return result;
   }
@@ -105,8 +89,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const value: AuthContextValue = {
     currentUser,
-    sendOTP,
-    verifyOTP,
+    loginFieldWorker,
     loginWithGoogle,
     logout,
   };

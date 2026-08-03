@@ -119,38 +119,44 @@ async function handleCreateAlert(
     recommendation: string;
   };
 
-  // Classify alert severity with Gemini
-  const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'asia-south1' });
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: [{
-      role: 'user',
-      parts: [{
-        text: `Visit anomaly detected:
+  let classification: { severity: string; title: string; message: string; actionRequired: string };
+
+  try {
+    const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'us-central1' });
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [{
+        role: 'user',
+        parts: [{
+          text: `Visit anomaly detected:
 Household: ${householdName}
 Reason: ${flaggedReason}
 Verification recommendation: ${recommendation}
 
 Classify this alert's severity and generate a supervisor-facing message.`,
+        }],
       }],
-    }],
-    config: {
-      systemInstruction: `You are the IntelliASHA Alert Agent. Classify anomaly alerts for PHC supervisors.
+      config: {
+        systemInstruction: `You are the IntelliASHA Alert Agent. Classify anomaly alerts for PHC supervisors.
 HIGH = immediate danger (severe malnutrition, potential fraud, disease outbreak indicator)
 MEDIUM = requires review within 24 hours (data inconsistencies, poor GPS accuracy)
 LOW = informational (minor data gaps, routine follow-up needed)
 
 Write clear, actionable messages. No jargon.`,
-      responseMimeType: 'application/json',
-      responseSchema: alertClassificationSchema,
-      temperature: 0.2,
-    },
-  });
+        responseMimeType: 'application/json',
+        responseSchema: alertClassificationSchema,
+        temperature: 0.2,
+      },
+    });
 
-  const text = response?.text;
-  const classification = text
-    ? JSON.parse(text) as { severity: string; title: string; message: string; actionRequired: string }
-    : { severity: 'medium', title: `Anomaly: ${householdName}`, message: flaggedReason, actionRequired: 'Review visit data' };
+    const text = response?.text;
+    classification = text 
+      ? JSON.parse(text) 
+      : { severity: 'medium', title: `Anomaly: ${householdName}`, message: flaggedReason, actionRequired: 'Review visit data (AI processing failed)' };
+  } catch (err) {
+    logger.error('[ALERT_AGENT] AI Classification failed, using fallback', { error: err instanceof Error ? err.message : 'Unknown error' });
+    classification = { severity: 'medium', title: `Anomaly: ${householdName}`, message: flaggedReason, actionRequired: 'Review visit data (Fallback Mode)' };
+  }
 
   // Create alert document
   const alertRef = await db.collection('alerts').add({
