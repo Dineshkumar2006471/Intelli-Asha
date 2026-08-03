@@ -1,5 +1,5 @@
-import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps';
-import { useState } from 'react';
+import { APIProvider, Map, AdvancedMarker, Pin, useMap } from '@vis.gl/react-google-maps';
+import { useState, useEffect } from 'react';
 
 interface GoogleMapProps {
   markers: Array<{
@@ -9,6 +9,16 @@ interface GoogleMapProps {
     status: 'active' | 'flagged' | 'inactive';
     title?: string;
   }>;
+}
+
+function MapUpdater({ center }: { center: { lat: number; lng: number } }) {
+  const map = useMap();
+  useEffect(() => {
+    if (map && center) {
+      map.panTo(center);
+    }
+  }, [map, center.lat, center.lng]);
+  return null;
 }
 
 export default function GoogleMap({ markers }: GoogleMapProps) {
@@ -51,6 +61,7 @@ export default function GoogleMap({ markers }: GoogleMapProps) {
           zoomControl={true}
           className="w-full h-full"
         >
+          <MapUpdater center={center} />
           {markers.map((marker) => (
             <AdvancedMarker
               key={marker.id}

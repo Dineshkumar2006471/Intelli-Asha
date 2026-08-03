@@ -51,7 +51,23 @@ export async function generateFullDashboardData(
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
-      throw new Error(`Analytics data not found for ${locationName}. Backend processing may be delayed.`);
+      log.warn(`Analytics data not found for ${locationName}. Returning empty dashboard state.`);
+      return {
+        aiBrief: {
+          anomaly: "No data available yet.",
+          recommendation: "Please wait for field workers to submit their first visits.",
+          alert: "Awaiting initial data sync."
+        },
+        metrics: {
+          total_ashas: 0,
+          total_beneficiaries: 0,
+          surveys_completed: 0,
+          high_risk_cases: 0,
+          data_quality_score: 100,
+          disbursement_ready: 0
+        },
+        phcs: []
+      };
     }
 
     log.info('Analytics data retrieved from Firestore');
@@ -104,7 +120,22 @@ export async function calculateWorkerIncentive(
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
-      throw new Error('Incentive calculation not found for this worker.');
+      log.warn(`Incentive calculation not found for this worker. Returning empty state.`);
+      return {
+        workerId,
+        workerName: 'Pending',
+        period: 'Current',
+        breakdown: [],
+        totalGross: 0,
+        totalDeductions: 0,
+        netDisbursement: 0,
+        totalVisits: 0,
+        verifiedVisits: 0,
+        flaggedVisits: 0,
+        ghostReportingRisk: 'None',
+        recommendation: 'Waiting for visits to be logged.',
+        anomalyPatterns: []
+      };
     }
 
     return docSnap.data() as IncentiveResult;

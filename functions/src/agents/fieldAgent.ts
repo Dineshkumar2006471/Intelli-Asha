@@ -77,7 +77,8 @@ RULES:
    - Immunisation is overdue
    - Any danger signs are mentioned
 7. NEVER fabricate data that isn't in the transcription.
-8. Respond ONLY with valid JSON matching the output schema.`;
+8. Respond ONLY with valid JSON matching the output schema.
+9. CRITICAL: ALL extracted string values (like names, immunisations) MUST be translated to English. NEVER output Hindi, Telugu, or regional text in the JSON fields.`;
 
 // ─── Input sanitisation ─────────────────────────────────────────────────
 

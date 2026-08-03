@@ -5,8 +5,7 @@ import {
   GoogleAuthProvider,
   signOut,
   updateProfile,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
+  signInAnonymously,
   linkWithPopup,
   type User,
   type UserCredential,
@@ -46,21 +45,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
 
   async function loginFieldWorker(displayName: string, phoneNumber: string): Promise<UserCredential> {
-    log.info('Logging in field worker (Deterministic OTP-less hackathon mode)', { displayName, phoneNumber });
-    
-    // Use a deterministic email/password so logout -> login keeps the exact same UID and data
-    const email = `${phoneNumber}@demo.intelliasha.local`;
-    const password = `Hackathon2026!`;
+    log.info('Logging in field worker (Anonymous mode)', { displayName, phoneNumber });
     
     let result: UserCredential;
     try {
-      result = await signInWithEmailAndPassword(auth, email, password);
+      result = await signInAnonymously(auth);
     } catch (err: any) {
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-        result = await createUserWithEmailAndPassword(auth, email, password);
-      } else {
-        throw err;
-      }
+      log.error('Anonymous auth failed. Please ensure Anonymous sign-in is enabled in Firebase Console.', err);
+      throw err;
     }
     
     // Update the profile with their actual name and phone

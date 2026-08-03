@@ -21,13 +21,13 @@ import { initializeApp } from 'firebase-admin/app';
 // Initialise Firebase Admin SDK (must be called before any agent imports)
 initializeApp();
 
-// ─── Agent Exports ──────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// 1. Agent Cloud Functions
+// ---------------------------------------------------------------------------
 
-// Agent 1: Field Agent — Voice-to-structured-data processing
 export { processVisitVoiceNote } from './agents/fieldAgent';
-
-// Agent 2: Verification Agent — Autonomous visit verification
 export { verificationAgent } from './agents/verificationAgent';
+export { calculateIncentive } from './agents/incentiveAgent';
 
 // Agent 3: Alert Agent — A2A task handler + scheduled zero-visit detection
 export { alertAgent, zeroVisitZoneDetection } from './agents/alertAgent';
@@ -35,8 +35,6 @@ export { alertAgent, zeroVisitZoneDetection } from './agents/alertAgent';
 // Agent 4: Analytics Agent — District health intelligence
 export { updateAnalyticsOnVisit } from './agents/analyticsAgent';
 
-// Agent 5: Incentive Agent — NHM-compliant TBI calculation
-export { updateIncentiveOnVisit } from './agents/incentiveAgent';
 
 // Agent 6: Triage Agent — AI-powered visit prioritization
 export { updateSmartRouteOnVisit } from './agents/triageAgent';

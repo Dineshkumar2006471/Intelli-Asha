@@ -63,7 +63,7 @@ const SupervisorReports = () => {
           </button>
         </header>
         
-        <div className="px-4 md:px-0">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 px-4 md:px-0 mb-8">
           <div className="bg-surface border border-border-default rounded-lg p-5 flex flex-col gap-1 shadow-sm">
             <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Verified Today</span>
             <span className="font-display-kpi text-display-kpi text-on-surface font-bold">{allVisits.length}</span>
@@ -86,17 +86,18 @@ const SupervisorReports = () => {
           </div>
         </div>
 
-        {/* Tables/Lists Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Flagged Visits Table */}
+        {/* Tables Grid - 50/50 Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          
+          {/* Left Side: Flagged Visits Table (50%) */}
           <div className="bg-surface border border-border-default rounded-lg shadow-sm overflow-hidden flex flex-col">
             <div className="p-5 border-b border-border-default bg-surface-container-lowest">
               <h2 className="font-title-md text-title-md text-on-surface font-semibold">Flagged Visits</h2>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto flex-1 max-h-[400px] overflow-y-auto custom-scrollbar">
               <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-surface-container-low border-b border-border-default">
+                <thead className="sticky top-0 z-10 bg-surface-container-low border-b border-border-default">
+                  <tr>
                     <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Household</th>
                     <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Issue</th>
                     <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Action</th>
@@ -123,15 +124,15 @@ const SupervisorReports = () => {
             </div>
           </div>
 
-          {/* Recent Visits (Verified) */}
+          {/* Right Side: Recent Visits Table (50%) */}
           <div className="bg-surface border border-border-default rounded-lg shadow-sm overflow-hidden flex flex-col">
             <div className="p-5 border-b border-border-default bg-surface-container-lowest">
               <h2 className="font-title-md text-title-md text-on-surface font-semibold">Recent Verified Visits</h2>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto flex-1 max-h-[400px] overflow-y-auto custom-scrollbar">
               <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-surface-container-low border-b border-border-default">
+                <thead className="sticky top-0 z-10 bg-surface-container-low border-b border-border-default">
+                  <tr>
                     <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Household</th>
                     <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Time</th>
                     <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Status</th>
@@ -141,7 +142,7 @@ const SupervisorReports = () => {
                   {allVisits.filter(v => !v.anomaliesFound).length === 0 ? (
                     <tr><td colSpan={3} className="p-4 text-center text-on-surface-variant font-body-base text-body-base">No recent verified visits.</td></tr>
                   ) : (
-                    allVisits.filter(v => !v.anomaliesFound).slice(0, 5).map((visit) => (
+                    allVisits.filter(v => !v.anomaliesFound).slice(0, 50).map((visit) => (
                       <tr key={visit.id} className="border-b border-border-default hover:bg-surface-container-lowest transition-colors">
                         <td className="p-4 font-body-base text-body-base text-on-surface">{visit.householdName}</td>
                         <td className="p-4 font-body-base text-body-base text-on-surface-variant">
@@ -159,37 +160,50 @@ const SupervisorReports = () => {
           </div>
         </div>
 
-        {/* Live Agent Activity Terminal */}
-        <div className="mt-8 bg-[#0D1117] border border-border-default rounded-lg shadow-sm overflow-hidden flex flex-col mb-8">
-          <div className="p-3 border-b border-[#30363D] bg-[#161B22] flex items-center justify-between">
+        {/* Full-width Agent Activity Terminal Below Tables */}
+        <div className="w-full bg-[#0D1117] border border-[#30363D] rounded-lg shadow-sm overflow-hidden flex flex-col h-[500px] mb-8">
+          <div className="p-3 border-b border-[#30363D] bg-[#161B22] flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-[#8B949E] text-[16px]" style={{fontVariationSettings: "'FILL' 0"}}>terminal</span>
               <h2 className="font-data-mono text-sm text-[#C9D1D9]">Agentic Orchestration Log (Live)</h2>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-verified-green animate-pulse"></span>
-              <span className="font-data-mono text-xs text-[#8B949E]">A2A Network Active</span>
+              <span className="font-data-mono text-[10px] text-[#8B949E]">A2A Network Active</span>
             </div>
           </div>
-          <div className="p-4 font-data-mono text-sm h-48 overflow-y-auto space-y-2 flex flex-col justify-start">
+          <div className="p-4 font-data-mono text-xs overflow-y-auto space-y-3 flex-1 flex flex-col justify-start custom-scrollbar">
             {agentLogs.length === 0 ? (
               <p className="text-[#8B949E] animate-pulse">Waiting for agent activity...</p>
             ) : (
-              agentLogs.map((log) => (
-                <div key={log.id} className={`${getLogColor(log.severity)} animate-fade-in flex flex-col gap-1`}>
-                  <div className="flex gap-3">
-                    <span className="text-[#8B949E] shrink-0">
-                      {log.timestamp ? new Date(log.timestamp.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) : '...'}
-                    </span>
-                    <span>[{(log.agentName || 'SYSTEM').toUpperCase()}] {log.action}</span>
-                  </div>
-                  {log.details && (
-                    <div className="text-xs text-[#8B949E] ml-16 bg-surface-container-low p-2 rounded border border-border-default whitespace-pre-wrap">
-                      {log.details}
+              agentLogs
+                .filter(log => !log.details?.includes('Lightning dunning decision'))
+                .map((log) => {
+                  let prettyAction = log.action;
+                  let prettyDetails = log.details || '';
+                  
+                  const uidRegex = /2u8ILxiXLWdXJiXWnrn9rqf8e9g1/g;
+                  prettyAction = prettyAction.replace(uidRegex, 'kaveri');
+                  prettyDetails = prettyDetails.replace(uidRegex, 'kaveri');
+
+                  return (
+                    <div key={log.id} className={`${getLogColor(log.severity)} animate-fade-in flex flex-col gap-1 border-b border-[#30363D]/30 pb-2`}>
+                      <div className="flex gap-2 items-start">
+                        <span className="text-[#8B949E] shrink-0 text-[10px] mt-[3px]">
+                          {log.timestamp ? new Date(log.timestamp.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) : '...'}
+                        </span>
+                        <span className="leading-snug break-words">
+                          <span className="font-bold">[{ (log.agentName || 'SYSTEM').toUpperCase() }]</span> {prettyAction}
+                        </span>
+                      </div>
+                      {prettyDetails && (
+                        <div className="text-[10px] text-[#A5D6FF] ml-[68px] bg-[#161B22] p-2 rounded border border-[#30363D] whitespace-pre-wrap break-words">
+                          {prettyDetails}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              ))
+                  );
+                })
             )}
             <div ref={terminalEndRef} />
           </div>

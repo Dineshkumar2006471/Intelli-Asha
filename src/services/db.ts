@@ -224,18 +224,26 @@ export async function saveFCMToken(userId: string, token: string): Promise<void>
 
 export async function uploadAudioLog(audioBlob: Blob, userId: string): Promise<string> {
   try {
-    const { getStorage, ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-    const storage = getStorage(db.app);
-    const audioRef = ref(storage, `audio_logs/${userId}/${Date.now()}.webm`);
+    log.info('Converting audio to Base64 for Firestore storage', { userId, size: audioBlob.size });
     
-    log.info('Starting audio upload to Firebase Storage', { userId, size: audioBlob.size });
-    const snapshot = await uploadBytes(audioRef, audioBlob);
-    const url = await getDownloadURL(snapshot.ref);
-    
-    log.info('Audio upload successful', { url });
-    return url;
+    // Enterprise Offline-First Solution: Store as Base64 Data URL directly in Firestore
+    // This bypasses Firebase Storage completely, eliminating CORS issues and ensuring 
+    // the audio is fully available offline via Firestore's persistent cache.
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(audioBlob);
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          log.info('Audio converted to Data URL successfully');
+          resolve(reader.result);
+        } else {
+          reject(new Error('Failed to convert audio to base64 string'));
+        }
+      };
+      reader.onerror = reject;
+    });
   } catch (error) {
-    log.error('Failed to upload audio log', error);
+    log.error('Failed to process audio log', error);
     throw error;
   }
 }
