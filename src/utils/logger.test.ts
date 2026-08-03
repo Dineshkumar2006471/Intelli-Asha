@@ -16,7 +16,7 @@ describe('Logger', () => {
     log.info('Hello world');
     
     expect(consoleSpy).toHaveBeenCalled();
-    const logMessage = consoleSpy.mock.calls[0][0] as string;
+    const logMessage = consoleSpy.mock.calls[0]?.[0] as string;
     expect(logMessage).toContain('[INFO]');
     expect(logMessage).toContain('[TEST_TAG]');
     expect(logMessage).toContain('Hello world');
