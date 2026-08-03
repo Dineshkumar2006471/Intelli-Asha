@@ -17,13 +17,9 @@
  */
 
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { defineSecret } from 'firebase-functions/params';
 import { GoogleGenAI, Type } from '@google/genai';
 import { writeAgentLog } from '../services/agentLogger';
 import * as logger from 'firebase-functions/logger';
-
-// ─── Secret Manager ─────────────────────────────────────────────────────
-const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
 // ─── Gemini Schema ──────────────────────────────────────────────────────
 
@@ -96,7 +92,6 @@ function sanitiseInput(raw: string): string {
 
 export const processVoiceNote = onCall(
   {
-    secrets: [geminiApiKey],
     region: 'asia-south1',
     memory: '512MiB',
     timeoutSeconds: 60,
@@ -130,7 +125,7 @@ export const processVoiceNote = onCall(
     });
 
     try {
-      const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
+      const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'asia-south1' });
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: [

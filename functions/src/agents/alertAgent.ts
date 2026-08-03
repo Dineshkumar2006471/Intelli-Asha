@@ -16,14 +16,11 @@
 
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { defineSecret } from 'firebase-functions/params';
 import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
 import { GoogleGenAI, Type } from '@google/genai';
 import { writeAgentLog } from '../services/agentLogger';
 import * as logger from 'firebase-functions/logger';
-
-const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
 // ─── Alert Classification Schema ────────────────────────────────────────
 
@@ -46,7 +43,6 @@ const alertClassificationSchema = {
 export const alertAgent = onDocumentCreated(
   {
     document: 'a2a_tasks/{taskId}',
-    secrets: [geminiApiKey],
     region: 'asia-south1',
     memory: '256MiB',
     timeoutSeconds: 30,
@@ -124,7 +120,7 @@ async function handleCreateAlert(
   };
 
   // Classify alert severity with Gemini
-  const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
+  const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'asia-south1' });
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash',
     contents: [{
@@ -171,11 +167,12 @@ Write clear, actionable messages. No jargon.`,
     sourceTaskId: taskId,
   });
 
+  const severity = classification.severity || 'medium';
   await writeAgentLog({
     agentName: 'ALERT_AGENT',
-    action: `Alert created — ${classification.severity.toUpperCase()}`,
+    action: `Alert created — ${severity.toUpperCase()}`,
     details: `${classification.title}: ${classification.message}`,
-    severity: classification.severity === 'high' ? 'warning' : 'info',
+    severity: severity === 'high' ? 'warning' : 'info',
     relatedVisitId: visitId,
     relatedWorkerId: workerId,
   });
@@ -247,7 +244,6 @@ export const zeroVisitZoneDetection = onSchedule(
   {
     schedule: 'every 6 hours',
     region: 'asia-south1',
-    secrets: [geminiApiKey],
     memory: '256MiB',
     timeoutSeconds: 120,
   },

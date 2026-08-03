@@ -15,13 +15,9 @@
  */
 
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { defineSecret } from 'firebase-functions/params';
 import { GoogleGenAI, Type } from '@google/genai';
 import { writeAgentLog } from '../services/agentLogger';
 import * as logger from 'firebase-functions/logger';
-
-// ─── Secret Manager ─────────────────────────────────────────────────────
-const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
 // ─── Gemini Schema ──────────────────────────────────────────────────────
 
@@ -52,7 +48,6 @@ export const generateSmartRoute = onCall(
     region: 'asia-south1',
     memory: '512MiB',
     timeoutSeconds: 30,
-    secrets: [geminiApiKey],
     enforceAppCheck: false,
   },
   async (request) => {
@@ -80,7 +75,7 @@ export const generateSmartRoute = onCall(
     });
 
     try {
-      const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
+      const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'asia-south1' });
 
       const prompt = `You are the IntelliASHA Triage Agent. Based on these past visit records for an ASHA worker, generate a prioritized visit list for today.
 

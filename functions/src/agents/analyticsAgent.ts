@@ -15,13 +15,12 @@
  */
 
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { defineSecret } from 'firebase-functions/params';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { GoogleGenAI, Type } from '@google/genai';
 import { writeAgentLog } from '../services/agentLogger';
 import * as logger from 'firebase-functions/logger';
 
-const geminiApiKey = defineSecret('GEMINI_API_KEY');
+// Switched to Vertex AI (no API key needed)
 
 // ─── Output Schemas ─────────────────────────────────────────────────────
 
@@ -129,7 +128,6 @@ async function aggregateFirestoreData(): Promise<LiveMetrics> {
 
 export const generateAnalytics = onCall(
   {
-    secrets: [geminiApiKey],
     region: 'asia-south1',
     memory: '512MiB',
     timeoutSeconds: 120,
@@ -163,7 +161,7 @@ export const generateAnalytics = onCall(
       });
 
       // Step 2: Call Gemini with real data + Google Search grounding
-      const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
+      const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'asia-south1' });
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: [{
