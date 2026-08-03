@@ -47,4 +47,4 @@ export { transcribeAudio } from './services/speechToText';
 export { syncVisitToBigQuery } from './services/syncToBigQuery';
 
 // A2A Protocol Gateway (Google Agent-to-Agent Specification)
-export { a2aGateway } from './services/a2aGateway';
+

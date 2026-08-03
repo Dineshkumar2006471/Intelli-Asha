@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useGeolocation } from '../useGeolocation';
-import { httpsCallable } from 'firebase/functions';
+
 
 vi.mock('firebase/functions', async (importOriginal) => {
   const actual = await importOriginal<typeof import('firebase/functions')>();
@@ -14,7 +14,6 @@ vi.mock('firebase/functions', async (importOriginal) => {
 
 describe('useGeolocation hook', () => {
   const mockGetCurrentPosition = vi.fn();
-  const mockHttpsCallable = vi.mocked(httpsCallable);
 
   beforeEach(() => {
     vi.resetAllMocks();
