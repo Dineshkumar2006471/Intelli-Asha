@@ -44,6 +44,7 @@ export async function saveVisit(
   }
 }
 
+
 // ---------------------------------------------------------------------------
 // Reads
 // ---------------------------------------------------------------------------
@@ -198,15 +199,8 @@ export async function fetchDHOAnalytics(): Promise<DashboardMetrics> {
     log.info('DHO analytics fetched from BigQuery');
     return result.data;
   } catch (error) {
-    log.error('BigQuery analytics unavailable — using fallback', error);
-    return {
-      total_ashas: 1245,
-      total_beneficiaries: 45200,
-      surveys_completed: 12800,
-      high_risk_cases: 342,
-      data_quality_score: 94,
-      disbursement_ready: 4200000,
-    };
+    log.error('BigQuery analytics unavailable', error);
+    throw error;
   }
 }
 
@@ -228,15 +222,20 @@ export async function saveFCMToken(userId: string, token: string): Promise<void>
 // Cloud Storage (Audio Logs)
 // ---------------------------------------------------------------------------
 
-export async function uploadAudioLog(audioBlob: Blob, userId: string): Promise<string | null> {
-  // HACKATHON FIX: Since the Firebase Storage bucket is not provisioned (kavach-hackathon-500511.firebasestorage.app),
-  // uploading the Blob triggers a 404 Preflight / CORS error in the browser console.
-  // We mock the upload here so the app flows smoothly without throwing scary red console errors.
-  log.info('Mocking audio log upload to avoid missing bucket CORS errors', { userId, size: audioBlob.size });
-  
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  const dummyUrl = `https://storage.googleapis.com/mock-audio-bucket/audio_logs/${userId}/${Date.now()}.webm`;
-  return dummyUrl;
+export async function uploadAudioLog(audioBlob: Blob, userId: string): Promise<string> {
+  try {
+    const { getStorage, ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+    const storage = getStorage(db.app);
+    const audioRef = ref(storage, `audio_logs/${userId}/${Date.now()}.webm`);
+    
+    log.info('Starting audio upload to Firebase Storage', { userId, size: audioBlob.size });
+    const snapshot = await uploadBytes(audioRef, audioBlob);
+    const url = await getDownloadURL(snapshot.ref);
+    
+    log.info('Audio upload successful', { url });
+    return url;
+  } catch (error) {
+    log.error('Failed to upload audio log', error);
+    throw error;
+  }
 }

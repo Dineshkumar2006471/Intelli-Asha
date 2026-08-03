@@ -24,7 +24,7 @@ initializeApp();
 // ─── Agent Exports ──────────────────────────────────────────────────────
 
 // Agent 1: Field Agent — Voice-to-structured-data processing
-export { processVoiceNote } from './agents/fieldAgent';
+export { processVisitVoiceNote } from './agents/fieldAgent';
 
 // Agent 2: Verification Agent — Autonomous visit verification
 export { verificationAgent } from './agents/verificationAgent';
@@ -33,13 +33,13 @@ export { verificationAgent } from './agents/verificationAgent';
 export { alertAgent, zeroVisitZoneDetection } from './agents/alertAgent';
 
 // Agent 4: Analytics Agent — District health intelligence
-export { generateAnalytics } from './agents/analyticsAgent';
+export { updateAnalyticsOnVisit } from './agents/analyticsAgent';
 
 // Agent 5: Incentive Agent — NHM-compliant TBI calculation
-export { calculateIncentive } from './agents/incentiveAgent';
+export { updateIncentiveOnVisit } from './agents/incentiveAgent';
 
 // Agent 6: Triage Agent — AI-powered visit prioritization
-export { generateSmartRoute } from './agents/triageAgent';
+export { updateSmartRouteOnVisit } from './agents/triageAgent';
 
 // Services
 export { geocode } from './services/geocode';

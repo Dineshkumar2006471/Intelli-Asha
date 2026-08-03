@@ -90,19 +90,20 @@ function sanitiseInput(raw: string): string {
 
 // ─── Callable Cloud Function ────────────────────────────────────────────
 
-export const processVoiceNote = onCall(
+export const processVisitVoiceNote = onCall(
   {
     region: 'asia-south1',
     memory: '512MiB',
     timeoutSeconds: 60,
   },
   async (request) => {
-    // Auth check
+    // 1. Authenticate Request
     if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Authentication required.');
+      throw new HttpsError('unauthenticated', 'User must be logged in.');
     }
 
-    const { transcription } = request.data as { transcription?: string };
+    const { text } = request.data;
+    const transcription = text;
 
     if (!transcription || typeof transcription !== 'string' || transcription.trim().length === 0) {
       throw new HttpsError('invalid-argument', 'Transcription text is required.');
@@ -110,7 +111,7 @@ export const processVoiceNote = onCall(
 
     const sanitised = sanitiseInput(transcription);
 
-    logger.info('[FIELD_AGENT] Processing voice note', {
+    logger.info('[FIELD_AGENT] Processing voice note (onCall)', {
       uid: request.auth.uid,
       inputLength: sanitised.length,
     });
@@ -144,14 +145,14 @@ export const processVoiceNote = onCall(
 
       const text = response?.text;
       if (!text) {
-        throw new HttpsError('internal', 'Gemini returned empty response.');
+        throw new Error('Gemini returned empty response.');
       }
 
       const parsed = JSON.parse(text);
 
       // Validate shape
       if (!parsed.householdName || !parsed.status) {
-        throw new HttpsError('internal', 'Gemini response missing required fields.');
+        throw new Error('Gemini response missing required fields.');
       }
 
       // Log success
@@ -169,39 +170,24 @@ export const processVoiceNote = onCall(
         visitType: parsed.visitType,
       });
 
-      return { success: true, data: parsed };
+      // Return structured data directly to the frontend for preview
+      return {
+        success: true,
+        data: parsed
+      };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
-      logger.error('[FIELD_AGENT] Processing failed, using IRONCLAD FALLBACK', { error: message });
+      logger.error('[FIELD_AGENT] Processing failed', { error: message });
 
       await writeAgentLog({
         agentName: 'FIELD_AGENT',
-        action: 'Processing failed - Using Fallback',
+        action: 'Processing failed',
         details: message,
-        severity: 'warning',
+        severity: 'error',
         relatedWorkerId: request.auth.uid,
       });
 
-      // Ironclad Fallback: Ensure visit is saved even if AI fails
-      const fallbackData = {
-        householdName: 'Unknown Household (Fallback)',
-        childName: 'Unknown Child',
-        childAge: 'Unknown',
-        weight: 'Unknown',
-        status: 'Unknown',
-        visitType: 'General Visit',
-        immunisation: 'Not mentioned',
-        followUpNeeded: true,
-        followUpReason: 'Agent processing failed. Manual review required.',
-        detectedLanguage: 'other'
-      };
-
-      // Basic heuristic
-      const lower = sanitised.toLowerCase();
-      if (lower.includes('vaccine') || lower.includes('immunisation')) fallbackData.visitType = 'Immunization';
-      else if (lower.includes('pregnant') || lower.includes('anc')) fallbackData.visitType = 'Antenatal Care';
-
-      return { success: true, data: fallbackData, isFallback: true };
+      throw new HttpsError('internal', message);
     }
   }
 );

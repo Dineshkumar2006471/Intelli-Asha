@@ -14,8 +14,11 @@ const Login = () => {
 
   useEffect(() => {
     if (currentUser) {
-      if (currentUser.isAnonymous) navigate('/app/field');
-      else navigate('/dashboard/supervisor');
+      if (currentUser.email?.endsWith('@demo.intelliasha.local')) {
+        navigate('/app/field');
+      } else {
+        navigate('/dashboard/supervisor');
+      }
     }
   }, [currentUser, navigate]);
 

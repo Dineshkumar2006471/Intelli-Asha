@@ -7,6 +7,7 @@ import {
   updateProfile,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  linkWithPopup,
   type User,
   type UserCredential,
 } from 'firebase/auth';
@@ -20,12 +21,14 @@ interface AuthContextValue {
   currentUser: User | null;
   loginFieldWorker: (displayName: string, phoneNumber: string) => Promise<UserCredential>;
   loginWithGoogle: () => Promise<UserCredential>;
+  linkGoogleAccount: () => Promise<UserCredential>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 /** Hook to access the authentication context. Throws if used outside AuthProvider. */
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext);
   if (!context) {
@@ -87,6 +90,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return signInWithPopup(auth, provider);
   }
 
+  async function linkGoogleAccount(): Promise<UserCredential> {
+    if (!auth.currentUser) throw new Error('No user is currently signed in');
+    const provider = new GoogleAuthProvider();
+    log.info('Linking Google account');
+    return linkWithPopup(auth.currentUser, provider);
+  }
+
   function logout(): Promise<void> {
     log.info('User signed out');
     return signOut(auth);
@@ -104,6 +114,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     currentUser,
     loginFieldWorker,
     loginWithGoogle,
+    linkGoogleAccount,
     logout,
   };
 

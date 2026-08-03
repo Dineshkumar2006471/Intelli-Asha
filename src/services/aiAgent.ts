@@ -11,118 +11,54 @@
  *  • calculateIncentive — Incentive Agent (TBI calculation)
  */
 
-import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions';
-import { app } from '../firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
+import { db, functions } from '../firebase';
 import { createLogger } from '../utils/logger';
-import type { VisitData, DashboardData } from '../types';
+import type { DashboardData } from '../types';
 
 const log = createLogger('AI_AGENT_SERVICE');
 
-// ─── Cloud Functions Instance ───────────────────────────────────────────
+// ─── Field Agent: Voice Transcription ────────────────────────────────────
 
-const functions = getFunctions(app, 'asia-south1');
-
-// Connect to emulator in development
-if (import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === 'true') {
-  connectFunctionsEmulator(functions, 'localhost', 5001);
-}
-
-// ─── Field Agent: Voice → Structured Data ───────────────────────────────
-
-/**
- * Process an ASHA worker's voice transcription into structured visit data.
- * Calls the server-side Field Agent Cloud Function.
- *
- * @param transcription - Raw text from speech recognition
- * @returns Structured visit data extracted by Gemini
- */
 export async function processVisitVoiceNote(
   transcription: string
-): Promise<VisitData> {
-  log.info('Sending transcription to Field Agent', { length: transcription.length });
-
-  const processVoiceNote = httpsCallable<
-    { transcription: string },
-    { success: boolean; data: VisitData }
-  >(functions, 'processVoiceNote');
-
+): Promise<any> {
+  log.info('Calling processVisitVoiceNote (Field Agent)', { length: transcription.length });
+  
   try {
-    const result = await processVoiceNote({ transcription });
-
-    if (!result.data.success || !result.data.data) {
-      throw new Error('Field Agent returned unsuccessful response');
-    }
-
-    log.info('Field Agent extraction complete', {
-      household: result.data.data.householdName,
-      status: result.data.data.status,
-    });
-
+    const processVoiceNoteFn = httpsCallable<{ text: string }, any>(
+      functions,
+      'processVisitVoiceNote'
+    );
+    
+    const result = await processVoiceNoteFn({ text: transcription });
+    log.info('Field Agent response received', result.data);
     return result.data.data;
   } catch (error) {
-    log.error('Field Agent call failed', error);
-
-    // Return a fallback structure so the UI doesn't break
-    return {
-      householdName: 'Processing Error',
-      childName: 'Unknown',
-      childAge: 'Unknown',
-      weight: 'Unknown',
-      status: 'Unknown',
-      visitType: 'General Visit',
-      immunisation: 'Unknown',
-    };
+    log.error('Field Agent processing failed', error);
+    throw error;
   }
 }
 
-// ─── Analytics Agent: Dashboard Data ────────────────────────────────────
-
-/**
- * Generate full dashboard data for the DHO Analytics view.
- * Calls the server-side Analytics Agent Cloud Function.
- *
- * @param locationName - District or region name
- * @returns Dashboard payload with AI brief, metrics, and PHC breakdown
- */
 export async function generateFullDashboardData(
   locationName: string
 ): Promise<DashboardData> {
-  log.info('Requesting analytics from Analytics Agent', { location: locationName });
-
-  const generateAnalytics = httpsCallable<
-    { locationName: string },
-    { success: boolean; data: DashboardData }
-  >(functions, 'generateAnalytics');
+  log.info('Fetching analytics from Firestore', { location: locationName });
 
   try {
-    const result = await generateAnalytics({ locationName });
+    const docRef = doc(db, 'analytics', locationName);
+    const docSnap = await getDoc(docRef);
 
-    if (!result.data.success || !result.data.data) {
-      throw new Error('Analytics Agent returned unsuccessful response');
+    if (!docSnap.exists()) {
+      throw new Error(`Analytics data not found for ${locationName}. Backend processing may be delayed.`);
     }
 
-    log.info('Analytics Agent response received');
-    return result.data.data;
+    log.info('Analytics data retrieved from Firestore');
+    return docSnap.data() as DashboardData;
   } catch (error) {
-    log.error('Analytics Agent call failed — using fallback', error);
-
-    // Fallback data so the dashboard still renders
-    return {
-      aiBrief: {
-        anomaly: 'Anomaly Detection: Unable to reach Analytics Agent. Showing cached data.',
-        recommendation: 'Recommendation: Please refresh once connectivity is restored.',
-        alert: 'Alert: Analytics service temporarily unavailable.',
-      },
-      metrics: {
-        total_ashas: 0,
-        total_beneficiaries: 0,
-        surveys_completed: 0,
-        high_risk_cases: 0,
-        data_quality_score: 0,
-        disbursement_ready: 0,
-      },
-      phcs: [],
-    };
+    log.error('Failed to fetch analytics data from Firestore', error);
+    throw error;
   }
 }
 
@@ -153,32 +89,27 @@ export interface IncentiveResult {
   anomalyPatterns: string[];
 }
 
-/**
- * Calculate NHM-compliant TBI disbursement for an ASHA worker.
- * Calls the server-side Incentive Agent Cloud Function.
- */
 export async function calculateWorkerIncentive(
   workerId?: string,
-  periodStart?: string,
-  periodEnd?: string
+  _periodStart?: string,
+  _periodEnd?: string
 ): Promise<IncentiveResult> {
-  log.info('Requesting incentive calculation from Incentive Agent', { workerId });
-
-  const calculateIncentive = httpsCallable<
-    { workerId?: string; periodStart?: string; periodEnd?: string },
-    { success: boolean; data: IncentiveResult }
-  >(functions, 'calculateIncentive');
+  if (!workerId) throw new Error('workerId is required');
+  log.info('Fetching incentive calculation from Firestore', { workerId });
 
   try {
-    const result = await calculateIncentive({ workerId, periodStart, periodEnd });
+    // In a real app, periodStart/periodEnd would be used to fetch the right month's doc
+    // e.g., 'workers/{workerId}/incentives/2026-08'
+    const docRef = doc(db, 'workers', workerId, 'incentives', 'latest');
+    const docSnap = await getDoc(docRef);
 
-    if (!result.data.success || !result.data.data) {
-      throw new Error('Incentive Agent returned unsuccessful response');
+    if (!docSnap.exists()) {
+      throw new Error('Incentive calculation not found for this worker.');
     }
 
-    return result.data.data;
+    return docSnap.data() as IncentiveResult;
   } catch (error) {
-    log.error('Incentive Agent call failed', error);
+    log.error('Failed to fetch incentive data', error);
     throw error;
   }
 }

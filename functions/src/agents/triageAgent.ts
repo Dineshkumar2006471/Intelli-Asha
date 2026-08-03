@@ -14,7 +14,8 @@
  * Google Services: Gemini 2.5 Flash, Firebase Cloud Functions, Secret Manager
  */
 
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+import { getFirestore } from 'firebase-admin/firestore';
 import { GoogleGenAI, Type } from '@google/genai';
 import { writeAgentLog } from '../services/agentLogger';
 import * as logger from 'firebase-functions/logger';
@@ -43,34 +44,49 @@ const triageOutputSchema = {
 
 // ─── Cloud Function ─────────────────────────────────────────────────────
 
-export const generateSmartRoute = onCall(
+export const updateSmartRouteOnVisit = onDocumentWritten(
   {
+    document: 'visits/{visitId}',
     region: 'asia-south1',
     memory: '512MiB',
     timeoutSeconds: 30,
-    enforceAppCheck: false,
   },
-  async (request) => {
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Authentication required.');
-    }
+  async (event) => {
+    const snap = event.data?.after?.exists ? event.data.after : event.data?.before;
+    if (!snap || !snap.exists) return;
 
-    const { visits } = request.data as {
-      visits: Array<{
-        household: string;
-        status: string;
-        visitType: string;
-        date: string;
-        flagged: boolean;
-      }>;
-    };
+    const workerId = snap.data()?.workerId;
+    if (!workerId) return;
 
-    if (!visits || !Array.isArray(visits) || visits.length === 0) {
-      return { success: true, data: [] };
-    }
+    const db = getFirestore();
+
+    // Fetch all visits for this worker
+    const visitsSnap = await db.collection('visits').where('workerId', '==', workerId).get();
+    
+    // Group by household to get the latest status
+    const households = new Map<string, any>();
+    visitsSnap.docs.forEach(doc => {
+      const data = doc.data();
+      const name = data.householdName || 'Unknown';
+      
+      if (!households.has(name) || (data.timestamp?.toMillis?.() > households.get(name).timestamp)) {
+        households.set(name, {
+          household: name,
+          status: data.status,
+          visitType: data.visitType,
+          date: data.timestamp?.toDate?.()?.toISOString() || new Date().toISOString(),
+          flagged: !!data.anomaliesFound,
+          timestamp: data.timestamp?.toMillis?.() || Date.now()
+        });
+      }
+    });
+
+    const visits = Array.from(households.values());
+
+    if (visits.length === 0) return;
 
     logger.info('[TRIAGE_AGENT] Processing triage request', {
-      userId: request.auth.uid,
+      userId: workerId,
       visitCount: visits.length,
     });
 
@@ -98,17 +114,19 @@ Rules:
         },
       });
 
-      const parsed = JSON.parse(response.text || '[]');
+      if (!response.text) throw new Error('Empty response from Gemini');
+      const parsed = JSON.parse(response.text);
 
       await writeAgentLog({
         agentName: 'TRIAGE_AGENT',
         action: 'visit_prioritization',
-        details: `Triaged ${visits.length} visits → ${parsed.length} prioritized for worker ${request.auth.uid}`,
+        details: `Triaged ${visits.length} visits → ${parsed.length} prioritized for worker ${workerId}`,
         severity: 'success',
       });
 
       logger.info('[TRIAGE_AGENT] Triage completed', { count: parsed.length });
-      return { success: true, data: parsed };
+
+      await db.collection('workers').doc(workerId).collection('smartRoute').doc('latest').set({ route: parsed });
     } catch (error) {
       logger.error('[TRIAGE_AGENT] Failed', error);
 
@@ -118,8 +136,7 @@ Rules:
         details: `Failed to triage ${visits.length} visits: ${error instanceof Error ? error.message : 'Unknown error'}`,
         severity: 'error',
       });
-
-      throw new HttpsError('internal', 'Triage Agent failed to process visits.');
+      throw error;
     }
   }
 );

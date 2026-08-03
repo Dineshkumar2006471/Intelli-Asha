@@ -22,6 +22,7 @@ const DHODashboard = () => {
   const [locationName, setLocationName] = useState('Your District');
   const [aiBrief, setAiBrief] = useState<AIBrief | null>(null);
   const [phcs, setPhcs] = useState<PHCBreakdown[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [isEditingLocation, setIsEditingLocation] = useState(false);
   const [manualLocation, setManualLocation] = useState('');
   const [liveVisitCount, setLiveVisitCount] = useState(0);
@@ -50,6 +51,7 @@ const DHODashboard = () => {
     setLoading(true);
     setAiBrief(null);
     setPhcs([]);
+    setError(null);
 
     // Forward geocode to get coordinates for the map
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -69,6 +71,9 @@ const DHODashboard = () => {
       setMetrics(payload.metrics);
       setPhcs(payload.phcs);
       setLoading(false);
+    }).catch(err => {
+      setError(err.message);
+      setLoading(false);
     });
   };
   // Workers scattered around user's location for the map
@@ -87,6 +92,9 @@ const DHODashboard = () => {
       setAiBrief(payload.aiBrief);
       setMetrics(payload.metrics);
       setPhcs(payload.phcs);
+      setLoading(false);
+    }).catch(err => {
+      setError(err.message);
       setLoading(false);
     });
   }, [detectedLocation, geoAnchor, geoLoading]);
@@ -177,6 +185,13 @@ const DHODashboard = () => {
             </div>
           </div>
         </div>
+
+        {error && (
+          <div className="bg-error-container text-on-error-container p-4 rounded-lg flex items-center gap-2 border border-error">
+            <span className="material-symbols-outlined">error</span>
+            <p><strong>Failed to load analytics:</strong> {error}</p>
+          </div>
+        )}
 
         {/* 6 Column KPIs */}
         <section className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 ${loading ? 'opacity-50 pointer-events-none' : 'opacity-100'} transition-opacity duration-300`}>

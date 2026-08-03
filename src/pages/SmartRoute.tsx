@@ -1,17 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { db } from '../firebase';
-import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { app } from '../firebase';
-import type { Visit } from '../types';
-import { createLogger } from '../utils/logger';
-
-const log = createLogger('SMART_ROUTE');
-
-const functions = getFunctions(app, 'asia-south1');
+import { onSnapshot, doc } from 'firebase/firestore';
 
 /** USP Feature: AI Triage & Smart Routing
  *  Instead of random visit order, the Analytics Agent sorts households by severity.
@@ -37,79 +29,31 @@ const PRIORITY_CONFIG = {
 const SmartRoute = () => {
   const { currentUser } = useAuth();
   const { locationName, loading: geoLoading } = useGeolocation({ zoom: 14, fallback: 'Unknown Block' });
-  const [visits, setVisits] = useState<Visit[]>([]);
   const [triagedList, setTriagedList] = useState<TriagedHousehold[]>([]);
   const [loading, setLoading] = useState(true);
   const [aiProcessing, setAiProcessing] = useState(false);
 
-  // Real-time listener: fetch worker's past visits
+
+
+  // AI Triage: Listen to the triage agent's output in Firestore
   useEffect(() => {
     if (!currentUser) return;
-    const visitsRef = collection(db, 'visits');
-    const q = query(visitsRef, where('workerId', '==', currentUser.uid), orderBy('timestamp', 'desc'));
-    const unsub = onSnapshot(q, (snap) => {
-      const data = snap.docs.map(d => ({ id: d.id, ...d.data() }) as Visit);
-      setVisits(data);
-      setLoading(false);
-    }, () => setLoading(false));
+    setAiProcessing(true);
+    const unsub = onSnapshot(doc(db, 'workers', currentUser.uid, 'smartRoute', 'latest'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.route && Array.isArray(data.route)) {
+          setTriagedList(data.route);
+          setAiProcessing(false);
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+        setAiProcessing(false);
+      }
+    });
     return () => unsub();
   }, [currentUser]);
-
-  // AI Triage: Once visits are loaded, ask backend Triage Agent to prioritize them
-  const runTriage = useCallback(async () => {
-    if (visits.length === 0) {
-      setTriagedList([]);
-      return;
-    }
-    setAiProcessing(true);
-    try {
-      const householdSummaries = visits.slice(0, 20).map(v => ({
-        household: v.householdName,
-        status: v.status,
-        visitType: v.visitType,
-        date: v.timestamp ? new Date(v.timestamp.seconds * 1000).toISOString().split('T')[0] : 'Unknown',
-        flagged: v.anomaliesFound ?? false,
-      }));
-
-      const generateSmartRoute = httpsCallable<
-        { visits: typeof householdSummaries },
-        { success: boolean; data: TriagedHousehold[] }
-      >(functions, 'generateSmartRoute');
-
-      const result = await generateSmartRoute({ visits: householdSummaries });
-
-      if (result.data.success && result.data.data) {
-        setTriagedList(result.data.data);
-        log.info('AI Triage completed via Cloud Function', { count: result.data.data.length });
-      } else {
-        throw new Error('Triage Agent returned unsuccessful response');
-      }
-    } catch (err) {
-      log.error('AI Triage failed, using fallback sort', err);
-      // Fallback: manual severity sort
-      const fallback: TriagedHousehold[] = visits.slice(0, 15).map(v => ({
-        name: v.householdName,
-        lastStatus: v.status,
-        lastVisitDate: v.timestamp ? new Date(v.timestamp.seconds * 1000).toLocaleDateString() : 'Unknown',
-        priority: v.status === 'Severe Acute Malnutrition' ? 'critical' as const
-          : v.status === 'Underweight' || v.anomaliesFound ? 'high' as const
-          : 'routine' as const,
-        reason: v.anomaliesFound ? 'Previously flagged by verification agent' : 'Standard follow-up',
-        visitType: v.visitType || 'General Visit',
-      }));
-      fallback.sort((a, b) => {
-        const order = { critical: 0, high: 1, medium: 2, routine: 3 };
-        return order[a.priority] - order[b.priority];
-      });
-      setTriagedList(fallback);
-    } finally {
-      setAiProcessing(false);
-    }
-  }, [visits]);
-
-  useEffect(() => {
-    if (!loading && visits.length > 0) runTriage();
-  }, [loading, visits.length, runTriage]);
 
   const criticalCount = triagedList.filter(h => h.priority === 'critical').length;
   const highCount = triagedList.filter(h => h.priority === 'high').length;
@@ -170,10 +114,6 @@ const SmartRoute = () => {
           <div className="bg-surface rounded-xl border border-border-default overflow-hidden">
             <div className="p-5 border-b border-border-default flex items-center justify-between">
               <h2 className="font-title-md text-[18px] text-on-surface font-semibold">Today's Prioritized Visits</h2>
-              <button onClick={runTriage} disabled={aiProcessing} className="text-primary font-label-sm text-[12px] hover:underline disabled:opacity-50 flex items-center gap-1">
-                <span className="material-symbols-outlined text-[16px]">refresh</span>
-                Re-triage
-              </button>
             </div>
 
             {loading || aiProcessing ? (

@@ -14,7 +14,7 @@
  * Google Services: Gemini 2.5 Flash, Firestore, BigQuery, Secret Manager
  */
 
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { GoogleGenAI, Type } from '@google/genai';
 import { writeAgentLog } from '../services/agentLogger';
@@ -126,21 +126,19 @@ async function aggregateFirestoreData(): Promise<LiveMetrics> {
 
 // ─── Callable Cloud Function ────────────────────────────────────────────
 
-export const generateAnalytics = onCall(
+export const updateAnalyticsOnVisit = onDocumentWritten(
   {
+    document: 'visits/{visitId}',
     region: 'asia-south1',
     memory: '512MiB',
     timeoutSeconds: 120,
   },
-  async (request) => {
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Authentication required.');
-    }
+  async (_event) => {
+    // For the prototype, we default to updating the 'Hyderabad' dashboard
+    // In production, we would group visits by district
+    const location = 'Hyderabad';
 
-    const { locationName } = request.data as { locationName?: string };
-    const location = locationName || 'District';
-
-    logger.info('[ANALYTICS_AGENT] Generating dashboard', { location });
+    logger.info('[ANALYTICS_AGENT] Visit changed. Updating dashboard', { location });
 
     await writeAgentLog({
       agentName: 'ANALYTICS_AGENT',
@@ -213,39 +211,8 @@ For the AI brief:
 
         dashboard = JSON.parse(text);
       } catch (aiError) {
-        logger.warn('[ANALYTICS_AGENT] AI generation failed, falling back to heuristic data', aiError);
-        const errorMessage = aiError instanceof Error ? aiError.message : 'Unknown AI error';
-        
-        await writeAgentLog({
-          agentName: 'ANALYTICS_AGENT',
-          action: 'Vertex AI authentication failed',
-          details: `Falling back to heuristic calculations. Error: ${errorMessage}`,
-          severity: 'warning',
-        });
-
-        const verified = liveMetrics.totalVisits - liveMetrics.flaggedVisits;
-        const dqScore = liveMetrics.totalVisits > 0 ? Math.round((verified / liveMetrics.totalVisits) * 100) : 100;
-        
-        // Ironclad Fallback
-        dashboard = {
-          aiBrief: {
-            anomaly: 'Anomaly Detection: Using heuristic fallback due to Vertex AI service unavailability (Emulator Auth).',
-            recommendation: 'Recommendation: Monitor flagged visits manually until AI service is restored.',
-            alert: 'Alert: AI Insights degraded. Check Vertex AI ADC credentials.'
-          },
-          metrics: {
-            total_ashas: liveMetrics.uniqueWorkers || 5,
-            total_beneficiaries: (liveMetrics.totalVisits || 1) * 3,
-            surveys_completed: liveMetrics.totalVisits,
-            high_risk_cases: liveMetrics.flaggedVisits,
-            data_quality_score: dqScore,
-            disbursement_ready: liveMetrics.totalVisits * 250
-          },
-          phcs: [
-            { name: "Central Block PHC", block: "Central", active_ashas: liveMetrics.uniqueWorkers || 5, surveys_wtd: liveMetrics.totalVisits, status: liveMetrics.flaggedVisits > 0 ? "Delayed" : "Optimal", readiness: "90%" },
-            { name: "North Block PHC", block: "North", active_ashas: 3, surveys_wtd: 0, status: "Critical", readiness: "60%" }
-          ]
-        };
+        logger.error('[ANALYTICS_AGENT] AI generation failed', aiError);
+        throw aiError; // No fallback data allowed!
       }
 
       // Override with real data where available
@@ -264,7 +231,11 @@ For the AI brief:
         severity: 'success',
       });
 
-      return { success: true, data: dashboard };
+      // Write to Firestore
+      const db = getFirestore();
+      await db.collection('analytics').doc(location).set(dashboard);
+      
+      logger.info('[ANALYTICS_AGENT] Analytics updated in Firestore', { location });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       logger.error('[ANALYTICS_AGENT] System Failed', { error: message });
@@ -276,7 +247,7 @@ For the AI brief:
         severity: 'error',
       });
 
-      throw new HttpsError('internal', `Analytics Agent system failure: ${message}`);
+      throw err;
     }
   }
 );

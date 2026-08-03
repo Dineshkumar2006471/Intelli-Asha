@@ -22,7 +22,9 @@ coverage
 functions/lib
 test_services.js
 PROJECT*.md
-
+serviceAccountKey.json
+run.json
+runs.json
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

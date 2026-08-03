@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { processVisitVoiceNote } from '../services/aiAgent';
 import { saveVisit, uploadAudioLog } from '../services/db';
+import { processVisitVoiceNote } from '../services/aiAgent';
+import type { VisitData } from '../types';
 import { createLogger } from '../utils/logger';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useGeolocation } from '../hooks/useGeolocation';
-import type { VisitData } from '../types';
 
 const log = createLogger('LOG_VISIT');
 
@@ -66,11 +66,9 @@ const LogVisit = () => {
       setStructuredData(data);
       
       // USP Feature: Native Audio Feedback
-      // Speak back the parsed data to the worker for confirmation
       if ('speechSynthesis' in window) {
         const textToSpeak = `Data extracted. Household ${data.householdName || 'Unknown'}, Child ${data.childName || 'Unknown'}, Weight ${data.weight || 'Unknown'}. Status is ${data.status}.`;
         const utterance = new SpeechSynthesisUtterance(textToSpeak);
-        // Try to find an Indian English or Hindi voice if available
         const voices = window.speechSynthesis.getVoices();
         const indianVoice = voices.find(v => v.lang.includes('en-IN') || v.lang.includes('hi-IN'));
         if (indianVoice) utterance.voice = indianVoice;
@@ -86,10 +84,10 @@ const LogVisit = () => {
   }, [transcription]);
 
   useEffect(() => {
-    if (!isRecording && !isProcessingAudio && transcription.trim() && !structuredData && !isProcessing) {
+    if (!isRecording && !isProcessingAudio && transcription.trim() && !structuredData && !isProcessing && !error) {
       handleProcessVoiceNote();
     }
-  }, [isRecording, isProcessingAudio, transcription, structuredData, isProcessing, handleProcessVoiceNote]);
+  }, [isRecording, isProcessingAudio, transcription, structuredData, isProcessing, error, handleProcessVoiceNote]);
 
   const handleSubmit = async () => {
     if (!structuredData || !currentUser) return;
@@ -97,7 +95,6 @@ const LogVisit = () => {
     setIsProcessing(true);
 
     try {
-      // Audio upload is best-effort — don't block the visit save if storage fails
       let audioUrl: string | null = null;
       if (audioBlob) {
         try {
@@ -105,16 +102,18 @@ const LogVisit = () => {
           audioUrl = await uploadAudioLog(audioBlob, workerId);
         } catch (audioErr) {
           log.error('Audio upload failed (non-blocking)', audioErr);
-          // Continue without audio — the visit data is what matters
         }
       }
 
-      await saveVisit({
-        ...structuredData,
-        rawTranscription: transcription,
-        audioUrl: audioUrl,
-        geoAnchor: geoAnchor ?? null,
-      }, currentUser.uid);
+      await saveVisit(
+        {
+          ...structuredData,
+          rawTranscription: transcription,
+          audioUrl,
+          geoAnchor: geoAnchor ?? null,
+        },
+        currentUser.uid
+      );
       // Navigate back to Field Worker home after successful submission
       navigate('/app/field');
     } catch (err) {
@@ -187,7 +186,6 @@ const LogVisit = () => {
             )}
           </div>
         </section>
-
         {structuredData && (
           <section className="bg-surface-container-lowest border border-border-default rounded-xl p-6 shadow-sm space-y-6">
             <div className="flex items-center justify-between border-b border-border-default pb-4">
@@ -233,6 +231,7 @@ const LogVisit = () => {
               <button 
                 onClick={handleSubmit}
                 disabled={isProcessing}
+                aria-label={!isOnline ? 'Save Visit Offline' : 'Confirm and Submit Visit'}
                 className="w-full md:w-auto min-w-[240px] bg-primary-container text-on-primary font-title-sm text-title-sm py-3 px-8 rounded-lg shadow-sm hover:bg-primary transition-colors flex justify-center items-center active:scale-[0.98] disabled:opacity-50"
               >
                 <span>{isProcessing ? 'Saving...' : (!isOnline ? 'Save Offline' : 'Confirm & Submit')}</span>

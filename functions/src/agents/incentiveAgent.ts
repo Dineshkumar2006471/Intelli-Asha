@@ -15,7 +15,7 @@
  * Google Services: Gemini 2.5 Flash, Firestore, Secret Manager
  */
 
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { getFirestore } from 'firebase-admin/firestore';
 import { GoogleGenAI, Type } from '@google/genai';
 import { writeAgentLog } from '../services/agentLogger';
@@ -81,34 +81,26 @@ interface IncentiveResult {
 
 // ─── Callable Cloud Function ────────────────────────────────────────────
 
-export const calculateIncentive = onCall(
+export const updateIncentiveOnVisit = onDocumentWritten(
   {
+    document: 'visits/{visitId}',
     region: 'asia-south1',
     memory: '512MiB',
     timeoutSeconds: 60,
   },
-  async (request) => {
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Authentication required.');
-    }
+  async (event) => {
+    const snap = event.data?.after?.exists ? event.data.after : event.data?.before;
+    if (!snap || !snap.exists) return;
 
-    const { workerId, periodStart, periodEnd } = request.data as {
-      workerId?: string;
-      periodStart?: string;
-      periodEnd?: string;
-    };
+    const targetWorkerId = snap.data()?.workerId;
+    if (!targetWorkerId) return;
 
-    const targetWorkerId = workerId || request.auth.uid;
     const db = getFirestore();
 
     // Default period: current month
     const now = new Date();
-    const startDate = periodStart
-      ? new Date(periodStart)
-      : new Date(now.getFullYear(), now.getMonth(), 1);
-    const endDate = periodEnd
-      ? new Date(periodEnd)
-      : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
     const periodLabel = `${startDate.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}`;
 
@@ -249,15 +241,18 @@ export const calculateIncentive = onCall(
           },
         });
         
-        if (response?.text) {
-          geminiResult = JSON.parse(response.text) as {
-            ghostReportingRisk: string;
-            recommendation: string;
-            anomalyPatterns: string[];
-          };
+        if (!response?.text) {
+          throw new Error('Incentive Agent received empty response from Gemini.');
         }
+
+        geminiResult = JSON.parse(response.text) as {
+          ghostReportingRisk: string;
+          recommendation: string;
+          anomalyPatterns: string[];
+        };
       } catch (aiError) {
-        logger.warn('[INCENTIVE_AGENT] Vertex AI analysis failed, using fallback metrics', aiError);
+        logger.error('[INCENTIVE_AGENT] Vertex AI analysis failed', aiError);
+        throw aiError; // No fallback data allowed!
       }
 
       const result: IncentiveResult = {
@@ -284,13 +279,16 @@ export const calculateIncentive = onCall(
         relatedWorkerId: targetWorkerId,
       });
 
-      logger.info('[INCENTIVE_AGENT] Calculation complete', {
+      // Write to Firestore
+      await db.collection('workers').doc(targetWorkerId)
+              .collection('incentives').doc('latest').set(result);
+
+      logger.info('[INCENTIVE_AGENT] Calculation complete and written to Firestore', {
         workerId: targetWorkerId,
         netDisbursement,
         ghostReportingRisk: geminiResult.ghostReportingRisk,
       });
 
-      return { success: true, data: result };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       logger.error('[INCENTIVE_AGENT] Failed', { error: message });
@@ -303,8 +301,7 @@ export const calculateIncentive = onCall(
         relatedWorkerId: targetWorkerId,
       });
 
-      if (err instanceof HttpsError) throw err;
-      throw new HttpsError('internal', `Incentive Agent failed: ${message}`);
+      throw err;
     }
   }
 );
