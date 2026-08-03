@@ -54,7 +54,7 @@ const Schedule = () => {
 
     log.info('Initializing real-time visit listener for schedule');
     const visitsRef = collection(db, 'visits');
-    const q = query(visitsRef, where('workerId', '==', currentUser.photoURL), orderBy('timestamp', 'desc'));
+    const q = query(visitsRef, where('workerId', '==', currentUser.uid), orderBy('timestamp', 'desc'));
     
     const unsub = onSnapshot(q, 
       (snap) => {

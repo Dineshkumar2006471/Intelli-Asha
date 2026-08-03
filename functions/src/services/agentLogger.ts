@@ -14,6 +14,7 @@ export type AgentName =
   | 'ALERT_AGENT'
   | 'ANALYTICS_AGENT'
   | 'INCENTIVE_AGENT'
+  | 'TRIAGE_AGENT'
   | 'A2A_ROUTER'
   | 'MCP_SERVER';
 

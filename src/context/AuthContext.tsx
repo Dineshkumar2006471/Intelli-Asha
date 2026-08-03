@@ -66,8 +66,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await updateProfile(result.user, { displayName, photoURL: phoneNumber });
 
     // Save worker profile to Firestore so Supervisor can see them
+    // Use Firebase UID as the document key (matches security rules)
     await setDoc(
-      doc(db, 'workers', phoneNumber),
+      doc(db, 'workers', result.user.uid),
       {
         name: displayName,
         phone: phoneNumber,

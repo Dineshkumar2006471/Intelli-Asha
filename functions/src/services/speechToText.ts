@@ -7,11 +7,19 @@
  */
 
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { SpeechClient } from '@google-cloud/speech';
 import * as logger from 'firebase-functions/logger';
 
-// Initialize the Speech client
-const speechClient = new SpeechClient();
+// Lazy-initialized to avoid gRPC connection at module load (prevents deployment timeout)
+let speechClient: InstanceType<typeof import('@google-cloud/speech').SpeechClient> | null = null;
+
+function getSpeechClient() {
+  if (!speechClient) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { SpeechClient } = require('@google-cloud/speech');
+    speechClient = new SpeechClient();
+  }
+  return speechClient;
+}
 
 export const transcribeAudio = onCall(
   {
@@ -52,7 +60,7 @@ export const transcribeAudio = onCall(
       };
 
       // Detects speech in the audio file
-      const [response] = await speechClient.recognize(requestObj);
+      const [response] = await getSpeechClient()!.recognize(requestObj);
       const transcription = response.results
         ?.map((result) => result.alternatives?.[0]?.transcript)
         .join('\n');

@@ -23,7 +23,7 @@ describe('useSpeechRecognition hook', () => {
     mockMediaRecorderStart = vi.fn();
     mockMediaRecorderStop = vi.fn();
 
-    Object.defineProperty(global.navigator, 'mediaDevices', {
+    Object.defineProperty(globalThis.navigator, 'mediaDevices', {
       value: {
         getUserMedia: mockGetUserMedia,
       },
@@ -64,7 +64,7 @@ describe('useSpeechRecognition hook', () => {
   });
 
   it('should flag unsupported browser when mediaDevices is missing', () => {
-    Object.defineProperty(global.navigator, 'mediaDevices', {
+    Object.defineProperty(globalThis.navigator, 'mediaDevices', {
       value: undefined,
       configurable: true,
       writable: true,

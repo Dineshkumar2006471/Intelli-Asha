@@ -4,13 +4,14 @@ import { useAuth } from '../context/AuthContext';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { db } from '../firebase';
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
-import { GoogleGenAI } from '@google/genai';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { app } from '../firebase';
 import type { Visit } from '../types';
 import { createLogger } from '../utils/logger';
 
 const log = createLogger('SMART_ROUTE');
 
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+const functions = getFunctions(app, 'asia-south1');
 
 /** USP Feature: AI Triage & Smart Routing
  *  Instead of random visit order, the Analytics Agent sorts households by severity.
@@ -45,7 +46,7 @@ const SmartRoute = () => {
   useEffect(() => {
     if (!currentUser) return;
     const visitsRef = collection(db, 'visits');
-    const q = query(visitsRef, where('workerId', '==', currentUser.photoURL), orderBy('timestamp', 'desc'));
+    const q = query(visitsRef, where('workerId', '==', currentUser.uid), orderBy('timestamp', 'desc'));
     const unsub = onSnapshot(q, (snap) => {
       const data = snap.docs.map(d => ({ id: d.id, ...d.data() }) as Visit);
       setVisits(data);
@@ -54,7 +55,7 @@ const SmartRoute = () => {
     return () => unsub();
   }, [currentUser]);
 
-  // AI Triage: Once visits are loaded, ask Gemini to prioritize them
+  // AI Triage: Once visits are loaded, ask backend Triage Agent to prioritize them
   const runTriage = useCallback(async () => {
     if (visits.length === 0) {
       setTriagedList([]);
@@ -70,27 +71,19 @@ const SmartRoute = () => {
         flagged: v.anomaliesFound ?? false,
       }));
 
-      const prompt = `You are the IntelliASHA Triage Agent. Based on these past visit records for an ASHA worker, generate a prioritized visit list for today.
+      const generateSmartRoute = httpsCallable<
+        { visits: typeof householdSummaries },
+        { success: boolean; data: TriagedHousehold[] }
+      >(functions, 'generateSmartRoute');
 
-Past visits data: ${JSON.stringify(householdSummaries)}
+      const result = await generateSmartRoute({ visits: householdSummaries });
 
-Rules:
-1. Households with "Severe Acute Malnutrition" → priority: "critical"
-2. Households with "Underweight" or flagged anomalies → priority: "high"
-3. Households not visited in 7+ days → priority: "medium"
-4. All others → priority: "routine"
-5. Include a brief "reason" for each priority assignment.
-6. Sort from highest to lowest priority.
-7. Return an array of objects. Each object: { name, lastStatus, lastVisitDate, priority, reason, visitType }`;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: { responseMimeType: 'application/json' },
-      });
-      const parsed = JSON.parse(response.text || '[]') as TriagedHousehold[];
-      setTriagedList(parsed);
-      log.info('AI Triage completed', { count: parsed.length });
+      if (result.data.success && result.data.data) {
+        setTriagedList(result.data.data);
+        log.info('AI Triage completed via Cloud Function', { count: result.data.data.length });
+      } else {
+        throw new Error('Triage Agent returned unsuccessful response');
+      }
     } catch (err) {
       log.error('AI Triage failed, using fallback sort', err);
       // Fallback: manual severity sort

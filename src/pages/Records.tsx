@@ -14,7 +14,7 @@ const Records = () => {
   useEffect(() => {
     if (!currentUser) return;
     const visitsRef = collection(db, 'visits');
-    const q = query(visitsRef, where('workerId', '==', currentUser.photoURL), orderBy('timestamp', 'desc'));
+    const q = query(visitsRef, where('workerId', '==', currentUser.uid), orderBy('timestamp', 'desc'));
     const unsub = onSnapshot(q, (snap) => {
       const data = snap.docs.map(d => ({ id: d.id, ...d.data() }) as Visit);
       setVisits(data);

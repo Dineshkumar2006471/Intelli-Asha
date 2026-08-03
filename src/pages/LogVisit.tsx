@@ -108,8 +108,8 @@ const LogVisit = () => {
         ...structuredData,
         rawTranscription: transcription,
         audioUrl: audioUrl,
-        geoAnchor: geoAnchor ?? null
-      }, currentUser?.photoURL ?? '');
+        geoAnchor: geoAnchor ?? null,
+      }, currentUser.uid);
       // Navigate back to Field Worker home after successful submission
       navigate('/app/field');
     } catch (err) {

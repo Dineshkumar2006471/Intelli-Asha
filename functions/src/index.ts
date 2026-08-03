@@ -38,6 +38,9 @@ export { generateAnalytics } from './agents/analyticsAgent';
 // Agent 5: Incentive Agent — NHM-compliant TBI calculation
 export { calculateIncentive } from './agents/incentiveAgent';
 
+// Agent 6: Triage Agent — AI-powered visit prioritization
+export { generateSmartRoute } from './agents/triageAgent';
+
 // Services
 export { geocode } from './services/geocode';
 export { transcribeAudio } from './services/speechToText';

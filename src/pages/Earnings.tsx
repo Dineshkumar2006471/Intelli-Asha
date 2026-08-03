@@ -38,14 +38,14 @@ const Earnings = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!currentUser?.photoURL) return;
+    if (!currentUser?.uid) return;
     
     const fetchIncentives = async () => {
       try {
         const functions = getFunctions(app, 'asia-south1');
         const calculateIncentive = httpsCallable<{ workerId: string }, IncentiveResult>(functions, 'calculateIncentive');
         
-        const response = await calculateIncentive({ workerId: currentUser.photoURL! });
+        const response = await calculateIncentive({ workerId: currentUser.uid });
         setIncentiveData(response.data);
       } catch (err: unknown) {
         console.error('Failed to fetch incentives', err);

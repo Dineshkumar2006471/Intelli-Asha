@@ -19,7 +19,7 @@ describe('useGeolocation hook', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     
-    Object.defineProperty(global.navigator, 'geolocation', {
+    Object.defineProperty(globalThis.navigator, 'geolocation', {
       value: {
         getCurrentPosition: mockGetCurrentPosition,
       },
@@ -33,7 +33,7 @@ describe('useGeolocation hook', () => {
   });
 
   it('should handle geolocation not supported', async () => {
-    Object.defineProperty(global.navigator, 'geolocation', {
+    Object.defineProperty(globalThis.navigator, 'geolocation', {
       value: undefined,
       configurable: true,
       writable: true,

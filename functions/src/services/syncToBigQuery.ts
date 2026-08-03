@@ -9,10 +9,18 @@
  */
 
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
-import { BigQuery } from '@google-cloud/bigquery';
 import * as logger from 'firebase-functions/logger';
 
-const bigquery = new BigQuery();
+let bigquery: InstanceType<typeof import('@google-cloud/bigquery').BigQuery> | null = null;
+
+function getBigQuery() {
+  if (!bigquery) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { BigQuery } = require('@google-cloud/bigquery');
+    bigquery = new BigQuery();
+  }
+  return bigquery;
+}
 const DATASET_ID = 'intelliasha_analytics';
 const TABLE_ID = 'visits';
 
@@ -20,10 +28,10 @@ let tableReady = false;
 
 async function ensureTableExists() {
   if (tableReady) {
-    return bigquery.dataset(DATASET_ID).table(TABLE_ID);
+    return getBigQuery()!.dataset(DATASET_ID).table(TABLE_ID);
   }
 
-  const dataset = bigquery.dataset(DATASET_ID);
+  const dataset = getBigQuery()!.dataset(DATASET_ID);
   const [datasetExists] = await dataset.exists();
   
   if (!datasetExists) {

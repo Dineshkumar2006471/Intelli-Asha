@@ -19,7 +19,7 @@ const FieldWorker = () => {
     
     // REAL-TIME LISTENER: Updates the dashboard the instant a new visit is saved to Firestore
     const visitsRef = collection(db, 'visits');
-    const q = query(visitsRef, where("workerId", "==", currentUser.photoURL), orderBy("timestamp", "desc"));
+    const q = query(visitsRef, where("workerId", "==", currentUser.uid), orderBy("timestamp", "desc"));
     
     const unsub = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }) as Visit);
@@ -36,8 +36,8 @@ const FieldWorker = () => {
   const { locationName, loading: geoLoading } = useGeolocation({ zoom: 14, fallback: 'Unknown Block' });
 
   useEffect(() => {
-    if (!geoLoading && currentUser?.photoURL) {
-      updateDoc(doc(db, 'workers', currentUser.photoURL), { location: locationName }).catch((err: unknown) => log.error('Failed to update location', err));
+    if (!geoLoading && currentUser) {
+      updateDoc(doc(db, 'workers', currentUser.uid), { location: locationName }).catch((err: unknown) => log.error('Failed to update location', err));
     }
   }, [geoLoading, locationName, currentUser]);
 

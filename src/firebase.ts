@@ -29,7 +29,7 @@ export const db = initializeFirestore(app, {
 });
 
 export const auth = getAuth(app);
-export const functions = getFunctions(app);
+export const functions = getFunctions(app, 'asia-south1');
 export const storage = getStorage(app);
 
 // Messaging is only supported in context with a secure origin (HTTPS/localhost)
