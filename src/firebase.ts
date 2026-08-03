@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, memoryLocalCache } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { getFunctions } from 'firebase/functions';
 import { getMessaging, isSupported } from 'firebase/messaging';
@@ -23,9 +23,12 @@ export const app = initializeApp(firebaseConfig);
  * Firestore with persistent local cache for offline support in rural areas.
  * Uses the modern `persistentLocalCache` API (replaces deprecated `enableIndexedDbPersistence`).
  * Multi-tab persistence is enabled by default for safe concurrent usage.
+ * Uses memoryLocalCache during tests to prevent hanging in CI environments.
  */
 export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+  localCache: import.meta.env.MODE === 'test' 
+    ? memoryLocalCache() 
+    : persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
 });
 
 export const auth = getAuth(app);
