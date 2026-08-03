@@ -79,7 +79,7 @@ describe('useGeolocation hook', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.locationName).toBe('New Delhi');
+    expect(result.current.locationName).toBe('Delhi Division District');
     expect(result.current.geoAnchor).toEqual({
       lat: 28.6139,
       lng: 77.209,

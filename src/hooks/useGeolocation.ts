@@ -28,12 +28,16 @@ export function useGeolocation(options: UseGeolocationOptions = {}): Geolocation
     async (lat: number, lng: number): Promise<string> => {
       try {
         const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+        if (!apiKey || apiKey.includes('VITE_')) {
+          throw new Error('Missing Google Maps API Key in .env');
+        }
+        
         const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
         const response = await fetch(url);
         const data = await response.json();
 
         if (!response.ok || data.status !== 'OK' || !data.results || data.results.length === 0) {
-          throw new Error('No results from Google Maps Geocoding');
+          throw new Error(data.error_message || 'No results from Google Maps');
         }
 
         const results = data.results;
@@ -93,9 +97,9 @@ export function useGeolocation(options: UseGeolocationOptions = {}): Geolocation
         }
         
         return district;
-      } catch (err) {
+      } catch (err: any) {
         log.warn('Reverse geocoding failed', err);
-        return fallback; // Return fallback (e.g. Mathura District) instead of ugly error string
+        return err.message?.includes('API Key') ? '⚠️ Maps API Key Missing' : fallback;
       }
     },
     [zoom, fallback]

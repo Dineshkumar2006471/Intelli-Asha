@@ -3,8 +3,11 @@
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
 
+const params = new URLSearchParams(location.search);
+const apiKey = params.get('apiKey') || '';
+
 firebase.initializeApp({
-  apiKey: 'AIzaSyASqsinqeZPGXrl1rdAJYlshxP_1G2o5ek',
+  apiKey: apiKey,
   authDomain: 'kavach-hackathon-500511.firebaseapp.com',
   projectId: 'kavach-hackathon-500511',
   storageBucket: 'kavach-hackathon-500511.firebasestorage.app',

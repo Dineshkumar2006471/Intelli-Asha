@@ -5,7 +5,8 @@ import {
   GoogleAuthProvider,
   signOut,
   updateProfile,
-  signInAnonymously,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   type User,
   type UserCredential,
 } from 'firebase/auth';
@@ -42,12 +43,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
 
   async function loginFieldWorker(displayName: string, phoneNumber: string): Promise<UserCredential> {
-    log.info('Logging in field worker anonymously (OTP-less hackathon mode)', { displayName, phoneNumber });
+    log.info('Logging in field worker (Deterministic OTP-less hackathon mode)', { displayName, phoneNumber });
     
-    // Use Anonymous Auth for the hackathon to avoid SMS limits
-    const result = await signInAnonymously(auth);
+    // Use a deterministic email/password so logout -> login keeps the exact same UID and data
+    const email = `${phoneNumber}@demo.intelliasha.local`;
+    const password = `Hackathon2026!`;
     
-    // Update the anonymous profile with their actual name and phone
+    let result: UserCredential;
+    try {
+      result = await signInWithEmailAndPassword(auth, email, password);
+    } catch (err: any) {
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        result = await createUserWithEmailAndPassword(auth, email, password);
+      } else {
+        throw err;
+      }
+    }
+    
+    // Update the profile with their actual name and phone
     await updateProfile(result.user, { displayName, photoURL: phoneNumber });
 
     // Save worker profile to Firestore so Supervisor can see them

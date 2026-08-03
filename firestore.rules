@@ -9,8 +9,8 @@ service cloud.firestore {
 
     // Supervisors / DHOs sign in with Google; field workers use Phone OTP.
     function isSupervisor() {
-      return isAuthenticated()
-        && request.auth.token.firebase.sign_in_provider == 'google.com';
+      // HACKATHON: Allow any authenticated user (including demo workers) to view supervisor dashboards
+      return isAuthenticated();
     }
 
     function isOwner(field) {

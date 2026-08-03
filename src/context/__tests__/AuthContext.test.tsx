@@ -16,15 +16,12 @@ vi.mock('firebase/auth', () => ({
     callback(null);
     return vi.fn(); // unsubscribe
   },
-  signInWithPhoneNumber: vi.fn().mockResolvedValue({
-    confirm: vi.fn().mockResolvedValue({
-      user: { uid: 'anon-123', displayName: null, photoURL: null },
-    })
+  signInWithEmailAndPassword: vi.fn().mockResolvedValue({
+    user: { uid: 'anon-123', displayName: null, photoURL: null },
   }),
-  RecaptchaVerifier: vi.fn().mockImplementation(() => ({
-    render: vi.fn(),
-    clear: vi.fn(),
-  })),
+  createUserWithEmailAndPassword: vi.fn().mockResolvedValue({
+    user: { uid: 'anon-123', displayName: null, photoURL: null },
+  }),
   signInWithPopup: vi.fn().mockResolvedValue({
     user: { uid: 'google-456', displayName: 'Test Admin' },
   }),
@@ -88,7 +85,7 @@ describe('AuthContext', () => {
     spy.mockRestore();
   });
 
-  it('should provide sendOTP, verifyOTP, loginWithGoogle, and logout functions', () => {
+  it('should provide loginFieldWorker, loginWithGoogle, and logout functions', () => {
     let contextValue: ReturnType<typeof useAuth> | null = null;
 
     function ContextCapture() {
@@ -103,8 +100,7 @@ describe('AuthContext', () => {
     );
 
     expect(contextValue).not.toBeNull();
-    expect(typeof contextValue!.sendOTP).toBe('function');
-    expect(typeof contextValue!.verifyOTP).toBe('function');
+    expect(typeof contextValue!.loginFieldWorker).toBe('function');
     expect(typeof contextValue!.loginWithGoogle).toBe('function');
     expect(typeof contextValue!.logout).toBe('function');
   });

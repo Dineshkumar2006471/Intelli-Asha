@@ -28,10 +28,17 @@ export function useFCM() {
           return;
         }
 
+        // Register SW with API key in URL to avoid hardcoding secrets
+        const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
+        const registration = await navigator.serviceWorker.register(
+          `/firebase-messaging-sw.js?apiKey=${apiKey}`
+        );
+
         // Get token
         // In production, VAPID key is recommended, but Firebase default works without it in many cases
         const token = await getToken(msg, {
-          vapidKey: import.meta.env.VITE_FCM_VAPID_KEY // optional, fallback to default
+          vapidKey: import.meta.env.VITE_FCM_VAPID_KEY,
+          serviceWorkerRegistration: registration,
         });
 
         if (token) {
