@@ -66,12 +66,9 @@ describe('useGeolocation hook', () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        status: 'OK',
-        results: [{
-          address_components: [
-            { types: ['administrative_area_level_2'], long_name: 'Delhi Division' }
-          ]
-        }]
+        address: {
+          state_district: 'Delhi Division'
+        }
       })
     });
 
