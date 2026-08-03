@@ -131,7 +131,7 @@ export const processVisitVoiceNote = onCall(
     });
 
     try {
-      const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
+      const ai = new GoogleGenAI({ apiKey: geminiApiKey.value(), project: '' });
       const response = await ai.models.generateContent({
         model: 'gemini-3.5-flash',
         contents: [

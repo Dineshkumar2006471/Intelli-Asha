@@ -126,7 +126,7 @@ async function handleCreateAlert(
   let classification: { severity: string; title: string; message: string; actionRequired: string };
 
   try {
-    const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
+    const ai = new GoogleGenAI({ apiKey: geminiApiKey.value(), project: '' });
     const response = await ai.models.generateContent({
       model: 'gemini-3.5-flash',
       contents: [{

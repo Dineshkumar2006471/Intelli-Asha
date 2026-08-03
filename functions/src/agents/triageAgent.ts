@@ -95,7 +95,7 @@ export const updateSmartRouteOnVisit = onDocumentWritten(
     });
 
     try {
-      const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
+      const ai = new GoogleGenAI({ apiKey: geminiApiKey.value(), project: '' });
 
       const prompt = `You are the IntelliASHA Triage Agent. Based on these past visit records for an ASHA worker, generate a prioritized visit list for today.
 
