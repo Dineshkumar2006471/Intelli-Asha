@@ -27,71 +27,30 @@ export function useGeolocation(options: UseGeolocationOptions = {}): Geolocation
   const reverseGeocode = useCallback(
     async (lat: number, lng: number): Promise<string> => {
       try {
-        const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-        if (!apiKey || apiKey.includes('VITE_')) {
-          throw new Error('Missing Google Maps API Key in .env');
-        }
-        
-        const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
-        const response = await fetch(url);
+        // Using Nominatim (OpenStreetMap) to bypass Google API key referrer restrictions on client-side fetch
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`;
+        const response = await fetch(url, { headers: { 'User-Agent': 'IntelliASHA-App' } });
         const data = await response.json();
 
-        if (!response.ok || data.status !== 'OK' || !data.results || data.results.length === 0) {
-          throw new Error(data.error_message || 'No results from Google Maps');
+        if (!response.ok || !data || !data.address) {
+          throw new Error('No results from Geocoder');
         }
 
-        const results = data.results;
+        const address = data.address;
         
-        // Find appropriate component based on zoom level
         if (zoom >= 14) {
           // Field worker level
-          let block = '';
-          let district = '';
-          
-          for (const result of results) {
-            for (const component of result.address_components) {
-              if (component.types.includes('sublocality') || component.types.includes('locality')) {
-                if (!block) block = component.long_name;
-              }
-              if (component.types.includes('administrative_area_level_3') || component.types.includes('administrative_area_level_2')) {
-                if (!district) district = component.long_name;
-              }
-            }
-          }
-          
-          block = block || 'Local';
-          district = district || fallback;
-          return `${block} PHC, ${district}`;
+          const block = address.suburb || address.village || address.town || address.city_district || 'Local';
+          const dist = address.state_district || address.county || address.city || fallback;
+          return `${block} PHC, ${dist}`;
         }
 
-        // Dashboard level - Find the District (Admin Level 2 in India)
-        let district = '';
-        for (const result of results) {
-          for (const component of result.address_components) {
-            if (component.types.includes('administrative_area_level_2')) {
-              district = component.long_name;
-              break;
-            }
-          }
-          if (district) break;
-        }
-        
-        // Fallback to locality if admin_level_2 isn't found
-        if (!district) {
-          for (const result of results) {
-            for (const component of result.address_components) {
-              if (component.types.includes('locality')) {
-                district = component.long_name;
-                break;
-              }
-            }
-            if (district) break;
-          }
-        }
+        // Dashboard level - Find the District
+        let district = address.state_district || address.county || address.region || address.city;
         
         if (!district) return fallback;
         
-        // Make sure "District" is appended nicely for the dashboard if missing
+        // Make sure "District" is appended nicely
         if (!district.toLowerCase().includes('district') && !district.toLowerCase().includes('dist')) {
           district = `${district} District`;
         }
@@ -99,7 +58,7 @@ export function useGeolocation(options: UseGeolocationOptions = {}): Geolocation
         return district;
       } catch (err: any) {
         log.warn('Reverse geocoding failed', err);
-        return err.message?.includes('API Key') ? '⚠️ Maps API Key Missing' : fallback;
+        return fallback;
       }
     },
     [zoom, fallback]
