@@ -51,6 +51,9 @@ describe('useGeolocation hook', () => {
   });
 
   it('should successfully resolve coordinates and reverse geocode at zoom 10', async () => {
+    // Set dummy env var for test
+    vi.stubEnv('VITE_GOOGLE_MAPS_API_KEY', 'dummy-key');
+    
     mockGetCurrentPosition.mockImplementationOnce((success) => {
       success({
         coords: {
@@ -61,17 +64,17 @@ describe('useGeolocation hook', () => {
       });
     });
 
-    const mockFunction = vi.fn().mockResolvedValue({
-      data: {
-        success: true,
-        data: [{
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        status: 'OK',
+        results: [{
           address_components: [
-            { types: ['locality'], long_name: 'New Delhi' }
+            { types: ['administrative_area_level_2'], long_name: 'Delhi Division' }
           ]
         }]
-      }
+      })
     });
-    mockHttpsCallable.mockReturnValue(mockFunction as any);
 
     const { result } = renderHook(() => useGeolocation({ zoom: 10 }));
 
