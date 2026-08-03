@@ -21,6 +21,9 @@ import { getMessaging } from 'firebase-admin/messaging';
 import { GoogleGenAI, Type } from '@google/genai';
 import { writeAgentLog } from '../services/agentLogger';
 import * as logger from 'firebase-functions/logger';
+import { defineSecret } from 'firebase-functions/params';
+
+const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
 // ─── Alert Classification Schema ────────────────────────────────────────
 
@@ -46,6 +49,7 @@ export const alertAgent = onDocumentCreated(
     region: 'asia-south1',
     memory: '256MiB',
     timeoutSeconds: 30,
+    secrets: [geminiApiKey],
   },
   async (event) => {
     const snapshot = event.data;
@@ -122,7 +126,7 @@ async function handleCreateAlert(
   let classification: { severity: string; title: string; message: string; actionRequired: string };
 
   try {
-    const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'us-central1' });
+    const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [{
@@ -252,6 +256,7 @@ export const zeroVisitZoneDetection = onSchedule(
     region: 'asia-south1',
     memory: '256MiB',
     timeoutSeconds: 120,
+    secrets: [geminiApiKey],
   },
   async () => {
     const db = getFirestore();

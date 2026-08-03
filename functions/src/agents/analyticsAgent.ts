@@ -19,8 +19,9 @@ import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { GoogleGenAI, Type } from '@google/genai';
 import { writeAgentLog } from '../services/agentLogger';
 import * as logger from 'firebase-functions/logger';
+import { defineSecret } from 'firebase-functions/params';
 
-// Switched to Vertex AI (no API key needed)
+const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
 // ─── Output Schemas ─────────────────────────────────────────────────────
 
@@ -132,6 +133,7 @@ export const updateAnalyticsOnVisit = onDocumentWritten(
     region: 'asia-south1',
     memory: '512MiB',
     timeoutSeconds: 120,
+    secrets: [geminiApiKey],
   },
   async (_event) => {
     // For the prototype, we default to updating the 'Hyderabad' dashboard
@@ -159,7 +161,7 @@ export const updateAnalyticsOnVisit = onDocumentWritten(
       });
 
       // Step 2: Call Gemini with real data + Google Search grounding
-      const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'us-central1' });
+      const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
       let dashboard;
       try {
         const response = await ai.models.generateContent({

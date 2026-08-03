@@ -22,6 +22,9 @@ import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { GoogleGenAI, Type } from '@google/genai';
 import { writeAgentLog } from '../services/agentLogger';
 import * as logger from 'firebase-functions/logger';
+import { defineSecret } from 'firebase-functions/params';
+
+const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
 // ─── Verification Output Schema ─────────────────────────────────────────
 
@@ -150,6 +153,7 @@ export const verificationAgent = onDocumentCreated(
     region: 'asia-south1',
     memory: '512MiB',
     timeoutSeconds: 60,
+    secrets: [geminiApiKey],
   },
   async (event) => {
     const snapshot = event.data;
@@ -191,7 +195,7 @@ export const verificationAgent = onDocumentCreated(
       });
 
       // ── Step 2: Gemini medical plausibility check ──
-      const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'us-central1' });
+      const ai = new GoogleGenAI({ apiKey: geminiApiKey.value() });
       const prompt = `ASHA Worker Visit Data:
 ${JSON.stringify(visitData, null, 2).substring(0, 3000)}
 
