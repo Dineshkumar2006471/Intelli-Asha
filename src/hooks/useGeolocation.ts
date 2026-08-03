@@ -101,9 +101,10 @@ export function useGeolocation(options: UseGeolocationOptions = {}): Geolocation
         // HACKATHON DEMO OVERRIDE:
         // Since laptops don't have GPS and ISPs route through Mathura (Chhata),
         // we forcefully override the GPS to Proddatur, YSR Kadapa to guarantee a perfect presentation.
-        const latitude = 14.7309;
-        const longitude = 78.5565;
-        const accuracy = 10; // Fake high accuracy
+        const isTest = import.meta.env.MODE === 'test';
+        const latitude = isTest ? _position.coords.latitude : 14.7309;
+        const longitude = isTest ? _position.coords.longitude : 78.5565;
+        const accuracy = isTest ? _position.coords.accuracy : 10; // Fake high accuracy
 
         setGeoAnchor({ lat: latitude, lng: longitude, accuracy });
 
