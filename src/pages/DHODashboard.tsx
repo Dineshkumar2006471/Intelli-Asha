@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { generateFullDashboardData } from '../services/aiAgent';
 import type { AIBrief, DashboardMetrics, PHCBreakdown } from '../types';
-import { onVisitsSnapshot, onFlaggedVisitsSnapshot } from '../services/db';
+import { onVisitsSnapshot } from '../services/db';
 import GoogleMap from '../components/GoogleMap';
 import { createLogger } from '../utils/logger';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -27,7 +26,7 @@ const DHODashboard = () => {
   const [manualLocation, setManualLocation] = useState('');
   const [liveVisitCount, setLiveVisitCount] = useState(0);
   const [liveFlaggedCount, setLiveFlaggedCount] = useState(0);
-  const { locationName: detectedLocation, geoAnchor, loading: geoLoading } = useGeolocation({ zoom: 10, fallback: 'Mathura District' });
+  const { locationName: detectedLocation, loading: geoLoading } = useGeolocation({ zoom: 10, fallback: 'Mathura District' });
 
   // REAL-TIME FIRESTORE LISTENERS: These update KPIs the instant a field worker submits a visit
   useEffect(() => {

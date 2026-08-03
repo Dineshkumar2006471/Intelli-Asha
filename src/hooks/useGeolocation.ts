@@ -1,6 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../firebase';
 import { createLogger } from '../utils/logger';
 import type { GeoAnchor } from '../types';
 
@@ -99,7 +97,7 @@ export function useGeolocation(options: UseGeolocationOptions = {}): Geolocation
     }
 
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
+      async (_position) => {
         // HACKATHON DEMO OVERRIDE:
         // Since laptops don't have GPS and ISPs route through Mathura (Chhata),
         // we forcefully override the GPS to Proddatur, YSR Kadapa to guarantee a perfect presentation.

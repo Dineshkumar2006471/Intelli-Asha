@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { saveVisit, uploadAudioLog } from '../services/db';
 import { processVisitVoiceNote } from '../services/aiAgent';
-import type { VisitData } from '../types';
+import type { VisitData, HealthStatus } from '../types';
 import { createLogger } from '../utils/logger';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -267,7 +267,7 @@ const LogVisit = () => {
                 {isEditingData ? (
                   <select 
                     value={structuredData.status || 'Unknown'} 
-                    onChange={(e) => setStructuredData({...structuredData, status: e.target.value})} 
+                    onChange={(e) => setStructuredData({...structuredData, status: e.target.value as HealthStatus})} 
                     className="w-full border border-border-default rounded px-2 py-1 font-body-base text-body-base bg-surface-container outline-none focus:border-primary"
                   >
                     <option value="Normal">Normal</option>
