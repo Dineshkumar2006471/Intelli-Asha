@@ -4,7 +4,9 @@ import { auth, functions } from '../firebase';
 import { httpsCallable } from 'firebase/functions';
 import { saveVisit } from '../services/db';
 
-describe('End-to-End System Integration', () => {
+const isCI = import.meta.env.VITE_FIREBASE_API_KEY === 'ci-dummy-key';
+
+describe.skipIf(isCI)('End-to-End System Integration', () => {
   beforeAll(async () => {
     // 1. Authenticate as a test user
     try {
