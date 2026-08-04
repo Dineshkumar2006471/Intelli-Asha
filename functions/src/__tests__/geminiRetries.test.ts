@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock firebase-functions/logger
 vi.mock('firebase-functions/logger', () => ({
@@ -9,7 +9,7 @@ vi.mock('firebase-functions/logger', () => ({
 
 import { callGeminiWithRetries } from '../utils/geminiRetries';
 import * as logger from 'firebase-functions/logger';
-import type { GoogleGenAI, GenerateContentParameters, GenerateContentResponse } from '@google/genai';
+import type { GoogleGenAI, GenerateContentParameters } from '@google/genai';
 
 describe('callGeminiWithRetries', () => {
   let mockGenAI: any;
