@@ -30,11 +30,18 @@ jobs:
     - name: Run Linter (Code Quality Check)
       run: npm run lint
 
-    - name: Run Type Check
+    - name: Security Scan (npm audit)
+      run: npm audit --audit-level=high
+
+    - name: Run Type Check (Frontend)
       run: npm run typecheck
 
-    - name: Run Unit Tests with Coverage
-      run: npm run test -- --coverage
+    - name: Run Type Check (Functions)
+      working-directory: ./functions
+      run: npm run lint
+
+    - name: Run Unit Tests with Coverage (Frontend)
+      run: npm run test -- --coverage --run
       env:
         VITE_FIREBASE_API_KEY: "ci-dummy-key"
         VITE_FIREBASE_AUTH_DOMAIN: "ci-dummy-domain"
@@ -54,6 +61,10 @@ jobs:
         VITE_FIREBASE_MESSAGING_SENDER_ID: "ci-dummy-sender"
         VITE_FIREBASE_APP_ID: "ci-dummy-app-id"
         VITE_GOOGLE_MAPS_API_KEY: "ci-dummy-maps-key"
+
+    - name: Run Unit Tests (Functions)
+      working-directory: ./functions
+      run: npm run test -- --run
 
     - name: Verify Docker Build
       run: docker build -t intelliasha:ci .

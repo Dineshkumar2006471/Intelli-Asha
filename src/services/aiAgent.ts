@@ -15,7 +15,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../firebase';
 import { createLogger } from '../utils/logger';
-import type { DashboardData } from '../types';
+import type { DashboardData, VisitData } from '../types';
 
 const log = createLogger('AI_AGENT_SERVICE');
 
@@ -23,11 +23,11 @@ const log = createLogger('AI_AGENT_SERVICE');
 
 export async function processVisitVoiceNote(
   transcription: string
-): Promise<any> {
+): Promise<VisitData> {
   log.info('Calling processVisitVoiceNote (Field Agent)', { length: transcription.length });
   
   try {
-    const processVoiceNoteFn = httpsCallable<{ text: string }, any>(
+    const processVoiceNoteFn = httpsCallable<{ text: string }, { data: VisitData }>(
       functions,
       'processVisitVoiceNote'
     );
