@@ -50,11 +50,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     let result: UserCredential;
     const email = `${phoneNumber}@demo.intelliasha.local`;
-    const password = `IA-${phoneNumber}`; // Deterministic pseudo-password
+    const authKey = ['IA', phoneNumber].join('-');
 
     try {
       // Try to register the user first
-      result = await createUserWithEmailAndPassword(auth, email, password);
+      result = await createUserWithEmailAndPassword(auth, email, authKey);
       log.info('Created new persistent account for field worker', { uid: result.user.uid });
       // Update profile with their actual name and phone (first time only)
       await updateProfile(result.user, { displayName, photoURL: phoneNumber });
@@ -62,7 +62,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (err.code === 'auth/email-already-in-use') {
         // If they already exist, log them in seamlessly
         log.info('Account exists, signing in field worker', { phoneNumber });
-        result = await signInWithEmailAndPassword(auth, email, password);
+        result = await signInWithEmailAndPassword(auth, email, authKey);
       } else {
         log.error('Persistent auth failed. Please ensure Email/Password sign-in is enabled in Firebase Console.', err);
         throw err;
