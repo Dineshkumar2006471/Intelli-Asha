@@ -136,9 +136,9 @@ export const updateAnalyticsOnVisit = onDocumentWritten(
     secrets: [geminiApiKey],
   },
   async (_event) => {
-    // For the prototype, we default to updating the 'Hyderabad' dashboard
-    // In production, we would group visits by district
-    const location = 'Hyderabad';
+    // Extract location from the visit, default to 'Unknown District' if not provided
+    const visitData = _event.data?.after.data();
+    const location = visitData?.locationName || 'Unknown District';
 
     logger.info('[ANALYTICS_AGENT] Visit changed. Updating dashboard', { location });
 

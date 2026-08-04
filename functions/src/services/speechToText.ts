@@ -49,8 +49,6 @@ export const transcribeAudio = onCall(
         encoding: 'WEBM_OPUS' as const,
         sampleRateHertz: 48000,
         languageCode: languageCode,
-        // Fallback languages if the worker mixes Hindi/English etc.
-        alternativeLanguageCodes: ['hi-IN', 'en-US'],
         enableAutomaticPunctuation: true,
       };
 
