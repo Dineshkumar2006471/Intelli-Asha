@@ -84,7 +84,20 @@ RULES:
 7. NEVER fabricate data that isn't in the transcription.
 8. Respond ONLY with valid JSON matching the output schema.
 9. CRITICAL: ALL extracted string values (like names, immunisations) MUST be translated to English. NEVER output Hindi, Telugu, or regional text in the JSON fields.
-10. Generate a professional, structured medical summary report in Markdown format for the \`professionalReport\` field. Frame it like an official Medical Officer's case summary, capturing all symptoms, complaints, and requests in structured bullet points. Make it detailed, clear, and actionable.`;
+10. Generate a VERY detailed, highly structured professional medical summary report in Markdown format for the \`professionalReport\` field. You MUST use the following exact structure:
+
+### Clinical Summary
+(2-3 sentences summarizing the patient's current condition and the primary reason for the visit)
+
+### Key Observations
+* **Symptoms:** (list any symptoms described)
+* **Vitals & Measurements:** (list age, weight, etc.)
+* **General Status:** (describe the overall well-being)
+
+### Recommended Action Plan
+* (Bullet points of what needs to be done next, e.g., "Urgent PHC referral required", "Schedule next visit in 2 weeks")
+
+Do NOT omit the professionalReport field. It is the most important part of the response. Make sure the markdown is properly formatted inside the JSON string.`;
 
 // ─── Input sanitisation ─────────────────────────────────────────────────
 
