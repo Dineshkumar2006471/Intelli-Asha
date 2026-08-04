@@ -40,6 +40,7 @@ export interface VisitData {
   visitType: string;
   immunisation: string;
   audioUrl?: string | null;
+  observations?: string[];
 }
 
 /** A visit document as stored in the `visits` Firestore collection. */

@@ -55,14 +55,14 @@ const Login = () => {
   };
 
   return (
-    <div className="h-screen w-full bg-surface text-text-primary font-body-base antialiased flex overflow-hidden">
+    <div className="min-h-screen w-full bg-surface text-text-primary font-body-base antialiased flex flex-col lg:flex-row overflow-x-hidden">
       {/* Left Side Image */}
-      <div className="hidden lg:block w-1/2 relative h-full bg-neutral-900">
+      <div className="hidden lg:block w-1/2 relative min-h-screen bg-neutral-900">
         <img alt="ASHA Worker in the field" className="absolute inset-0 w-full h-full object-cover" src="/images/asha-field-worker.png" />
       </div>
 
       {/* Right Side Content */}
-      <div className="w-full lg:w-1/2 flex flex-col h-full relative overflow-y-auto bg-surface">
+      <div className="w-full lg:w-1/2 flex flex-col min-h-screen relative bg-surface">
         
         {/* Header */}
         <div className="w-full px-8 py-8 flex items-center shrink-0">

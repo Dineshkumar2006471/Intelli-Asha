@@ -178,9 +178,9 @@ REAL DATA FROM OUR SYSTEM (last 30 days):
 - Visit type breakdown: ${JSON.stringify(liveMetrics.visitTypes)}
 
 Using this real data as a foundation, generate:
-1. An AI brief with anomaly insights, recommendations, and alerts relevant to ${location}
+1. An AI brief with anomaly insights, recommendations, and alerts relevant to ${location}. If visit data is very low, extrapolate realistically based on typical district patterns and current health news for ${location}.
 2. Extended metrics (fill in total_beneficiaries and disbursement_ready based on visit counts)
-3. A PHC breakdown table with 5-6 realistic PHCs for ${location}
+3. A PHC breakdown table with 5-6 realistic PHCs for ${location}. Ensure they are real or highly plausible PHCs for ${location}.
 
 The data quality score should be calculated as: verified visits / total visits * 100.
 The disbursement_ready should be calculated based on visit counts × standard NHM TBI rates.

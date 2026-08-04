@@ -288,6 +288,33 @@ const LogVisit = () => {
                 )}
               </div>
             </div>
+
+            {/* Observations Section */}
+            {structuredData.observations && structuredData.observations.length > 0 && (
+              <div className="mt-6 pt-4 border-t border-border-default">
+                <span className="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-3">Contextual Observations (Unstructured)</span>
+                <ul className="list-disc pl-5 space-y-1.5">
+                  {structuredData.observations.map((obs, idx) => (
+                    <li key={idx} className="font-body-base text-body-base text-on-surface leading-relaxed">
+                      {isEditingData ? (
+                        <input
+                          type="text"
+                          value={obs}
+                          onChange={(e) => {
+                            const newObs = [...(structuredData.observations || [])];
+                            newObs[idx] = e.target.value;
+                            setStructuredData({ ...structuredData, observations: newObs });
+                          }}
+                          className="w-full border border-border-default rounded px-2 py-1 font-body-base text-body-base bg-surface-container outline-none focus:border-primary mt-1"
+                        />
+                      ) : (
+                        obs
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </section>
         )}
         </div>

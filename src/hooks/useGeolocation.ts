@@ -70,9 +70,9 @@ export function useGeolocation(options: UseGeolocationOptions = {}): Geolocation
         }
 
         if (district !== 'Unknown District') {
-          if (!district.toLowerCase().includes('district') && !district.toLowerCase().includes('dist')) {
-            district = `${district} District`;
-          }
+          // Clean up "District" suffix to prevent "YSR District District"
+          district = district.replace(/ district/i, '').replace(/ dist/i, '').trim();
+          district = `${district} District`;
         } else {
           district = fallback;
         }

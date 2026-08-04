@@ -39,10 +39,9 @@ const AppLayout = ({ children }: AppLayoutProps) => {
       {/* Main Content Wrapper */}
       <div className="flex-1 flex flex-col h-screen w-full min-w-0 overflow-hidden bg-surface-container-lowest relative">
         
-        {/* Mobile Header with Hamburger (Only visible on small screens for supervisors) */}
-        {role === 'supervisor' && (
-          <header className="md:hidden flex-none relative flex justify-between items-center px-2 py-2 bg-surface border-b border-border-default z-30 shadow-sm shrink-0 min-h-[56px]">
-            {/* Left: Hamburger */}
+        {/* Mobile Header with Hamburger (Visible for all roles on mobile) */}
+        <header className="md:hidden flex-none relative flex justify-between items-center px-2 py-2 bg-surface border-b border-border-default z-30 shadow-sm shrink-0 min-h-[56px]">
+          {/* Left: Hamburger */}
             <div className="flex-1 flex justify-start">
               <button 
                 onClick={() => setIsSidebarOpen(true)}
@@ -58,33 +57,15 @@ const AppLayout = ({ children }: AppLayoutProps) => {
               <img src="/logo-ia.png" alt="IntelliASHA Logo" className="h-7 w-auto object-contain" />
             </div>
 
-            {/* Right: Actions */}
             <div className="flex-1 flex justify-end">
                <button className="p-2 min-w-[48px] min-h-[48px] flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors">
                 <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 0"}}>notifications</span>
               </button>
             </div>
           </header>
-        )}
-        
-        {/* Mobile Header for Field Worker (No hamburger, just logo and notifications) */}
-        {role === 'field-worker' && (
-          <header className="md:hidden flex-none relative flex justify-between items-center px-2 py-2 bg-surface border-b border-border-default z-30 shadow-sm shrink-0 min-h-[56px]">
-            <div className="flex-1 flex justify-start">
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <img src="/logo-ia.png" alt="IntelliASHA Logo" className="h-7 w-auto object-contain" />
-            </div>
-            <div className="flex-1 flex justify-end">
-               <button className="p-2 min-w-[48px] min-h-[48px] flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors">
-                <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 0"}}>notifications</span>
-              </button>
-            </div>
-          </header>
-        )}
 
         {/* The Page Content */}
-        <main className="flex-1 overflow-y-auto w-full relative z-10 pb-[72px] md:pb-0">
+        <main className="flex-1 overflow-y-auto w-full relative z-10 pb-[90px] md:pb-0">
           {children}
         </main>
         
