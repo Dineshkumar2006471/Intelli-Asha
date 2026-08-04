@@ -17,6 +17,7 @@ const LogVisit = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [structuredData, setStructuredData] = useState<VisitData | null>(null);
   const [isEditingData, setIsEditingData] = useState(false);
+  const [editableTranscription, setEditableTranscription] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   
@@ -60,12 +61,18 @@ const LogVisit = () => {
     }
   };
 
+  useEffect(() => {
+    if (transcription) {
+      setEditableTranscription(transcription);
+    }
+  }, [transcription]);
+
   const handleProcessVoiceNote = useCallback(async () => {
-    if (!transcription.trim()) return;
+    if (!editableTranscription.trim()) return;
     
     setIsProcessing(true);
     try {
-      const data = await processVisitVoiceNote(transcription);
+      const data = await processVisitVoiceNote(editableTranscription);
       setStructuredData(data);
       
       // USP Feature: Native Audio Feedback
@@ -84,13 +91,9 @@ const LogVisit = () => {
     } finally {
       setIsProcessing(false);
     }
-  }, [transcription]);
+  }, [editableTranscription]);
 
-  useEffect(() => {
-    if (!isRecording && !isProcessingAudio && transcription.trim() && !structuredData && !isProcessing && !error) {
-      handleProcessVoiceNote();
-    }
-  }, [isRecording, isProcessingAudio, transcription, structuredData, isProcessing, error, handleProcessVoiceNote]);
+  // Removed auto-processing effect to allow manual editing
 
   const handleSubmit = async () => {
     if (!structuredData || !currentUser) return;
@@ -111,7 +114,7 @@ const LogVisit = () => {
       await saveVisit(
         {
           ...structuredData,
-          rawTranscription: transcription,
+          rawTranscription: editableTranscription,
           audioUrl,
           geoAnchor: geoAnchor ?? null,
           locationName: locationName || 'Unknown District',
@@ -200,10 +203,26 @@ const LogVisit = () => {
             {isProcessingAudio && <p className="font-title-md text-title-md text-primary animate-pulse mb-2">Transcribing audio (Google Speech-to-Text)...</p>}
             {isProcessing && !isProcessingAudio && <p className="font-title-md text-title-md text-primary animate-pulse mb-2">Understanding with Gemini AI...</p>}
             
-            {transcription && (
-              <p className="font-title-sm text-title-sm text-on-surface-variant text-center bg-surface-container-low p-4 rounded-lg w-full shadow-sm">
-                "{transcription}"
-              </p>
+            {editableTranscription && (
+              <div className="w-full space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <p className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-center">Review Transcription (Edit if needed)</p>
+                <textarea
+                  value={editableTranscription}
+                  onChange={(e) => setEditableTranscription(e.target.value)}
+                  disabled={isProcessing}
+                  className="w-full font-body-base text-body-base text-on-surface bg-surface-container-lowest p-4 rounded-lg shadow-sm border border-border-default focus:border-primary outline-none resize-y min-h-[100px] disabled:opacity-50"
+                  placeholder="Transcription will appear here..."
+                />
+                {!structuredData && !isProcessing && (
+                  <button 
+                    onClick={handleProcessVoiceNote}
+                    className="w-full bg-primary-container text-on-primary font-title-sm text-title-sm py-3 rounded-lg shadow-sm hover:bg-primary transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>auto_awesome</span>
+                    Extract Data with AI
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </section>
