@@ -112,6 +112,13 @@ const DHODashboard = () => {
       if (data) {
         if (data.aiBrief) setAiBrief(data.aiBrief);
         if (data.phcs) setPhcs(data.phcs);
+      } else {
+        setAiBrief({
+          anomaly: "No analytics data generated for this district yet.",
+          recommendation: "Waiting for Field Workers to log new visits in this location to trigger the AI analysis.",
+          alert: "Awaiting Data"
+        });
+        setPhcs([]);
       }
       setLoading(false);
     });
