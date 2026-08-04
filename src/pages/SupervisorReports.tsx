@@ -1,10 +1,13 @@
 import { useEffect, useState, useRef } from 'react';
 import { onFlaggedVisitsSnapshot, onVisitsSnapshot, onAgentLogsSnapshot } from '../services/db';
 import type { Visit, AgentLog } from '../types';
+import ReactMarkdown from 'react-markdown';
+
 const SupervisorReports = () => {
   const [flaggedVisits, setFlaggedVisits] = useState<Visit[]>([]);
   const [allVisits, setAllVisits] = useState<Visit[]>([]);
   const [agentLogs, setAgentLogs] = useState<AgentLog[]>([]);
+  const [selectedVisit, setSelectedVisit] = useState<Visit | null>(null);
   const terminalEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -114,7 +117,7 @@ const SupervisorReports = () => {
                           <span className="inline-block px-2 py-1 rounded bg-flagged-bg text-flagged-amber font-label-sm text-label-sm uppercase">{visit.flaggedReason || 'Anomaly'}</span>
                         </td>
                         <td className="p-4">
-                          <button className="text-primary font-label-md text-label-md hover:underline font-semibold">Review</button>
+                          <button onClick={() => setSelectedVisit(visit)} className="text-primary font-label-md text-label-md hover:underline font-semibold">Review</button>
                         </td>
                       </tr>
                     ))
@@ -209,6 +212,82 @@ const SupervisorReports = () => {
           </div>
         </div>
       </main>
+
+      {/* Review Modal */}
+      {selectedVisit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-surface rounded-xl shadow-xl border border-border-default max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-border-default bg-surface-container-lowest flex justify-between items-start">
+              <div>
+                <h2 className="font-title-lg text-title-lg text-on-surface font-bold">Medical Case Review: {selectedVisit.householdName}</h2>
+                <div className="flex gap-2 mt-2">
+                  <span className="inline-block px-2 py-1 rounded bg-flagged-bg text-flagged-amber font-label-sm font-bold uppercase">
+                    {selectedVisit.flaggedReason || 'Flagged for Review'}
+                  </span>
+                  <span className="inline-block px-2 py-1 rounded bg-surface-variant text-secondary font-label-sm uppercase">
+                    {selectedVisit.timestamp ? new Date(selectedVisit.timestamp.seconds * 1000).toLocaleString() : 'Just now'}
+                  </span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setSelectedVisit(null)}
+                className="text-on-surface-variant hover:text-on-surface hover:bg-surface-variant p-2 rounded-full transition-colors"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-1 bg-surface-container-lowest">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-surface p-3 rounded border border-border-default">
+                  <span className="block text-[10px] uppercase text-secondary font-bold">Child</span>
+                  <span className="font-medium text-sm">{selectedVisit.childName || '-'} ({selectedVisit.childAge || '-'})</span>
+                </div>
+                <div className="bg-surface p-3 rounded border border-border-default">
+                  <span className="block text-[10px] uppercase text-secondary font-bold">Weight</span>
+                  <span className="font-medium text-sm">{selectedVisit.weight || '-'}</span>
+                </div>
+                <div className="bg-surface p-3 rounded border border-border-default">
+                  <span className="block text-[10px] uppercase text-secondary font-bold">Status</span>
+                  <span className="font-medium text-sm">{selectedVisit.status || '-'}</span>
+                </div>
+                <div className="bg-surface p-3 rounded border border-border-default">
+                  <span className="block text-[10px] uppercase text-secondary font-bold">Visit Type</span>
+                  <span className="font-medium text-sm">{selectedVisit.visitType || '-'}</span>
+                </div>
+              </div>
+
+              <div className="border border-border-default rounded-lg p-6 bg-surface">
+                <h3 className="font-title-sm text-secondary uppercase tracking-wide mb-4 border-b border-border-default pb-2">Medical Officer's Assessment</h3>
+                <div className="prose prose-sm md:prose-base prose-slate max-w-none prose-headings:font-title-md prose-headings:text-on-surface prose-p:text-on-surface prose-li:text-on-surface prose-strong:text-primary">
+                  {selectedVisit.professionalReport ? (
+                    <ReactMarkdown>{selectedVisit.professionalReport}</ReactMarkdown>
+                  ) : selectedVisit.observations && selectedVisit.observations.length > 0 ? (
+                    <ul className="list-disc pl-5">
+                      {selectedVisit.observations.map((obs, i) => <li key={i}>{obs}</li>)}
+                    </ul>
+                  ) : (
+                    <p className="text-secondary italic">No detailed report available for this visit.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-4 border-t border-border-default bg-surface-container-low flex justify-end gap-3">
+              <button 
+                onClick={() => setSelectedVisit(null)}
+                className="px-4 py-2 rounded-lg font-title-sm text-secondary hover:bg-surface-variant transition-colors"
+              >
+                Close
+              </button>
+              <button className="px-6 py-2 rounded-lg font-title-sm bg-primary text-on-primary hover:bg-primary-dark transition-colors shadow-sm">
+                Mark as Resolved
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

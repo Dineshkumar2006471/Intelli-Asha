@@ -4,12 +4,14 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase';
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import type { Visit } from '../types';
+import ReactMarkdown from 'react-markdown';
 
 const Records = () => {
   const { currentUser } = useAuth();
   const [visits, setVisits] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'flagged' | 'verified'>('all');
+  const [selectedVisit, setSelectedVisit] = useState<Visit | null>(null);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -108,6 +110,7 @@ const Records = () => {
                       <th className="p-4 font-label-sm text-[11px] text-secondary uppercase tracking-wider">Visit Type</th>
                       <th className="p-4 font-label-sm text-[11px] text-secondary uppercase tracking-wider">Verification</th>
                       <th className="p-4 font-label-sm text-[11px] text-secondary uppercase tracking-wider">Date</th>
+                      <th className="p-4 font-label-sm text-[11px] text-secondary uppercase tracking-wider text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-default">
@@ -141,6 +144,11 @@ const Records = () => {
                         <td className="p-4 font-data-mono text-[12px] text-secondary">
                           {visit.timestamp ? new Date(visit.timestamp.seconds * 1000).toLocaleDateString() : 'Just now'}
                         </td>
+                        <td className="p-4 text-right">
+                          <button onClick={() => setSelectedVisit(visit)} className="text-primary hover:text-primary-dark font-label-sm text-[12px] font-semibold underline decoration-transparent hover:decoration-primary transition-all">
+                            View Report
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -150,6 +158,70 @@ const Records = () => {
           </div>
         </div>
       </main>
+
+      {/* View Report Modal */}
+      {selectedVisit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-surface rounded-xl shadow-xl border border-border-default max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-border-default bg-surface-container-lowest flex justify-between items-start">
+              <div>
+                <h2 className="font-title-lg text-title-lg text-on-surface font-bold">Medical Case Review: {selectedVisit.householdName}</h2>
+                <div className="flex gap-2 mt-2">
+                  <span className={`inline-block px-2 py-1 rounded font-label-sm font-bold uppercase ${selectedVisit.anomaliesFound ? 'bg-flagged-bg text-flagged-amber' : 'bg-verified-bg text-verified-green'}`}>
+                    {selectedVisit.anomaliesFound ? 'Flagged for Review' : 'Verified'}
+                  </span>
+                  <span className="inline-block px-2 py-1 rounded bg-surface-variant text-secondary font-label-sm uppercase">
+                    {selectedVisit.timestamp ? new Date(selectedVisit.timestamp.seconds * 1000).toLocaleString() : 'Just now'}
+                  </span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setSelectedVisit(null)}
+                className="text-on-surface-variant hover:text-on-surface hover:bg-surface-variant p-2 rounded-full transition-colors"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-1 bg-surface-container-lowest">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-surface p-3 rounded border border-border-default">
+                  <span className="block text-[10px] uppercase text-secondary font-bold">Child</span>
+                  <span className="font-medium text-sm">{selectedVisit.childName || '-'} ({selectedVisit.childAge || '-'})</span>
+                </div>
+                <div className="bg-surface p-3 rounded border border-border-default">
+                  <span className="block text-[10px] uppercase text-secondary font-bold">Weight</span>
+                  <span className="font-medium text-sm">{selectedVisit.weight || '-'}</span>
+                </div>
+                <div className="bg-surface p-3 rounded border border-border-default">
+                  <span className="block text-[10px] uppercase text-secondary font-bold">Status</span>
+                  <span className="font-medium text-sm">{selectedVisit.status || '-'}</span>
+                </div>
+                <div className="bg-surface p-3 rounded border border-border-default">
+                  <span className="block text-[10px] uppercase text-secondary font-bold">Visit Type</span>
+                  <span className="font-medium text-sm">{selectedVisit.visitType || '-'}</span>
+                </div>
+              </div>
+
+              <div className="border border-border-default rounded-lg p-6 bg-surface">
+                <h3 className="font-title-sm text-secondary uppercase tracking-wide mb-4 border-b border-border-default pb-2">Professional Medical Report</h3>
+                <div className="prose prose-sm md:prose-base prose-slate max-w-none prose-headings:font-title-md prose-headings:text-on-surface prose-p:text-on-surface prose-li:text-on-surface prose-strong:text-primary">
+                  {selectedVisit.professionalReport ? (
+                    <ReactMarkdown>{selectedVisit.professionalReport}</ReactMarkdown>
+                  ) : selectedVisit.observations && selectedVisit.observations.length > 0 ? (
+                    <ul className="list-disc pl-5">
+                      {selectedVisit.observations.map((obs, i) => <li key={i}>{obs}</li>)}
+                    </ul>
+                  ) : (
+                    <p className="text-secondary italic">No detailed report available for this visit.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

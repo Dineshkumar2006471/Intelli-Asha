@@ -31,7 +31,7 @@ export function useSpeechRecognition(lang = 'en-IN'): UseSpeechRecognitionReturn
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  const isSupported = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+  const isSupported = typeof window !== 'undefined' && !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 
   const recognitionRef = useRef<any>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);

@@ -7,6 +7,7 @@ import type { VisitData, HealthStatus } from '../types';
 import { createLogger } from '../utils/logger';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useGeolocation } from '../hooks/useGeolocation';
+import ReactMarkdown from 'react-markdown';
 
 const log = createLogger('LOG_VISIT');
 
@@ -93,8 +94,6 @@ const LogVisit = () => {
     }
   }, [editableTranscription]);
 
-  // Removed auto-processing effect to allow manual editing
-
   const handleSubmit = async () => {
     if (!structuredData || !currentUser) return;
     
@@ -132,259 +131,236 @@ const LogVisit = () => {
   };
 
   return (
-    <div className="flex flex-col w-full">
-      <div className="flex-1 bg-surface-container-lowest">
-        <header className="bg-surface-container-lowest flex justify-between items-center px-margin-tablet lg:px-margin-desktop py-6 border-b border-border-default sticky top-0 z-50">
-          <div className="flex items-center space-x-4">
-            <Link to="/app/field" aria-label="Go back" className="text-on-surface-variant hover:text-on-surface transition-colors p-2 -ml-2 rounded-full hover:bg-surface-container-low">
-              <span className="material-symbols-outlined text-2xl" style={{fontVariationSettings: "'FILL' 0"}}>arrow_back</span>
-            </Link>
-            <h1 className="font-title-lg text-title-lg text-on-surface">Log Visit</h1>
-          </div>
-        </header>
+    <div className="flex flex-col w-full h-full min-h-screen bg-surface-variant">
+      <header className="bg-surface-container-lowest flex justify-between items-center px-6 py-4 border-b border-border-default sticky top-0 z-50">
+        <div className="flex items-center space-x-4">
+          <Link to="/app/field" aria-label="Go back" className="text-on-surface-variant hover:text-on-surface transition-colors p-2 -ml-2 rounded-full hover:bg-surface-container-low">
+            <span className="material-symbols-outlined text-2xl" style={{fontVariationSettings: "'FILL' 0"}}>arrow_back</span>
+          </Link>
+          <h1 className="font-title-lg text-title-lg text-on-surface">Log Visit</h1>
+        </div>
+      </header>
 
-        <div className="flex flex-col px-margin-tablet lg:px-margin-desktop py-12 max-w-max-width mx-auto w-full space-y-12">
+      <div className="flex-1 max-w-[1600px] mx-auto w-full p-4 lg:p-8">
         
         {error && (
-          <div className="p-4 bg-red-100 text-red-700 rounded-lg text-sm">
+          <div className="p-4 bg-red-100 text-red-700 rounded-lg text-sm mb-6">
             {error}
           </div>
         )}
 
-        {/* USP Feature: Offline Sync Indicator */}
         {!isOnline && (
-          <div className="p-4 bg-amber-100 text-amber-800 rounded-lg text-sm flex items-center gap-2 border border-amber-200">
+          <div className="p-4 bg-amber-100 text-amber-800 rounded-lg text-sm flex items-center gap-2 border border-amber-200 mb-6">
             <span className="material-symbols-outlined text-[20px]">cloud_off</span>
             <span><strong>You are offline.</strong> Don't worry, you can still log visits. They will sync automatically when you reconnect.</span>
           </div>
         )}
 
-        <section className="flex flex-col items-center justify-center space-y-6 py-4">
-          <div className="flex flex-col items-center gap-2 mb-4">
-            <label htmlFor="lang-select" className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Select Language</label>
-            <select 
-              id="lang-select" 
-              value={selectedLang} 
-              onChange={(e) => setSelectedLang(e.target.value)}
-              disabled={isRecording || isProcessingAudio || isProcessing}
-              className="bg-surface-container-lowest border border-border-default text-on-surface font-body-base rounded-md px-3 py-2 outline-none focus:border-primary disabled:opacity-50"
-            >
-              <option value="en-US">English (Strict)</option>
-              <option value="en-IN">English (India/Hinglish)</option>
-              <option value="hi-IN">Hindi (हिंदी)</option>
-              <option value="te-IN">Telugu (తెలుగు)</option>
-              <option value="ta-IN">Tamil (தமிழ்)</option>
-            </select>
-          </div>
-
-          <p className="font-title-md text-title-md text-on-surface-variant text-center max-w-2xl">
-            Tap to speak. Try saying:<br />
-            <span className="italic text-on-surface font-semibold">"Visited Sharma household. Child Rahul, weight 12kg. Standard checkup."</span>
-          </p>
-
-          <div className="relative flex items-center justify-center w-32 h-32">
-            {isRecording && (
-              <div className="absolute inset-0 bg-primary-container rounded-full opacity-50 animate-ping"></div>
-            )}
-            <button 
-              onClick={toggleRecording}
-              disabled={isProcessing}
-              aria-label={isRecording ? "Stop recording" : "Start recording"} 
-              className={`relative z-10 w-28 h-28 ${isRecording ? 'bg-error text-white' : 'bg-primary-container text-on-primary'} rounded-full flex items-center justify-center shadow-md hover:opacity-90 transition-all active:scale-95 disabled:opacity-50`}
-            >
-              <span className="material-symbols-outlined text-6xl" style={{fontVariationSettings: "'FILL' 1"}}>
-                {isRecording ? 'stop' : 'mic'}
-              </span>
-            </button>
-          </div>
-
-          <div className="min-h-[48px] flex flex-col items-center justify-center w-full max-w-2xl" aria-live="polite" aria-atomic="true">
-            {isRecording && <p className="font-title-md text-title-md text-primary animate-pulse mb-2">Listening...</p>}
-            {isProcessingAudio && <p className="font-title-md text-title-md text-primary animate-pulse mb-2">Transcribing audio (Google Speech-to-Text)...</p>}
-            {isProcessing && !isProcessingAudio && <p className="font-title-md text-title-md text-primary animate-pulse mb-2">Understanding with Gemini AI...</p>}
-            
-            {editableTranscription && (
-              <div className="w-full space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <p className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-center">Review Transcription (Edit if needed)</p>
-                <textarea
-                  value={editableTranscription}
-                  onChange={(e) => setEditableTranscription(e.target.value)}
-                  disabled={isProcessing}
-                  className="w-full font-body-base text-body-base text-on-surface bg-surface-container-lowest p-4 rounded-lg shadow-sm border border-border-default focus:border-primary outline-none resize-y min-h-[100px] disabled:opacity-50"
-                  placeholder="Transcription will appear here..."
-                />
-                {!structuredData && !isProcessing && (
-                  <button 
-                    onClick={handleProcessVoiceNote}
-                    className="w-full bg-primary-container text-on-primary font-title-sm text-title-sm py-3 rounded-lg shadow-sm hover:bg-primary transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-                  >
-                    <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>auto_awesome</span>
-                    Extract Data with AI
-                  </button>
-                )}
+        {/* SPLIT SCREEN LAYOUT */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          
+          {/* LEFT PANEL - DATA ENTRY */}
+          <section className="bg-surface-container-lowest border border-border-default rounded-xl p-6 shadow-sm flex flex-col items-center justify-start space-y-8 min-h-[600px]">
+            <div className="w-full flex justify-between items-center border-b border-border-default pb-4">
+              <h2 className="font-title-md text-title-md text-on-surface">1. Voice Input</h2>
+              <div className="flex items-center gap-2">
+                <label htmlFor="lang-select" className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Language:</label>
+                <select 
+                  id="lang-select" 
+                  value={selectedLang} 
+                  onChange={(e) => setSelectedLang(e.target.value)}
+                  disabled={isRecording || isProcessingAudio || isProcessing}
+                  className="bg-surface border border-border-default text-on-surface font-body-base rounded-md px-2 py-1 outline-none focus:border-primary disabled:opacity-50 text-sm"
+                >
+                  <option value="en-US">English (Strict)</option>
+                  <option value="en-IN">English (India/Hinglish)</option>
+                  <option value="hi-IN">Hindi (हिंदी)</option>
+                  <option value="te-IN">Telugu (తెలుగు)</option>
+                  <option value="ta-IN">Tamil (தமிழ்)</option>
+                </select>
               </div>
-            )}
-          </div>
-        </section>
-        {structuredData && (
-          <section className="bg-surface-container-lowest border border-border-default rounded-xl p-6 shadow-sm space-y-6">
-            <div className="flex items-center justify-between border-b border-border-default pb-4">
-              <h2 className="font-title-md text-title-md text-on-surface">Structured Data Preview</h2>
+            </div>
+
+            <p className="font-body-base text-body-base text-on-surface-variant text-center max-w-md">
+              Tap to speak. Try saying:<br />
+              <span className="italic text-on-surface font-semibold">"Visited Sharma household. Child Rahul, weight 12kg. Standard checkup."</span>
+            </p>
+
+            <div className="relative flex items-center justify-center w-32 h-32">
+              {isRecording && (
+                <div className="absolute inset-0 bg-primary-container rounded-full opacity-50 animate-ping"></div>
+              )}
               <button 
-                onClick={() => setIsEditingData(!isEditingData)}
-                className={`flex items-center gap-1 font-label-md text-label-md px-3 py-1.5 rounded-full transition-colors ${isEditingData ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface hover:bg-surface-variant'}`}
+                onClick={toggleRecording}
+                disabled={isProcessing}
+                aria-label={isRecording ? "Stop recording" : "Start recording"} 
+                className={`relative z-10 w-28 h-28 ${isRecording ? 'bg-error text-white' : 'bg-primary-container text-on-primary'} rounded-full flex items-center justify-center shadow-md hover:opacity-90 transition-all active:scale-95 disabled:opacity-50`}
               >
-                <span className="material-symbols-outlined text-[18px]" style={{fontVariationSettings: "'FILL' 0"}}>
-                  {isEditingData ? 'check' : 'edit'}
+                <span className="material-symbols-outlined text-6xl" style={{fontVariationSettings: "'FILL' 1"}}>
+                  {isRecording ? 'stop' : 'mic'}
                 </span>
-                {isEditingData ? 'Done' : 'Edit'}
               </button>
             </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-8 items-start">
-              <div className="space-y-1">
-                <span className="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Household</span>
-                {isEditingData ? (
-                  <input type="text" value={structuredData.householdName || ''} onChange={(e) => setStructuredData({...structuredData, householdName: e.target.value})} className="w-full border border-border-default rounded px-2 py-1 font-body-base text-body-base bg-surface-container outline-none focus:border-primary" />
-                ) : (
-                  <span className="block font-body-base text-body-base text-on-surface font-medium">{structuredData.householdName || '-'}</span>
-                )}
-              </div>
-              <div className="space-y-1">
-                <span className="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Child Name</span>
-                {isEditingData ? (
-                  <input type="text" value={structuredData.childName || ''} onChange={(e) => setStructuredData({...structuredData, childName: e.target.value})} className="w-full border border-border-default rounded px-2 py-1 font-body-base text-body-base bg-surface-container outline-none focus:border-primary" />
-                ) : (
-                  <span className="block font-body-base text-body-base text-on-surface font-medium">{structuredData.childName || '-'}</span>
-                )}
-              </div>
-              <div className="space-y-1">
-                <span className="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Age</span>
-                {isEditingData ? (
-                  <input type="text" value={structuredData.childAge || ''} onChange={(e) => setStructuredData({...structuredData, childAge: e.target.value})} className="w-full border border-border-default rounded px-2 py-1 font-body-base text-body-base bg-surface-container outline-none focus:border-primary" />
-                ) : (
-                  <span className="block font-body-base text-body-base text-on-surface font-medium">{structuredData.childAge || '-'}</span>
-                )}
-              </div>
-              <div className="space-y-1">
-                <span className="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Weight</span>
-                {isEditingData ? (
-                  <input type="text" value={structuredData.weight || ''} onChange={(e) => setStructuredData({...structuredData, weight: e.target.value})} className="w-full border border-border-default rounded px-2 py-1 font-body-base text-body-base bg-surface-container outline-none focus:border-primary" />
-                ) : (
-                  <span className="block font-body-base text-body-base text-on-surface font-medium">{structuredData.weight || '-'}</span>
-                )}
-              </div>
-              <div className="space-y-1">
-                <span className="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Visit Type</span>
-                {isEditingData ? (
-                  <input type="text" value={structuredData.visitType || ''} onChange={(e) => setStructuredData({...structuredData, visitType: e.target.value})} className="w-full border border-border-default rounded px-2 py-1 font-body-base text-body-base bg-surface-container outline-none focus:border-primary" />
-                ) : (
-                  <span className="block font-body-base text-body-base text-on-surface font-medium">{structuredData.visitType || '-'}</span>
-                )}
-              </div>
-              <div className="space-y-1">
-                <span className="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Condition</span>
-                {isEditingData ? (
-                  <select 
-                    value={structuredData.status || 'Unknown'} 
-                    onChange={(e) => setStructuredData({...structuredData, status: e.target.value as HealthStatus})} 
-                    className="w-full border border-border-default rounded px-2 py-1 font-body-base text-body-base bg-surface-container outline-none focus:border-primary"
-                  >
-                    <option value="Normal">Normal</option>
-                    <option value="Underweight">Underweight</option>
-                    <option value="Severe Acute Malnutrition">Severe Acute Malnutrition</option>
-                    <option value="Unknown">Unknown</option>
-                  </select>
-                ) : (
-                  <div className={`inline-flex items-center px-3 py-1.5 rounded-full ${structuredData.status === 'Severe Acute Malnutrition' ? 'bg-error-container text-on-error-container' : structuredData.status === 'Underweight' ? 'bg-amber-100 text-amber-900' : structuredData.status === 'Normal' ? 'bg-green-100 text-green-800' : 'bg-surface-container-high text-on-surface'}`} role="status">
-                    <span className="material-symbols-outlined text-[16px] mr-1.5" style={{fontVariationSettings: "'FILL' 1"}} aria-hidden="true">
-                      {structuredData.status === 'Severe Acute Malnutrition' ? 'warning' : structuredData.status === 'Normal' ? 'check_circle' : 'info'}
-                    </span>
-                    <span className="font-label-sm text-label-sm uppercase">
-                      {structuredData.status || 'Unknown'}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
 
-            {/* Observations Section */}
-            <div className="mt-6 pt-4 border-t border-border-default">
-              <div className="flex justify-between items-center mb-3">
-                <span className="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Contextual Observations (Unstructured)</span>
-                {isEditingData && (
-                  <button
-                    onClick={() => {
-                      const newObs = [...(structuredData.observations || []), ""];
-                      setStructuredData({ ...structuredData, observations: newObs });
-                    }}
-                    className="flex items-center text-primary hover:text-primary-dark font-label-sm text-label-sm transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[16px] mr-1" style={{fontVariationSettings: "'FILL' 0"}}>add</span>
-                    Add Observation
-                  </button>
-                )}
-              </div>
+            <div className="w-full flex-1 flex flex-col items-center justify-start" aria-live="polite" aria-atomic="true">
+              {isRecording && <p className="font-title-md text-title-md text-primary animate-pulse mb-2">Listening...</p>}
+              {isProcessingAudio && <p className="font-title-md text-title-md text-primary animate-pulse mb-2">Transcribing audio (Google Speech-to-Text)...</p>}
+              {isProcessing && !isProcessingAudio && <p className="font-title-md text-title-md text-primary animate-pulse mb-2">Understanding with Gemini AI...</p>}
               
-              {(!structuredData.observations || structuredData.observations.length === 0) ? (
-                <p className="font-body-base text-body-base text-on-surface-variant italic bg-surface-container-low p-3 rounded-md">
-                  No additional context detected. (Tip: If the transcription was unclear, click Edit to add notes manually).
-                </p>
-              ) : (
-                <ul className="list-disc pl-5 space-y-2">
-                  {structuredData.observations.map((obs, idx) => (
-                    <li key={idx} className="font-body-base text-body-base text-on-surface leading-relaxed flex items-start group">
-                      {isEditingData ? (
-                        <div className="flex w-full items-center gap-2">
-                          <input
-                            type="text"
-                            value={obs}
-                            onChange={(e) => {
-                              const newObs = [...structuredData.observations!];
-                              newObs[idx] = e.target.value;
-                              setStructuredData({ ...structuredData, observations: newObs });
-                            }}
-                            className="w-full border border-border-default rounded px-3 py-1.5 font-body-base text-body-base bg-surface-container outline-none focus:border-primary transition-colors"
-                            placeholder="Enter observation..."
-                          />
-                          <button
-                            onClick={() => {
-                              const newObs = structuredData.observations!.filter((_, i) => i !== idx);
-                              setStructuredData({ ...structuredData, observations: newObs });
-                            }}
-                            className="text-error hover:bg-error-container p-1 rounded-full transition-colors"
-                            aria-label="Delete observation"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">delete</span>
-                          </button>
-                        </div>
-                      ) : (
-                        <span>{obs}</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+              {editableTranscription && (
+                <div className="w-full space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300 mt-4 flex-1 flex flex-col">
+                  <div className="flex justify-between items-end">
+                    <p className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Review Transcription</p>
+                    <span className="font-label-sm text-on-surface-variant italic">Edit if needed</span>
+                  </div>
+                  <textarea
+                    value={editableTranscription}
+                    onChange={(e) => setEditableTranscription(e.target.value)}
+                    disabled={isProcessing}
+                    className="flex-1 w-full font-body-base text-body-base text-on-surface bg-surface-variant p-4 rounded-lg shadow-inner border border-border-default focus:border-primary outline-none resize-none min-h-[150px] disabled:opacity-50"
+                    placeholder="Transcription will appear here..."
+                  />
+                  {!structuredData && !isProcessing && (
+                    <button 
+                      onClick={handleProcessVoiceNote}
+                      className="w-full bg-primary text-on-primary font-title-md text-title-md py-4 rounded-lg shadow-md hover:bg-primary-dark transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-4"
+                    >
+                      <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>auto_awesome</span>
+                      Generate Professional Report
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </section>
-        )}
-        </div>
 
-        {structuredData && (
-          <div className="bg-surface-container-lowest border-t border-border-default p-4 sticky bottom-0 z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] mt-auto">
-            <div className="max-w-max-width mx-auto w-full flex justify-end">
-              <button 
-                onClick={handleSubmit}
-                disabled={isProcessing}
-                aria-label={!isOnline ? 'Save Visit Offline' : 'Confirm and Submit Visit'}
-                className="w-full md:w-auto min-w-[240px] bg-primary-container text-on-primary font-title-sm text-title-sm py-3 px-8 rounded-lg shadow-sm hover:bg-primary transition-colors flex justify-center items-center active:scale-[0.98] disabled:opacity-50"
-              >
-                <span>{isProcessing ? 'Saving...' : (!isOnline ? 'Save Offline' : 'Confirm & Submit')}</span>
-                {!isProcessing && <span className="material-symbols-outlined ml-2" style={{fontVariationSettings: "'FILL' 0"}}>{!isOnline ? 'save' : 'send'}</span>}
-              </button>
-            </div>
-          </div>
-        )}
+          {/* RIGHT PANEL - REPORT & DATA */}
+          {!structuredData ? (
+            <section className="hidden lg:flex bg-surface-container-low border border-border-default border-dashed rounded-xl p-6 min-h-[600px] flex-col items-center justify-center text-center">
+              <span className="material-symbols-outlined text-[64px] text-on-surface-variant opacity-50 mb-4">analytics</span>
+              <h2 className="font-title-lg text-on-surface-variant opacity-70">Awaiting Data</h2>
+              <p className="font-body-base text-on-surface-variant opacity-70 mt-2 max-w-sm">Record a visit and generate an AI report to view the structured analysis and professional case summary here.</p>
+            </section>
+          ) : (
+            <section className="bg-surface-container-lowest border border-border-default rounded-xl p-0 shadow-sm flex flex-col min-h-[600px] overflow-hidden animate-in fade-in slide-in-from-right-4 duration-500">
+              {/* Header */}
+              <div className="bg-primary-container p-6 border-b border-border-default flex justify-between items-center">
+                <div>
+                  <h2 className="font-title-lg text-title-lg text-on-primary-container">Medical Case Summary</h2>
+                  <p className="font-body-base text-on-primary-container/80 mt-1">Generated by IntelliASHA Field Agent</p>
+                </div>
+                <button 
+                  onClick={() => setIsEditingData(!isEditingData)}
+                  className={`flex items-center gap-1 font-label-md px-4 py-2 rounded-full transition-colors bg-surface text-primary hover:bg-surface-variant shadow-sm`}
+                >
+                  <span className="material-symbols-outlined text-[18px]" style={{fontVariationSettings: "'FILL' 0"}}>
+                    {isEditingData ? 'check' : 'edit'}
+                  </span>
+                  {isEditingData ? 'Done Editing' : 'Edit Data'}
+                </button>
+              </div>
+              
+              <div className="p-6 flex-1 flex flex-col gap-6 overflow-y-auto">
+                {/* Structured Metrics Grid */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-surface p-4 rounded-lg border border-border-default">
+                    <span className="block font-label-sm text-secondary uppercase tracking-wider mb-1">Household</span>
+                    {isEditingData ? (
+                      <input type="text" value={structuredData.householdName || ''} onChange={(e) => setStructuredData({...structuredData, householdName: e.target.value})} className="w-full border-b border-primary bg-transparent outline-none font-medium" />
+                    ) : (
+                      <span className="block font-body-base font-medium">{structuredData.householdName || '-'}</span>
+                    )}
+                  </div>
+                  <div className="bg-surface p-4 rounded-lg border border-border-default">
+                    <span className="block font-label-sm text-secondary uppercase tracking-wider mb-1">Child Name</span>
+                    {isEditingData ? (
+                      <input type="text" value={structuredData.childName || ''} onChange={(e) => setStructuredData({...structuredData, childName: e.target.value})} className="w-full border-b border-primary bg-transparent outline-none font-medium" />
+                    ) : (
+                      <span className="block font-body-base font-medium">{structuredData.childName || '-'}</span>
+                    )}
+                  </div>
+                  <div className="bg-surface p-4 rounded-lg border border-border-default">
+                    <span className="block font-label-sm text-secondary uppercase tracking-wider mb-1">Age</span>
+                    {isEditingData ? (
+                      <input type="text" value={structuredData.childAge || ''} onChange={(e) => setStructuredData({...structuredData, childAge: e.target.value})} className="w-full border-b border-primary bg-transparent outline-none font-medium" />
+                    ) : (
+                      <span className="block font-body-base font-medium">{structuredData.childAge || '-'}</span>
+                    )}
+                  </div>
+                  <div className="bg-surface p-4 rounded-lg border border-border-default">
+                    <span className="block font-label-sm text-secondary uppercase tracking-wider mb-1">Weight</span>
+                    {isEditingData ? (
+                      <input type="text" value={structuredData.weight || ''} onChange={(e) => setStructuredData({...structuredData, weight: e.target.value})} className="w-full border-b border-primary bg-transparent outline-none font-medium" />
+                    ) : (
+                      <span className="block font-body-base font-medium">{structuredData.weight || '-'}</span>
+                    )}
+                  </div>
+                  <div className="bg-surface p-4 rounded-lg border border-border-default">
+                    <span className="block font-label-sm text-secondary uppercase tracking-wider mb-1">Condition</span>
+                    {isEditingData ? (
+                      <select 
+                        value={structuredData.status || 'Unknown'} 
+                        onChange={(e) => setStructuredData({...structuredData, status: e.target.value as HealthStatus})} 
+                        className="w-full border-b border-primary bg-transparent outline-none font-medium"
+                      >
+                        <option value="Normal">Normal</option>
+                        <option value="Underweight">Underweight</option>
+                        <option value="Severe Acute Malnutrition">Severe Acute Malnutrition</option>
+                        <option value="Unknown">Unknown</option>
+                      </select>
+                    ) : (
+                      <div className={`inline-flex items-center px-2 py-1 rounded-md ${structuredData.status === 'Severe Acute Malnutrition' ? 'bg-error-container text-error' : structuredData.status === 'Underweight' ? 'bg-amber-100 text-amber-900' : structuredData.status === 'Normal' ? 'bg-verified-bg text-verified-green' : 'bg-surface-variant text-secondary'}`}>
+                        <span className="font-label-sm uppercase font-bold">
+                          {structuredData.status || 'Unknown'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="bg-surface p-4 rounded-lg border border-border-default">
+                    <span className="block font-label-sm text-secondary uppercase tracking-wider mb-1">Visit Type</span>
+                    {isEditingData ? (
+                      <input type="text" value={structuredData.visitType || ''} onChange={(e) => setStructuredData({...structuredData, visitType: e.target.value})} className="w-full border-b border-primary bg-transparent outline-none font-medium" />
+                    ) : (
+                      <span className="block font-body-base font-medium">{structuredData.visitType || '-'}</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Professional Report Render (Markdown) */}
+                <div className="flex-1 bg-surface rounded-lg border border-border-default p-6 shadow-inner">
+                  <span className="block font-label-sm text-secondary uppercase tracking-wider mb-4 border-b border-border-default pb-2">Medical Officer's Assessment</span>
+                  {isEditingData ? (
+                    <textarea 
+                      value={structuredData.professionalReport || ''} 
+                      onChange={(e) => setStructuredData({...structuredData, professionalReport: e.target.value})} 
+                      className="w-full h-64 border border-border-default bg-transparent outline-none font-body-base p-2 rounded focus:border-primary resize-none"
+                    />
+                  ) : (
+                    <div className="prose prose-sm md:prose-base prose-slate max-w-none prose-headings:font-title-md prose-headings:text-on-surface prose-p:text-on-surface prose-li:text-on-surface prose-strong:text-primary">
+                      {structuredData.professionalReport ? (
+                        <ReactMarkdown>{structuredData.professionalReport}</ReactMarkdown>
+                      ) : (
+                        <p className="text-secondary italic">No additional medical assessment generated.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="bg-surface p-6 border-t border-border-default mt-auto">
+                <button 
+                  onClick={handleSubmit}
+                  disabled={isProcessing}
+                  className="w-full bg-primary text-on-primary font-title-md py-4 rounded-lg shadow-md hover:bg-primary-dark transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <span>{isProcessing ? 'Saving...' : (!isOnline ? 'Save Visit Offline' : 'Confirm & Submit to DHIS2')}</span>
+                  {!isProcessing && <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 0"}}>{!isOnline ? 'save' : 'cloud_upload'}</span>}
+                </button>
+              </div>
+            </section>
+          )}
+        </div>
       </div>
     </div>
   );

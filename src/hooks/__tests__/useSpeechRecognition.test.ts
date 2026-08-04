@@ -15,6 +15,7 @@ describe('useSpeechRecognition hook', () => {
   let mockGetUserMedia: any;
   let mockMediaRecorderStart: any;
   let mockMediaRecorderStop: any;
+  let mockSpeechRecognitionStart: any;
 
   beforeEach(() => {
     mockGetUserMedia = vi.fn().mockResolvedValue({
@@ -22,6 +23,7 @@ describe('useSpeechRecognition hook', () => {
     });
     mockMediaRecorderStart = vi.fn();
     mockMediaRecorderStop = vi.fn();
+    mockSpeechRecognitionStart = vi.fn();
 
     Object.defineProperty(globalThis.navigator, 'mediaDevices', {
       value: {
@@ -49,13 +51,30 @@ describe('useSpeechRecognition hook', () => {
       configurable: true,
       writable: true,
     });
+
+    class MockSpeechRecognition {
+      continuous = false;
+      interimResults = false;
+      lang = '';
+      start = mockSpeechRecognitionStart;
+      stop = vi.fn();
+      onresult = null;
+      onerror = null;
+      onend = null;
+    }
+
+    Object.defineProperty(window, 'SpeechRecognition', {
+      value: MockSpeechRecognition,
+      configurable: true,
+      writable: true,
+    });
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('should initialize with correct support status when mediaDevices is present', () => {
+  it('should initialize with correct support status when SpeechRecognition is present', () => {
     const { result } = renderHook(() => useSpeechRecognition('en-IN'));
     expect(result.current.isSupported).toBe(true);
     expect(result.current.isRecording).toBe(false);
@@ -63,8 +82,13 @@ describe('useSpeechRecognition hook', () => {
     expect(result.current.error).toBeNull();
   });
 
-  it('should flag unsupported browser when mediaDevices is missing', () => {
-    Object.defineProperty(globalThis.navigator, 'mediaDevices', {
+  it('should flag unsupported browser when SpeechRecognition is missing', () => {
+    Object.defineProperty(window, 'SpeechRecognition', {
+      value: undefined,
+      configurable: true,
+      writable: true,
+    });
+    Object.defineProperty(window, 'webkitSpeechRecognition', {
       value: undefined,
       configurable: true,
       writable: true,
@@ -84,6 +108,7 @@ describe('useSpeechRecognition hook', () => {
     await waitFor(() => {
       expect(mockGetUserMedia).toHaveBeenCalled();
       expect(mockMediaRecorderStart).toHaveBeenCalled();
+      expect(mockSpeechRecognitionStart).toHaveBeenCalled();
     });
     
     expect(result.current.isRecording).toBe(true);

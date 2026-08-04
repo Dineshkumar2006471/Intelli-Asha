@@ -40,6 +40,7 @@ export interface VisitData {
   visitType: string;
   immunisation: string;
   audioUrl?: string | null;
+  professionalReport?: string;
   observations?: string[];
 }
 

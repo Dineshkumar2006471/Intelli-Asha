@@ -49,16 +49,15 @@ const visitDataSchema = {
       enum: ['hindi', 'english', 'telugu', 'tamil', 'bengali', 'kannada', 'other'],
       description: 'Language detected in the transcription',
     },
-    observations: {
-      type: Type.ARRAY,
-      items: { type: Type.STRING },
-      description: 'Any unstructured context, symptoms, issues, or observations mentioned that do not fit other fields (e.g., "Mother is feeling dizzy", "Water pump is broken").',
+    professionalReport: {
+      type: Type.STRING,
+      description: 'A professional, structured medical summary report in Markdown format.',
     },
   },
   required: [
     'householdName', 'childName', 'childAge', 'weight',
     'status', 'visitType', 'immunisation', 'followUpNeeded',
-    'detectedLanguage', 'observations'
+    'detectedLanguage', 'professionalReport'
   ],
 };
 
@@ -85,7 +84,7 @@ RULES:
 7. NEVER fabricate data that isn't in the transcription.
 8. Respond ONLY with valid JSON matching the output schema.
 9. CRITICAL: ALL extracted string values (like names, immunisations) MUST be translated to English. NEVER output Hindi, Telugu, or regional text in the JSON fields.
-10. Extract any extra context into the \`observations\` array as short bullet points.`;
+10. Generate a professional, structured medical summary report in Markdown format for the \`professionalReport\` field. Frame it like an official Medical Officer's case summary, capturing all symptoms, complaints, and requests in structured bullet points. Make it detailed, clear, and actionable.`;
 
 // ─── Input sanitisation ─────────────────────────────────────────────────
 
