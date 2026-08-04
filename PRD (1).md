@@ -391,9 +391,9 @@ zones/{zoneId}
 | Phase 1 | Auth, Firestore schema, Field App shell, voice capture | Complete |
 | Phase 2 | Field Agent (transcription + extraction), Verification Agent | Complete |
 | Phase 3 | Supervisor Dashboard, Alert Agent, FCM integration | Complete |
-| Phase 4 | Analytics Agent, DHO Dashboard, BigQuery pipeline | In progress |
-| Phase 5 | Incentive Agent, disbursement reporting | In progress |
-| Phase 6 | Multilingual voice validation (Hindi, Telugu), hardening, CI/CD, security audit | In progress — see Production Readiness Checklist |
+| Phase 4 | Analytics Agent, DHO Dashboard, BigQuery pipeline | Complete |
+| Phase 5 | Incentive Agent, disbursement reporting | Complete |
+| Phase 6 | Multilingual voice validation (Hindi, Telugu), hardening, CI/CD, security audit | Complete |
 | Phase 7 | Demo data seeding through live pipeline, rehearsal, final submission | Upcoming |
 
 ---
