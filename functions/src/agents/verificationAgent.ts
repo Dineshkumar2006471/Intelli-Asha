@@ -21,10 +21,8 @@ import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { GoogleGenAI, Type } from '@google/genai';
 import { writeAgentLog } from '../services/agentLogger';
+import { callGeminiWithRetries } from '../utils/geminiRetries';
 import * as logger from 'firebase-functions/logger';
-import { defineSecret } from 'firebase-functions/params';
-
-const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
 // ─── Verification Output Schema ─────────────────────────────────────────
 
@@ -152,8 +150,7 @@ export const verificationAgent = onDocumentCreated(
     document: 'visits/{visitId}',
     region: 'asia-south1',
     memory: '512MiB',
-    timeoutSeconds: 60,
-    secrets: [geminiApiKey],
+    timeoutSeconds: 300,
   },
   async (event) => {
     const snapshot = event.data;
@@ -195,10 +192,7 @@ export const verificationAgent = onDocumentCreated(
       });
 
       // ── Step 2: Gemini medical plausibility check ──
-      const originalProject = process.env.GOOGLE_CLOUD_PROJECT;
-      delete process.env.GOOGLE_CLOUD_PROJECT;
-      const ai = new GoogleGenAI({ apiKey: geminiApiKey.value(), project: '' });
-      process.env.GOOGLE_CLOUD_PROJECT = originalProject;
+      const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'us-central1' });
       const prompt = `ASHA Worker Visit Data:
 ${JSON.stringify(visitData, null, 2).substring(0, 3000)}
 
@@ -208,14 +202,14 @@ Failed Checks: ${failedChecks.length > 0 ? failedChecks.join(', ') : 'None'}
 
 Analyse this visit and determine if anomalies exist.`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
+      const response = await callGeminiWithRetries(ai, {
+        model: 'gemini-2.5-flash',
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         config: {
           systemInstruction: SYSTEM_INSTRUCTION,
           responseMimeType: 'application/json',
           responseSchema: verificationSchema,
-          temperature: 0.1,
+          temperature: 0.1, // Low temp for more deterministic evaluation
         },
       });
 

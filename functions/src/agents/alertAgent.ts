@@ -20,10 +20,8 @@ import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
 import { GoogleGenAI, Type } from '@google/genai';
 import { writeAgentLog } from '../services/agentLogger';
+import { callGeminiWithRetries } from '../utils/geminiRetries';
 import * as logger from 'firebase-functions/logger';
-import { defineSecret } from 'firebase-functions/params';
-
-const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
 // ─── Alert Classification Schema ────────────────────────────────────────
 
@@ -48,8 +46,7 @@ export const alertAgent = onDocumentCreated(
     document: 'a2a_tasks/{taskId}',
     region: 'asia-south1',
     memory: '256MiB',
-    timeoutSeconds: 30,
-    secrets: [geminiApiKey],
+    timeoutSeconds: 300,
   },
   async (event) => {
     const snapshot = event.data;
@@ -126,12 +123,9 @@ async function handleCreateAlert(
   let classification: { severity: string; title: string; message: string; actionRequired: string };
 
   try {
-    const originalProject = process.env.GOOGLE_CLOUD_PROJECT;
-    delete process.env.GOOGLE_CLOUD_PROJECT;
-    const ai = new GoogleGenAI({ apiKey: geminiApiKey.value(), project: '' });
-    process.env.GOOGLE_CLOUD_PROJECT = originalProject;
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash',
+    const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'us-central1' });
+    const response = await callGeminiWithRetries(ai, {
+      model: 'gemini-2.5-flash',
       contents: [{
         role: 'user',
         parts: [{
@@ -259,7 +253,6 @@ export const zeroVisitZoneDetection = onSchedule(
     region: 'asia-south1',
     memory: '256MiB',
     timeoutSeconds: 120,
-    secrets: [geminiApiKey],
   },
   async () => {
     const db = getFirestore();

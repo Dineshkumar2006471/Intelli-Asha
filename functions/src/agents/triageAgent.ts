@@ -18,10 +18,8 @@ import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { getFirestore } from 'firebase-admin/firestore';
 import { GoogleGenAI, Type } from '@google/genai';
 import { writeAgentLog } from '../services/agentLogger';
+import { callGeminiWithRetries } from '../utils/geminiRetries';
 import * as logger from 'firebase-functions/logger';
-import { defineSecret } from 'firebase-functions/params';
-
-const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
 // ─── Gemini Schema ──────────────────────────────────────────────────────
 
@@ -52,8 +50,7 @@ export const updateSmartRouteOnVisit = onDocumentWritten(
     document: 'visits/{visitId}',
     region: 'asia-south1',
     memory: '512MiB',
-    timeoutSeconds: 30,
-    secrets: [geminiApiKey],
+    timeoutSeconds: 300,
   },
   async (event) => {
     const snap = event.data?.after?.exists ? event.data.after : event.data?.before;
@@ -95,10 +92,7 @@ export const updateSmartRouteOnVisit = onDocumentWritten(
     });
 
     try {
-      const originalProject = process.env.GOOGLE_CLOUD_PROJECT;
-      delete process.env.GOOGLE_CLOUD_PROJECT;
-      const ai = new GoogleGenAI({ apiKey: geminiApiKey.value(), project: '' });
-      process.env.GOOGLE_CLOUD_PROJECT = originalProject;
+      const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'us-central1' });
 
       const prompt = `You are the IntelliASHA Triage Agent. Based on these past visit records for an ASHA worker, generate a prioritized visit list for today.
 
@@ -112,8 +106,8 @@ Rules:
 5. Include a brief "reason" for each priority assignment.
 6. Sort from highest to lowest priority.`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
+      const response = await callGeminiWithRetries(ai, {
+        model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
           responseMimeType: 'application/json',

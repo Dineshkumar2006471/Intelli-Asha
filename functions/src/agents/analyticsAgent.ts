@@ -18,10 +18,8 @@ import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { GoogleGenAI, Type } from '@google/genai';
 import { writeAgentLog } from '../services/agentLogger';
+import { callGeminiWithRetries } from '../utils/geminiRetries';
 import * as logger from 'firebase-functions/logger';
-import { defineSecret } from 'firebase-functions/params';
-
-const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
 // ─── Output Schemas ─────────────────────────────────────────────────────
 
@@ -132,8 +130,7 @@ export const updateAnalyticsOnVisit = onDocumentWritten(
     document: 'visits/{visitId}',
     region: 'asia-south1',
     memory: '512MiB',
-    timeoutSeconds: 120,
-    secrets: [geminiApiKey],
+    timeoutSeconds: 300,
   },
   async (_event) => {
     // Extract location from the visit, default to 'Unknown District' if not provided
@@ -161,14 +158,11 @@ export const updateAnalyticsOnVisit = onDocumentWritten(
       });
 
       // Step 2: Call Gemini with real data + Google Search grounding
-      const originalProject = process.env.GOOGLE_CLOUD_PROJECT;
-      delete process.env.GOOGLE_CLOUD_PROJECT;
-      const ai = new GoogleGenAI({ apiKey: geminiApiKey.value(), project: '' });
-      process.env.GOOGLE_CLOUD_PROJECT = originalProject;
+      const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'us-central1' });
       let dashboard;
       try {
-        const response = await ai.models.generateContent({
-          model: 'gemini-3.5-flash',
+        const response = await callGeminiWithRetries(ai, {
+          model: 'gemini-2.5-flash',
           contents: [{
             role: 'user',
             parts: [{

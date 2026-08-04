@@ -119,7 +119,7 @@ const DHODashboard = () => {
     return () => {
       unsubAnalytics();
     };
-  }, [locationName, geoLoading]);
+  }, [locationName, geoLoading, detectedLocation]);
 
   useEffect(() => {
     // Legacy pin logic removed. Pins are now driven directly by the master onVisitsSnapshot listener above.

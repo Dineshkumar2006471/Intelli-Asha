@@ -19,10 +19,8 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { GoogleGenAI, Type } from '@google/genai';
 import { writeAgentLog } from '../services/agentLogger';
+import { callGeminiWithRetries } from '../utils/geminiRetries';
 import * as logger from 'firebase-functions/logger';
-import { defineSecret } from 'firebase-functions/params';
-
-const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
 // ─── Gemini Schema ──────────────────────────────────────────────────────
 
@@ -98,8 +96,7 @@ export const processVisitVoiceNote = onCall(
   {
     region: 'asia-south1',
     memory: '512MiB',
-    timeoutSeconds: 60,
-    secrets: [geminiApiKey],
+    timeoutSeconds: 300,
   },
   async (request) => {
     // 1. Authenticate Request
@@ -131,12 +128,9 @@ export const processVisitVoiceNote = onCall(
     });
 
     try {
-      const originalProject = process.env.GOOGLE_CLOUD_PROJECT;
-      delete process.env.GOOGLE_CLOUD_PROJECT;
-      const ai = new GoogleGenAI({ apiKey: geminiApiKey.value(), project: '' });
-      process.env.GOOGLE_CLOUD_PROJECT = originalProject;
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
+      const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'us-central1' });
+      const response = await callGeminiWithRetries(ai, {
+        model: 'gemini-2.5-flash',
         contents: [
           {
             role: 'user',

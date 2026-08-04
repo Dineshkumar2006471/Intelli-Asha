@@ -27,32 +27,56 @@ export function useGeolocation(options: UseGeolocationOptions = {}): Geolocation
   const reverseGeocode = useCallback(
     async (lat: number, lng: number): Promise<string> => {
       try {
-        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
-        const response = await fetch(url, {
-          headers: {
-            'Accept-Language': 'en'
-          }
-        });
-        const data = await response.json();
-
-        if (!response.ok || data.error) {
-          throw new Error('No results from Nominatim Geocoding');
+        const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+        if (!apiKey) {
+          throw new Error('Google Maps API Key is missing from environment');
         }
 
-        const address = data.address;
-        if (!address) return fallback;
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (!response.ok || data.status !== 'OK' || !data.results || data.results.length === 0) {
+          throw new Error('No results from Google Maps Geocoding');
+        }
+
+        const results = data.results;
         
-        // Field worker level
+        // Find appropriate component based on zoom level
         if (zoom >= 14) {
-          const block = address.suburb || address.village || address.town || address.city_district || 'Unknown Block';
-          const district = address.state_district || address.county || address.city || 'Unknown District';
+          // Field worker level
+          let block = 'Unknown Block';
+          let district = 'Unknown District';
+          
+          for (const result of results) {
+            for (const component of result.address_components) {
+              if (component.types.includes('sublocality') || component.types.includes('locality')) {
+                block = component.long_name;
+              }
+              if (component.types.includes('administrative_area_level_3') || component.types.includes('administrative_area_level_2')) {
+                district = component.long_name;
+              }
+            }
+            if (block !== 'Unknown Block' && district !== 'Unknown District') break;
+          }
           return `${block} PHC, ${district}`;
         }
 
         // Dashboard level
-        let city = address.state_district || address.county || address.city || fallback;
-        if (city !== fallback && !city.toLowerCase().includes('district') && !city.toLowerCase().includes('dist')) {
-          city = `${city} District`;
+        let city = fallback;
+        for (const result of results) {
+          for (const component of result.address_components) {
+            if (component.types.includes('administrative_area_level_2') || component.types.includes('locality')) {
+              city = component.long_name;
+              
+              // Make sure "District" is appended nicely
+              if (!city.toLowerCase().includes('district') && !city.toLowerCase().includes('dist')) {
+                city = `${city} District`;
+              }
+              break;
+            }
+          }
+          if (city !== fallback) break;
         }
         
         return city;
