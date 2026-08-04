@@ -126,7 +126,10 @@ async function handleCreateAlert(
   let classification: { severity: string; title: string; message: string; actionRequired: string };
 
   try {
+    const originalProject = process.env.GOOGLE_CLOUD_PROJECT;
+    delete process.env.GOOGLE_CLOUD_PROJECT;
     const ai = new GoogleGenAI({ apiKey: geminiApiKey.value(), project: '' });
+    process.env.GOOGLE_CLOUD_PROJECT = originalProject;
     const response = await ai.models.generateContent({
       model: 'gemini-3.5-flash',
       contents: [{

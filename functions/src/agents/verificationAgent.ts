@@ -195,7 +195,10 @@ export const verificationAgent = onDocumentCreated(
       });
 
       // ── Step 2: Gemini medical plausibility check ──
+      const originalProject = process.env.GOOGLE_CLOUD_PROJECT;
+      delete process.env.GOOGLE_CLOUD_PROJECT;
       const ai = new GoogleGenAI({ apiKey: geminiApiKey.value(), project: '' });
+      process.env.GOOGLE_CLOUD_PROJECT = originalProject;
       const prompt = `ASHA Worker Visit Data:
 ${JSON.stringify(visitData, null, 2).substring(0, 3000)}
 

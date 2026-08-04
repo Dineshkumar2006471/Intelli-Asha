@@ -161,7 +161,10 @@ export const updateAnalyticsOnVisit = onDocumentWritten(
       });
 
       // Step 2: Call Gemini with real data + Google Search grounding
+      const originalProject = process.env.GOOGLE_CLOUD_PROJECT;
+      delete process.env.GOOGLE_CLOUD_PROJECT;
       const ai = new GoogleGenAI({ apiKey: geminiApiKey.value(), project: '' });
+      process.env.GOOGLE_CLOUD_PROJECT = originalProject;
       let dashboard;
       try {
         const response = await ai.models.generateContent({
