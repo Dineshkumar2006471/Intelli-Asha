@@ -290,31 +290,63 @@ const LogVisit = () => {
             </div>
 
             {/* Observations Section */}
-            {structuredData.observations && structuredData.observations.length > 0 && (
-              <div className="mt-6 pt-4 border-t border-border-default">
-                <span className="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-3">Contextual Observations (Unstructured)</span>
-                <ul className="list-disc pl-5 space-y-1.5">
+            <div className="mt-6 pt-4 border-t border-border-default">
+              <div className="flex justify-between items-center mb-3">
+                <span className="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Contextual Observations (Unstructured)</span>
+                {isEditingData && (
+                  <button
+                    onClick={() => {
+                      const newObs = [...(structuredData.observations || []), ""];
+                      setStructuredData({ ...structuredData, observations: newObs });
+                    }}
+                    className="flex items-center text-primary hover:text-primary-dark font-label-sm text-label-sm transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[16px] mr-1" style={{fontVariationSettings: "'FILL' 0"}}>add</span>
+                    Add Observation
+                  </button>
+                )}
+              </div>
+              
+              {(!structuredData.observations || structuredData.observations.length === 0) ? (
+                <p className="font-body-base text-body-base text-on-surface-variant italic bg-surface-container-low p-3 rounded-md">
+                  No additional context detected. (Tip: If the transcription was unclear, click Edit to add notes manually).
+                </p>
+              ) : (
+                <ul className="list-disc pl-5 space-y-2">
                   {structuredData.observations.map((obs, idx) => (
-                    <li key={idx} className="font-body-base text-body-base text-on-surface leading-relaxed">
+                    <li key={idx} className="font-body-base text-body-base text-on-surface leading-relaxed flex items-start group">
                       {isEditingData ? (
-                        <input
-                          type="text"
-                          value={obs}
-                          onChange={(e) => {
-                            const newObs = [...(structuredData.observations || [])];
-                            newObs[idx] = e.target.value;
-                            setStructuredData({ ...structuredData, observations: newObs });
-                          }}
-                          className="w-full border border-border-default rounded px-2 py-1 font-body-base text-body-base bg-surface-container outline-none focus:border-primary mt-1"
-                        />
+                        <div className="flex w-full items-center gap-2">
+                          <input
+                            type="text"
+                            value={obs}
+                            onChange={(e) => {
+                              const newObs = [...structuredData.observations!];
+                              newObs[idx] = e.target.value;
+                              setStructuredData({ ...structuredData, observations: newObs });
+                            }}
+                            className="w-full border border-border-default rounded px-3 py-1.5 font-body-base text-body-base bg-surface-container outline-none focus:border-primary transition-colors"
+                            placeholder="Enter observation..."
+                          />
+                          <button
+                            onClick={() => {
+                              const newObs = structuredData.observations!.filter((_, i) => i !== idx);
+                              setStructuredData({ ...structuredData, observations: newObs });
+                            }}
+                            className="text-error hover:bg-error-container p-1 rounded-full transition-colors"
+                            aria-label="Delete observation"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                          </button>
+                        </div>
                       ) : (
-                        obs
+                        <span>{obs}</span>
                       )}
                     </li>
                   ))}
                 </ul>
-              </div>
-            )}
+              )}
+            </div>
           </section>
         )}
         </div>
