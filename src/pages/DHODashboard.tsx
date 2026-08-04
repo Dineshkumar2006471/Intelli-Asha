@@ -326,13 +326,13 @@ const DHODashboard = () => {
           
           {/* Top Right: AI Brief Card */}
           <div className="lg:col-span-1 flex flex-col">
-            <div className="bg-surface-container-lowest border border-primary-fixed-dim rounded-lg p-6 relative overflow-hidden shadow-sm h-full flex flex-col">
+            <div className="bg-surface-container-lowest border border-primary-fixed-dim rounded-lg p-6 relative overflow-hidden shadow-sm h-[600px] flex flex-col">
               <div className="absolute top-0 left-0 w-full h-1 bg-primary-container"></div>
               <div className="flex items-center gap-2 mb-4">
                 <span className="material-symbols-outlined text-primary-container" style={{fontVariationSettings: "'FILL' 1"}}>auto_awesome</span>
                 <h2 className="font-title-sm text-title-sm text-on-surface font-bold">AI Brief — Week of {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</h2>
               </div>
-              <div className="font-body-base text-body-base text-on-surface-variant space-y-4 flex-1 flex flex-col justify-start">
+              <div className="font-body-base text-body-base text-on-surface-variant space-y-4 flex-1 flex flex-col justify-start overflow-y-auto pr-2 pb-4">
                 {aiBrief ? (
                   <>
                     <div className="bg-surface-container-low p-3.5 rounded-lg border border-border-default">

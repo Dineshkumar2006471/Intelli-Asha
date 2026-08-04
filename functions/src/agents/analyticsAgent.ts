@@ -183,24 +183,27 @@ Using this real data as a foundation, generate:
 3. A PHC breakdown table with 5-6 realistic PHCs for ${location}
 
 The data quality score should be calculated as: verified visits / total visits * 100.
-The disbursement_ready should be calculated based on visit counts × standard NHM TBI rates.`,
+The disbursement_ready should be calculated based on visit counts × standard NHM TBI rates.
+The readiness field for each PHC MUST be a percentage string (e.g. "85%", "92%").`,
             }],
           }],
-          config: {
+config: {
             systemInstruction: `You are the IntelliASHA Analytics Agent — a health intelligence system for Indian district health officers.
 
 Generate realistic, data-driven dashboard content based on the real visit data provided.
-Use the real metrics as the foundation and extend with contextually appropriate estimates.
-Reference real health concerns for the specified Indian district using your knowledge.
+Use the Google Search tool to research real health concerns and current events for the specified Indian district.
 Do NOT hallucinate visit counts — use the real numbers provided.
 
-For the AI brief:
-- anomaly: Start with "Anomaly Detected:" — cite a specific pattern from the data
-- recommendation: Start with "Recommendation:" — actionable next step
-- alert: Start with "Alert:" — urgent item if any, or a positive note`,
+For the AI brief (MUST use bullet points and be highly structured):
+- anomaly: Start with "• ANOMALY DETECTED:" — cite a specific pattern from the data and correlate it with your search results for the district.
+- recommendation: Start with "• ACTIONABLE RECOMMENDATION:" — clear next step for the DHO.
+- alert: Start with "• ALERT:" — urgent item or positive note.
+
+The readiness field for each PHC MUST be a percentage string (e.g. "95%").`,
             responseMimeType: 'application/json',
             responseSchema: dashboardSchema,
             temperature: 0.3,
+            tools: [{ googleSearch: {} }]
           },
         });
 
