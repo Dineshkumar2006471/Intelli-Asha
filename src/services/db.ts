@@ -25,7 +25,7 @@ const log = createLogger('DB');
 
 /** Saves a completed visit to Firestore. Alerts are created by the backend Verification Agent. */
 export async function saveVisit(
-  visitData: VisitData & { rawTranscription: string; geoAnchor: GeoAnchor | null; audioUrl?: string | null; locationName?: string },
+  visitData: VisitData & { rawTranscription: string; geoAnchor: GeoAnchor | null; audioUrl?: string | null; locationName?: string; districtName?: string },
   userId: string
 ): Promise<string> {
   try {

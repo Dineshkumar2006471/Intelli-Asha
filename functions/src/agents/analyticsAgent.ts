@@ -133,9 +133,10 @@ export const updateAnalyticsOnVisit = onDocumentWritten(
     timeoutSeconds: 300,
   },
   async (_event) => {
-    // Extract location from the visit, default to 'Unknown District' if not provided
+    // Extract district location from the visit, default to 'Unknown District' if not provided
     const visitData = _event.data?.after.data();
-    const location = visitData?.locationName || 'Unknown District';
+    // Prefer districtName for analytics grouping, fallback to locationName if missing
+    const location = visitData?.districtName || visitData?.locationName || 'Unknown District';
 
     logger.info('[ANALYTICS_AGENT] Visit changed. Updating dashboard', { location });
 

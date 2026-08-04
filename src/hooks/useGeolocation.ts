@@ -6,6 +6,7 @@ const log = createLogger('GEOLOCATION');
 
 interface GeolocationState {
   locationName: string;
+  districtName: string;
   geoAnchor: GeoAnchor | null;
   loading: boolean;
   error: string | null;
@@ -20,6 +21,7 @@ export function useGeolocation(options: UseGeolocationOptions = {}): Geolocation
   const { zoom = 10, fallback = 'Your District' } = options;
 
   const [locationName, setLocationName] = useState<string>('Detecting location...');
+  const [districtName, setDistrictName] = useState<string>('Unknown District');
   const [geoAnchor, setGeoAnchor] = useState<GeoAnchor | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +61,7 @@ export function useGeolocation(options: UseGeolocationOptions = {}): Geolocation
             }
             if (block !== 'Unknown Block' && district !== 'Unknown District') break;
           }
+          setDistrictName(district);
           return `${block} PHC, ${district}`;
         }
 
@@ -79,6 +82,7 @@ export function useGeolocation(options: UseGeolocationOptions = {}): Geolocation
           if (city !== fallback) break;
         }
         
+        setDistrictName(city);
         return city;
       } catch (err: any) {
         log.warn('Reverse geocoding failed', err);
@@ -98,13 +102,9 @@ export function useGeolocation(options: UseGeolocationOptions = {}): Geolocation
 
     navigator.geolocation.getCurrentPosition(
       async (_position) => {
-        // HACKATHON DEMO OVERRIDE:
-        // Since laptops don't have GPS and ISPs route through Mathura (Chhata),
-        // we forcefully override the GPS to Proddatur, YSR Kadapa to guarantee a perfect presentation.
-        const isTest = import.meta.env.MODE === 'test';
-        const latitude = isTest ? _position.coords.latitude : 14.7309;
-        const longitude = isTest ? _position.coords.longitude : 78.5565;
-        const accuracy = isTest ? _position.coords.accuracy : 10; // Fake high accuracy
+        const latitude = _position.coords.latitude;
+        const longitude = _position.coords.longitude;
+        const accuracy = _position.coords.accuracy;
 
         setGeoAnchor({ lat: latitude, lng: longitude, accuracy });
 
@@ -112,7 +112,7 @@ export function useGeolocation(options: UseGeolocationOptions = {}): Geolocation
         setLocationName(name);
         setLoading(false);
 
-        log.info('Geolocation resolved (Hackathon Override)', { name, accuracy });
+        log.info('Geolocation resolved', { name, accuracy });
       },
       (geoErr) => {
         log.warn('Geolocation denied', { code: geoErr.code, message: geoErr.message });
@@ -124,5 +124,5 @@ export function useGeolocation(options: UseGeolocationOptions = {}): Geolocation
     );
   }, [reverseGeocode, fallback]);
 
-  return { locationName, geoAnchor, loading, error };
+  return { locationName, districtName, geoAnchor, loading, error };
 }

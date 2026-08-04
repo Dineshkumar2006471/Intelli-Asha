@@ -43,7 +43,7 @@ const LogVisit = () => {
     startRecording, 
     stopRecording 
   } = useSpeechRecognition(selectedLang);
-  const { geoAnchor, locationName } = useGeolocation({ zoom: 14 });
+  const { geoAnchor, locationName, districtName } = useGeolocation({ zoom: 14 });
 
   useEffect(() => {
     if (speechError) setError(speechError);
@@ -115,6 +115,7 @@ const LogVisit = () => {
           audioUrl,
           geoAnchor: geoAnchor ?? null,
           locationName: locationName || 'Unknown District',
+          districtName: districtName || 'Unknown District',
         },
         currentUser.uid
       );
