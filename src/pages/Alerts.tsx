@@ -40,8 +40,8 @@ const Alerts = () => {
             <p className="text-secondary p-4">No active alerts at this time.</p>
           ) : (
             alerts.map(alert => (
-              <div key={alert.id} className={`bg-surface-container-lowest rounded-xl p-card-padding flex flex-col md:flex-row gap-4 md:items-start relative overflow-hidden group border-2 ${alert.severity === 'high' ? 'border-at-risk-red' : 'border-flagged-amber'} shadow-sm`}>
-                <div className={`flex-shrink-0 p-3 rounded-full flex items-center justify-center ${alert.severity === 'high' ? 'bg-at-risk-bg text-at-risk-red' : 'bg-flagged-bg text-flagged-amber'}`}>
+              <div key={alert.id} className={`bg-surface-container-lowest rounded-xl p-4 md:p-6 flex flex-col md:flex-row gap-4 md:items-start relative overflow-hidden group border-2 ${alert.severity === 'high' ? 'border-at-risk-red' : 'border-flagged-amber'} shadow-sm`}>
+                <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center self-start ${alert.severity === 'high' ? 'bg-at-risk-bg text-at-risk-red' : 'bg-flagged-bg text-flagged-amber'}`}>
                   <span className="material-symbols-outlined" style={{"fontVariationSettings": "'FILL' 1"}}>warning</span>
                 </div>
                 <div className="flex-1 space-y-2">

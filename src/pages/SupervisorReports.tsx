@@ -44,15 +44,6 @@ const SupervisorReports = () => {
       
       {/* Main Content Area */}
       <main className="flex-1 h-full overflow-y-auto bg-surface-container-lowest p-0 md:p-6 lg:p-10">
-        {/* Mobile Header */}
-        <header className="md:hidden flex justify-between items-center px-4 py-3 bg-surface border-b border-border-default shrink-0 mb-4">
-          <div className="flex items-center gap-2">
-            <span className="font-title-md text-title-md font-bold text-primary">IntelliASHA</span>
-          </div>
-          <button className="text-on-surface-variant">
-            <span className="material-symbols-outlined">menu</span>
-          </button>
-        </header>
 
         {/* Desktop Header */}
         <header className="hidden md:flex mb-8 justify-between items-start">
