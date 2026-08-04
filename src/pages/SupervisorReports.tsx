@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { onFlaggedVisitsSnapshot, onVisitsSnapshot, onAgentLogsSnapshot } from '../services/db';
+import { onFlaggedVisitsSnapshot, onVisitsSnapshot, onAgentLogsSnapshot, updateVisit } from '../services/db';
 import type { Visit, AgentLog } from '../types';
 import ReactMarkdown from 'react-markdown';
 
@@ -27,6 +27,17 @@ const SupervisorReports = () => {
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [agentLogs]);
+
+  const handleResolve = async () => {
+    if (!selectedVisit) return;
+    try {
+      await updateVisit(selectedVisit.id, { anomaliesFound: false, flaggedReason: '' });
+      setSelectedVisit(null);
+    } catch (e) {
+      console.error('Failed to resolve visit:', e);
+      alert('Failed to mark as resolved. Please try again.');
+    }
+  };
 
 
   const getLogColor = (severity: string) => {
@@ -271,7 +282,7 @@ const SupervisorReports = () => {
               >
                 Close
               </button>
-              <button className="px-6 py-2 rounded-lg font-title-sm bg-primary text-on-primary hover:bg-primary-dark transition-colors shadow-sm">
+              <button onClick={handleResolve} className="px-6 py-2 rounded-lg font-title-sm bg-primary text-on-primary hover:bg-primary-dark transition-colors shadow-sm">
                 Mark as Resolved
               </button>
             </div>

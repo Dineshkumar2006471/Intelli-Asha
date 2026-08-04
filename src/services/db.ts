@@ -35,11 +35,25 @@ export async function saveVisit(
       workerId: userId,
       timestamp: serverTimestamp(),
     });
-
     log.info('Visit saved successfully', { visitId: docRef.id, household: visitData.householdName });
     return docRef.id;
   } catch (error) {
     log.error('Failed to save visit', error);
+    throw error;
+  }
+}
+
+/** Updates an existing visit in Firestore (e.g., marking as resolved). */
+export async function updateVisit(
+  visitId: string,
+  data: Partial<Visit>
+): Promise<void> {
+  try {
+    const visitRef = doc(db, 'visits', visitId);
+    await setDoc(visitRef, data, { merge: true });
+    log.info('Visit updated successfully', { visitId });
+  } catch (error) {
+    log.error('Failed to update visit', error);
     throw error;
   }
 }

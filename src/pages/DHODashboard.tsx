@@ -146,7 +146,7 @@ const DHODashboard = () => {
   const averageReadiness = phcs.length > 0 ? Math.round(phcs.reduce((acc, p) => {
     const val = parseInt(p.readiness.replace('%', ''));
     return acc + (isNaN(val) ? 0 : val);
-  }, 0) / phcs.length) : 0;
+  }, 0) / phcs.length) : metrics.data_quality_score;
   const strokeDashoffset = 251.2 - (251.2 * (averageReadiness / 100));
 
   const handleExportCSV = () => {
