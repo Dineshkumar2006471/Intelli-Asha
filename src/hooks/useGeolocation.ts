@@ -44,46 +44,60 @@ export function useGeolocation(options: UseGeolocationOptions = {}): Geolocation
 
         const results = data.results;
         
+        // Unified District Extraction
+        let district = 'Unknown District';
+        for (const result of results) {
+          for (const component of result.address_components) {
+            if (component.types.includes('administrative_area_level_2')) {
+              district = component.long_name;
+              break;
+            }
+          }
+          if (district !== 'Unknown District') break;
+        }
+
+        // If still unknown, try locality
+        if (district === 'Unknown District') {
+          for (const result of results) {
+            for (const component of result.address_components) {
+              if (component.types.includes('locality')) {
+                district = component.long_name;
+                break;
+              }
+            }
+            if (district !== 'Unknown District') break;
+          }
+        }
+
+        if (district !== 'Unknown District') {
+          if (!district.toLowerCase().includes('district') && !district.toLowerCase().includes('dist')) {
+            district = `${district} District`;
+          }
+        } else {
+          district = fallback;
+        }
+
+        setDistrictName(district);
+        
         // Find appropriate component based on zoom level
         if (zoom >= 14) {
           // Field worker level
           let block = 'Unknown Block';
-          let district = 'Unknown District';
           
           for (const result of results) {
             for (const component of result.address_components) {
               if (component.types.includes('sublocality') || component.types.includes('locality')) {
                 block = component.long_name;
-              }
-              if (component.types.includes('administrative_area_level_3') || component.types.includes('administrative_area_level_2')) {
-                district = component.long_name;
+                break;
               }
             }
-            if (block !== 'Unknown Block' && district !== 'Unknown District') break;
+            if (block !== 'Unknown Block') break;
           }
-          setDistrictName(district);
           return `${block} PHC, ${district}`;
         }
 
         // Dashboard level
-        let city = fallback;
-        for (const result of results) {
-          for (const component of result.address_components) {
-            if (component.types.includes('administrative_area_level_2') || component.types.includes('locality')) {
-              city = component.long_name;
-              
-              // Make sure "District" is appended nicely
-              if (!city.toLowerCase().includes('district') && !city.toLowerCase().includes('dist')) {
-                city = `${city} District`;
-              }
-              break;
-            }
-          }
-          if (city !== fallback) break;
-        }
-        
-        setDistrictName(city);
-        return city;
+        return district;
       } catch (err: any) {
         log.warn('Reverse geocoding failed', err);
         return fallback;
