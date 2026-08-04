@@ -85,7 +85,7 @@ export function onVisitsSnapshot(callback: (visits: Visit[]) => void): Unsubscri
 
 /** Listen to real-time updates for all Agent Orchestration Logs */
 export function onAgentLogsSnapshot(callback: (logs: AgentLog[]) => void): Unsubscribe {
-  const logsRef = collection(db, 'orchestration_logs');
+  const logsRef = collection(db, 'agent_logs');
   const q = query(logsRef, orderBy('timestamp', 'desc'), limit(50));
   
   return onSnapshot(q, (snapshot) => {
