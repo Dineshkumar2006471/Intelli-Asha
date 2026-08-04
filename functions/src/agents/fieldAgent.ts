@@ -58,7 +58,7 @@ const visitDataSchema = {
   required: [
     'householdName', 'childName', 'childAge', 'weight',
     'status', 'visitType', 'immunisation', 'followUpNeeded',
-    'detectedLanguage',
+    'detectedLanguage', 'observations'
   ],
 };
 
