@@ -47,8 +47,8 @@ const FieldWorker = () => {
   const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (
-    <div className="flex flex-col h-full w-full">
-      <main className="flex-1 h-full overflow-y-auto bg-surface-container-lowest">
+    <div className="flex flex-col w-full">
+      <div className="flex-1 bg-surface-container-lowest">
         
         {/* Page Content */}
 
@@ -203,7 +203,7 @@ const FieldWorker = () => {
             )}
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };

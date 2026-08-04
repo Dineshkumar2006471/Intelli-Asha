@@ -176,10 +176,8 @@ const DHODashboard = () => {
   };
 
   return (
-    <div className="flex flex-col h-full w-full">
-      {/* Shared Sidebar */}
-      
-      <main className="flex-1 h-full overflow-y-auto bg-surface-container-lowest p-0 md:p-6 lg:p-10 space-y-8">
+    <div className="flex flex-col w-full">
+      <div className="flex-1 bg-surface-container-lowest p-4 md:p-6 lg:p-10 space-y-6 md:space-y-8">
         {/* Dashboard Header */}
         <div className="relative w-full rounded-lg overflow-hidden border border-border-default h-[280px]">
           <img alt="Health Center Briefing Context" className="w-full h-full object-cover object-top" src="/images/health-center-briefing.png" />
@@ -430,7 +428,7 @@ const DHODashboard = () => {
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };
