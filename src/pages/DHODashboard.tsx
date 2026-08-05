@@ -183,9 +183,9 @@ const DHODashboard = () => {
           <img alt="Health Center Briefing Context" className="w-full h-full object-cover object-top" src="/images/health-center-briefing.png" />
           <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/70 to-transparent flex flex-col justify-end p-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 w-full max-w-max-width mx-auto">
-              <div>
-                <h1 className="font-display-landing text-display-landing text-on-surface drop-shadow-sm">{locationName} Overview</h1>
-                <p className="font-body-base text-body-base text-on-surface-variant mt-2 font-medium">DHO Analytics Dashboard powered by BigQuery</p>
+              <div className="w-full md:w-auto overflow-hidden">
+                <h1 className="font-display-landing text-4xl md:text-display-landing text-on-surface drop-shadow-sm break-words leading-tight">{locationName} Overview</h1>
+                <p className="font-body-base text-sm md:text-base text-on-surface-variant mt-2 font-medium break-words">DHO Analytics Dashboard powered by BigQuery</p>
               </div>
               <div className="flex items-center gap-2 bg-surface-container-lowest/90 backdrop-blur px-3 py-1.5 rounded-full border border-border-default">
                 <span className="material-symbols-outlined text-outline" style={{fontVariationSettings: "'FILL' 0"}}>calendar_month</span>
@@ -262,7 +262,7 @@ const DHODashboard = () => {
         {/* Main Content Area */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column: Map */}
-          <div className="lg:col-span-2 bg-surface-container-lowest border border-border-default rounded-lg overflow-hidden flex flex-col h-[600px]">
+          <div className="lg:col-span-2 bg-surface-container-lowest border border-border-default rounded-lg overflow-hidden flex flex-col h-[400px] md:h-[600px]">
             <div className="p-4 border-b border-border-default flex justify-between items-center bg-surface-bright">
               {isEditingLocation ? (
                 <form onSubmit={handleManualLocationSubmit} className="flex gap-2 items-center">
@@ -324,7 +324,7 @@ const DHODashboard = () => {
           
           {/* Top Right: AI Brief Card */}
           <div className="lg:col-span-1 flex flex-col">
-            <div className="bg-surface-container-lowest border border-primary-fixed-dim rounded-lg p-6 relative overflow-hidden shadow-sm h-[600px] flex flex-col">
+            <div className="bg-surface-container-lowest border border-primary-fixed-dim rounded-lg p-6 relative overflow-hidden shadow-sm h-auto md:h-[600px] min-h-[400px] flex flex-col">
               <div className="absolute top-0 left-0 w-full h-1 bg-primary-container"></div>
               <div className="flex items-center gap-2 mb-4">
                 <span className="material-symbols-outlined text-primary-container" style={{fontVariationSettings: "'FILL' 1"}}>auto_awesome</span>
