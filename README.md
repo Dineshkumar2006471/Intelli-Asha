@@ -70,23 +70,23 @@ The IntelliASHA architecture is designed for high availability, low latency, and
 
 ```mermaid
 graph TD
-    subgraph "Edge / Field (Web App)"
+    subgraph Edge ["Edge / Field (Web App)"]
         A[ASHA Worker] -->|Voice Input| B(Web Speech API)
         B --> C[Frontend Client]
         A -->|GPS| D(Geolocation API)
         D --> C
     end
 
-    subgraph "Agentic Swarm (Backend Processing)"
-        C -->|Unstructured Text + GPS| E{Verification Agent<br/>Gemini 2.5 Flash}
+    subgraph Swarm ["Agentic Swarm (Backend Processing)"]
+        C -->|Unstructured Text + GPS| E{"Verification Agent (Gemini 2.5)"}
         E -->|Extracts JSON| F[(Firebase Cloud Firestore)]
-        E -- Anomaly Detected --> G{Alert Agent}
-        H{Analytics Agent} <-->|MCP| I[(NDHM Disease DB)]
-        H --> F
+        E -->|Anomaly Detected| G{Alert Agent}
+        H{Analytics Agent} -->|Queries MCP| I[(NDHM Disease DB)]
+        H -->|Updates| F
         I2{Incentive Agent} -->|Computes Payouts| F
     end
 
-    subgraph "Headquarters (Supervisor Dashboard)"
+    subgraph HQ ["Headquarters (Supervisor Dashboard)"]
         F -.->|onSnapshot Real-time Sync| J[DHO Dashboard]
         G -.->|High-Priority Push| J
         J --> K[Live Coverage Map]
@@ -109,21 +109,21 @@ Below is the clear flow diagram tracing a visit from the field to the supervisor
 
 ```mermaid
 sequenceDiagram
-    actor FieldWorker as ASHA Worker
+    participant FieldWorker as ASHA Worker
     participant WebApp as Web Client
     participant Geolocation as GPS API
     participant Agent as Gemini Agent
     participant Firestore as Firebase Database
-    actor Supervisor as DHO / Supervisor
+    participant Supervisor as DHO / Supervisor
 
     FieldWorker->>WebApp: Opens App & Begins Voice Log
     WebApp->>Geolocation: Request Live GPS
-    Geolocation-->>WebApp: Returns [Lat, Lng, Accuracy]
+    Geolocation-->>WebApp: Returns GPS Data
     FieldWorker->>WebApp: Speaks (Unstructured Audio/Text)
-    WebApp->>Agent: Sends [Text + GPS + Timestamp]
+    WebApp->>Agent: Sends Text, GPS, Timestamp
     Agent->>Agent: Analyzes sentiment & medical severity
     Agent->>Agent: Structures into typed JSON schema
-    Agent->>Firestore: Writes Document to 'visits' collection
+    Agent->>Firestore: Writes Document to visits collection
     Firestore-->>Supervisor: Live onSnapshot Trigger
     Supervisor->>Supervisor: Dashboard updates instantly
     alt Critical Anomaly Detected
