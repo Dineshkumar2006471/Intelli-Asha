@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-
 // Mock firebase-functions/logger
 vi.mock('firebase-functions/logger', () => ({
   info: vi.fn(),

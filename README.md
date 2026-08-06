@@ -12,8 +12,7 @@
   [![AI Agent Builder Series 2026](https://img.shields.io/badge/Hackathon-AI_Agent_Builder_Series_2026-ea4335?style=flat-square)](https://developers.google.com/)
   [![Powered by Gemini](https://img.shields.io/badge/Powered_by-Gemini_2.5_Flash-4285F4?style=flat-square)](https://deepmind.google/technologies/gemini/)
   [![TypeScript Strict](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-  [![CI Pipeline](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square&logo=githubactions)](https://github.com/Dineshkumar2006471/Intelli-Asha/actions)
-  [![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen?style=flat-square)](https://github.com/Dineshkumar2006471/Intelli-Asha)
+  ![CI](https://github.com/Dineshkumar2006471/Intelli-Asha/actions/workflows/ci.yml/badge.svg)
   
   <br />
 
@@ -81,8 +80,7 @@ graph TD
         C -->|Unstructured Text + GPS| E{"Verification Agent (Gemini 2.5)"}
         E -->|Extracts JSON| F[(Firebase Cloud Firestore)]
         E -->|Anomaly Detected| G{Alert Agent}
-        H{Analytics Agent} -->|Queries MCP| I[(NDHM Disease DB)]
-        H -->|Updates| F
+        H{Analytics Agent} -->|Updates| F
         I2{Incentive Agent} -->|Computes Payouts| F
     end
 
@@ -172,7 +170,6 @@ The system relies on Firebase Callable Functions to securely handle complex AI w
 | Endpoint (Cloud Function) | Method | Payload | Description |
 | :--- | :--- | :--- | :--- |
 | `calculateIncentive` | `CALL` | `{ workerId, periodStart?, periodEnd? }` | Analyzes a worker's logged visits for a given period using Vertex AI (Gemini) to determine the "Ghost Reporting Risk", verifies legitimate logs, and computes Task Based Incentives (TBI) payouts. |
-| `analyzeCoverage` | `CALL` | `{ region, dateRange }` | *(Planned/MCP)* Correlates local village data against regional models to detect gaps in public health coverage. |
 
 **Frontend Database Access:**
 The React client utilizes `onSnapshot` listeners to subscribe to the `visits` and `workers` collections in Firestore. Real-time updates occur via WebSockets.
@@ -214,7 +211,7 @@ IntelliASHA is built to strict production standards, ensuring enterprise-grade r
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js (v20+)
+- Node.js (v22+)
 - A Firebase Project (with Firestore and Auth enabled)
 - A Google Gemini API Key
 - A Google Maps API Key (for Geolocation parsing)
@@ -223,7 +220,7 @@ IntelliASHA is built to strict production standards, ensuring enterprise-grade r
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-org/intelliasha.git
+   git clone https://github.com/Dineshkumar2006471/Intelli-Asha.git
    cd intelliasha
    ```
 

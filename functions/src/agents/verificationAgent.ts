@@ -111,7 +111,11 @@ async function runPreChecks(
     } else {
       results.visitDuration = 'pass'; // First visit — no comparison
     }
-  } catch {
+  } catch (err) {
+    logger.warn('[VERIFICATION_AGENT] visitDuration check failed', {
+      error: err instanceof Error ? err.message : 'Unknown error',
+      workerId,
+    });
     results.visitDuration = 'skip';
   }
 
@@ -129,7 +133,11 @@ async function runPreChecks(
       .get();
 
     results.householdFrequency = householdVisits.size <= 2 ? 'pass' : 'fail';
-  } catch {
+  } catch (err) {
+    logger.warn('[VERIFICATION_AGENT] householdFrequency check failed', {
+      error: err instanceof Error ? err.message : 'Unknown error',
+      workerId,
+    });
     results.householdFrequency = 'skip';
   }
 
