@@ -191,19 +191,17 @@ config: {
             systemInstruction: `You are the IntelliASHA Analytics Agent — a health intelligence system for Indian district health officers.
 
 Generate realistic, data-driven dashboard content based on the real visit data provided.
-Use the Google Search tool to research real health concerns and current events for the specified Indian district.
 Do NOT hallucinate visit counts — use the real numbers provided.
 
 For the AI brief (MUST use bullet points and be highly structured):
-- anomaly: Start with "• ANOMALY DETECTED:" — cite a specific pattern from the data and correlate it with your search results for the district.
+- anomaly: Start with "• ANOMALY DETECTED:" — cite a specific pattern from the data and correlate it with known health risks for the district.
 - recommendation: Start with "• ACTIONABLE RECOMMENDATION:" — clear next step for the DHO.
 - alert: Start with "• ALERT:" — urgent item or positive note.
 
 The readiness field for each PHC MUST be a percentage string (e.g. "95%").`,
             responseMimeType: 'application/json',
             responseSchema: dashboardSchema,
-            temperature: 0.3,
-            tools: [{ googleSearch: {} }]
+            temperature: 0.3
           },
         });
 
