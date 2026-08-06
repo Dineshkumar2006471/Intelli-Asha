@@ -95,22 +95,32 @@ export const updateSmartRouteOnVisit = onDocumentWritten(
     try {
       const ai = new GoogleGenAI({ vertexai: true, project: 'kavach-hackathon-500511', location: 'us-central1' });
 
-      const prompt = `You are the IntelliASHA Triage Agent. Based on these past visit records for an ASHA worker, generate a prioritized visit list for today.
+      const systemInstruction = `You are the IntelliASHA Triage Agent, an expert AI auditor following strict NHM guidelines.
+Your job is to read past visit data for households and generate a prioritized visit schedule.
 
-Past visits data: ${JSON.stringify(visits.slice(0, 20))}
+STRICT PRIORITY RULES:
+1. CRITICAL: MUST be assigned if the household has 'flagged: true' AND the 'flaggedReason' mentions Severe Acute Malnutrition (SAM), severe emergency, or high-risk medical anomaly.
+2. HIGH: MUST be assigned if 'flagged: true' (for non-emergency reasons) OR if 'status' is "Underweight", "At Risk", or "Delayed".
+3. MEDIUM: MUST be assigned if 'flagged: false' AND the 'date' is older than 7 days.
+4. ROUTINE: MUST be assigned for all other normal households ('flagged: false' and recently visited).
 
-Rules:
-1. CRITICAL Priority: Assign if flaggedReason indicates Severe Acute Malnutrition (SAM), severe medical emergency, or impossible/critical health anomalies.
-2. HIGH Priority: Assign if status is "Underweight" or if there are non-emergency flagged anomalies.
-3. MEDIUM Priority: Assign if the household has not been visited in 7+ days and has no anomalies.
-4. ROUTINE Priority: All other normal households.
-5. Reason: Write a highly specific, professional reason based on the flaggedReason or status (e.g. "Flagged for Severe Acute Malnutrition due to very low weight for age", NOT generic "was flagged").
-6. Sort from highest to lowest priority.`;
+REASONING RULES:
+- The 'reason' MUST accurately reflect the data provided. 
+- If 'flagged: true', the reason MUST explicitly quote or summarize the 'flaggedReason'.
+- Do NOT hallucinate reasons. If status is Normal and not flagged, reason must be "Routine follow-up check".
+
+SORTING RULE:
+- You MUST sort the array in order of priority: critical first, then high, then medium, then routine.`;
+
+      const prompt = `Past visits data: ${JSON.stringify(visits.slice(0, 20))}
+Please generate the triage plan based on the strict priority rules.`;
 
       const response = await callGeminiWithRetries(ai, {
         model: 'gemini-2.5-flash',
-        contents: prompt,
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
         config: {
+          systemInstruction,
+          temperature: 0.1, // Low temperature for deterministic rule following
           responseMimeType: 'application/json',
           responseSchema: triageOutputSchema,
         },

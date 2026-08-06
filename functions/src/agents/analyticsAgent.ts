@@ -232,9 +232,11 @@ The readiness field for each PHC MUST be a percentage string (e.g. "95%").`,
         severity: 'success',
       });
 
-      // Write to Firestore
+      // CRITICAL FIX: Also write to a 'global' document so the dashboard always gets updates
+      // regardless of slight string mismatches (e.g. 'YSR District' vs 'Kadapa District')
       const db = getFirestore();
       await db.collection('analytics').doc(location).set(dashboard);
+      await db.collection('analytics').doc('global').set(dashboard);
       
       logger.info('[ANALYTICS_AGENT] Analytics updated in Firestore', { location });
     } catch (err) {
