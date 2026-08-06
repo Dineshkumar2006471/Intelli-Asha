@@ -57,6 +57,7 @@ export interface Visit extends VisitData {
   verificationConfidence?: number;
   verifiedAt?: Timestamp;
   districtName?: string;
+  locationName?: string;
 }
 
 // ---------------------------------------------------------------------------
