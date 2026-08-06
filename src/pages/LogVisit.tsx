@@ -160,7 +160,7 @@ const LogVisit = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           
           {/* LEFT PANEL - DATA ENTRY */}
-          <section className="bg-surface-container-lowest border border-border-default rounded-xl p-6 shadow-sm flex flex-col items-center justify-start space-y-8 min-h-[600px]">
+          <section className="bg-surface-container-lowest border border-border-default rounded-xl p-6 shadow-sm flex flex-col items-center justify-start space-y-8 lg:h-[650px] overflow-y-auto">
             <div className="w-full flex justify-between items-center border-b border-border-default pb-4">
               <h2 className="font-title-md text-title-md text-on-surface">1. Voice Input</h2>
               <div className="flex items-center gap-2">
@@ -186,7 +186,7 @@ const LogVisit = () => {
               <span className="italic text-on-surface font-semibold">"Visited Sharma household. Child Rahul, weight 12kg. Standard checkup."</span>
             </p>
 
-            <div className="relative flex items-center justify-center w-32 h-32">
+            <div className="relative flex items-center justify-center w-32 h-32 flex-shrink-0">
               {isRecording && (
                 <div className="absolute inset-0 bg-primary-container rounded-full opacity-50 animate-ping"></div>
               )}
@@ -202,7 +202,7 @@ const LogVisit = () => {
               </button>
             </div>
 
-            <div className="w-full flex-1 flex flex-col items-center justify-start" aria-live="polite" aria-atomic="true">
+            <div className="w-full flex-1 flex flex-col items-center justify-start min-h-[250px]" aria-live="polite" aria-atomic="true">
               {isRecording && <p className="font-title-md text-title-md text-primary animate-pulse mb-2">Listening...</p>}
               {isProcessingAudio && <p className="font-title-md text-title-md text-primary animate-pulse mb-2">Transcribing audio (Google Speech-to-Text)...</p>}
               {isProcessing && !isProcessingAudio && <p className="font-title-md text-title-md text-primary animate-pulse mb-2">Understanding with Gemini AI...</p>}
@@ -223,7 +223,7 @@ const LogVisit = () => {
                   {!structuredData && !isProcessing && (
                     <button 
                       onClick={handleProcessVoiceNote}
-                      className="w-full bg-primary text-on-primary font-title-md text-title-md py-4 rounded-lg shadow-md hover:bg-primary-dark transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-4"
+                      className="w-full bg-primary text-on-primary font-title-md text-title-md py-4 rounded-lg shadow-md hover:bg-primary-dark transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-4 flex-shrink-0"
                     >
                       <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>auto_awesome</span>
                       Generate Professional Report
@@ -236,13 +236,13 @@ const LogVisit = () => {
 
           {/* RIGHT PANEL - REPORT & DATA */}
           {!structuredData ? (
-            <section className="hidden lg:flex bg-surface-container-low border border-border-default border-dashed rounded-xl p-6 min-h-[600px] flex-col items-center justify-center text-center">
+            <section className="hidden lg:flex bg-surface-container-low border border-border-default border-dashed rounded-xl p-6 lg:h-[650px] flex-col items-center justify-center text-center">
               <span className="material-symbols-outlined text-[64px] text-on-surface-variant opacity-50 mb-4">analytics</span>
               <h2 className="font-title-lg text-on-surface-variant opacity-70">Awaiting Data</h2>
               <p className="font-body-base text-on-surface-variant opacity-70 mt-2 max-w-sm">Record a visit and generate an AI report to view the structured analysis and professional case summary here.</p>
             </section>
           ) : (
-            <section className="bg-surface-container-lowest border border-border-default rounded-xl p-0 shadow-sm flex flex-col min-h-[600px] overflow-hidden animate-in fade-in slide-in-from-right-4 duration-500">
+            <section className="bg-surface-container-lowest border border-border-default rounded-xl p-0 shadow-sm flex flex-col lg:h-[650px] overflow-hidden animate-in fade-in slide-in-from-right-4 duration-500">
               {/* Header */}
               <div className="bg-primary-container p-6 border-b border-border-default flex justify-between items-center">
                 <div>
