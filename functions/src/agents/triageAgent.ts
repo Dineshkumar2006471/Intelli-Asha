@@ -77,6 +77,7 @@ export const updateSmartRouteOnVisit = onDocumentWritten(
           visitType: data.visitType,
           date: data.timestamp?.toDate?.()?.toISOString() || new Date().toISOString(),
           flagged: !!data.anomaliesFound,
+          flaggedReason: data.flaggedReason || '',
           timestamp: data.timestamp?.toMillis?.() || Date.now()
         });
       }
@@ -99,11 +100,11 @@ export const updateSmartRouteOnVisit = onDocumentWritten(
 Past visits data: ${JSON.stringify(visits.slice(0, 20))}
 
 Rules:
-1. Households with "Severe Acute Malnutrition" → priority: "critical"
-2. Households with "Underweight" or flagged anomalies → priority: "high"
-3. Households not visited in 7+ days → priority: "medium"
-4. All others → priority: "routine"
-5. Include a brief "reason" for each priority assignment.
+1. CRITICAL Priority: Assign if flaggedReason indicates Severe Acute Malnutrition (SAM), severe medical emergency, or impossible/critical health anomalies.
+2. HIGH Priority: Assign if status is "Underweight" or if there are non-emergency flagged anomalies.
+3. MEDIUM Priority: Assign if the household has not been visited in 7+ days and has no anomalies.
+4. ROUTINE Priority: All other normal households.
+5. Reason: Write a highly specific, professional reason based on the flaggedReason or status (e.g. "Flagged for Severe Acute Malnutrition due to very low weight for age", NOT generic "was flagged").
 6. Sort from highest to lowest priority.`;
 
       const response = await callGeminiWithRetries(ai, {
