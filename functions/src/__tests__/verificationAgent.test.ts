@@ -1,9 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { verificationAgent } from '../agents/verificationAgent';
+import * as logger from 'firebase-functions/logger';
 
-const mockUpdate = vi.fn();
-const mockGet = vi.fn();
-const mockAdd = vi.fn();
+const { mockUpdate, mockGet, mockAdd, mockWarn } = vi.hoisted(() => ({
+  mockUpdate: vi.fn(),
+  mockGet: vi.fn(),
+  mockAdd: vi.fn(),
+  mockWarn: vi.fn()
+}));
 
 vi.mock('firebase-admin/firestore', () => {
   return {
@@ -27,7 +31,6 @@ vi.mock('firebase-admin/firestore', () => {
   };
 });
 
-const mockWarn = vi.fn();
 vi.mock('firebase-functions/logger', () => ({
   info: vi.fn(),
   error: vi.fn(),
@@ -48,7 +51,7 @@ vi.mock('../utils/geminiRetries', () => ({
 describe('Verification Agent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGet.mockResolvedValue({ size: 0, docs: [] });
+    mockGet.mockResolvedValue({ size: 0, docs: [] } as any);
   });
 
   it('runs successfully (happy path)', async () => {
@@ -83,7 +86,6 @@ describe('Verification Agent', () => {
     
     await (verificationAgent as any).run(event);
     
-    // Assert the NEW logger call from Fix 3 fires
     expect(mockWarn).toHaveBeenCalledWith(
       '[VERIFICATION_AGENT] visitDuration check failed',
       expect.objectContaining({ error: 'Firestore DB Error', workerId: 'w1' })

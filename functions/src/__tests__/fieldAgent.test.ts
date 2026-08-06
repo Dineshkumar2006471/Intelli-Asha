@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import * as https from 'firebase-functions/v2/https';
 import { processVisitVoiceNote } from '../agents/fieldAgent';
+import { callGeminiWithRetries } from '../utils/geminiRetries';
 
-// Mock the Retries utility and Logger
 vi.mock('../utils/geminiRetries', () => ({
   callGeminiWithRetries: vi.fn(),
 }));
@@ -15,12 +14,7 @@ vi.mock('firebase-functions/logger', () => ({
   warn: vi.fn(),
 }));
 
-// We must dynamically import to inject mocks before the module evaluates if needed,
-// but for standard vi.mock() it is hoisted.
-
 describe('Field Agent (processVisitVoiceNote)', () => {
-  const { callGeminiWithRetries } = require('../utils/geminiRetries');
-
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -39,9 +33,9 @@ describe('Field Agent (processVisitVoiceNote)', () => {
       professionalReport: 'Patient is healthy.'
     };
 
-    callGeminiWithRetries.mockResolvedValue({
+    vi.mocked(callGeminiWithRetries).mockResolvedValue({
       text: JSON.stringify(mockGeminiResponse)
-    });
+    } as any);
 
     const request = {
       auth: { uid: 'worker_123' },
