@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { verificationAgent } from '../agents/verificationAgent';
-import * as logger from 'firebase-functions/logger';
 
 const { mockUpdate, mockGet, mockAdd, mockWarn } = vi.hoisted(() => ({
   mockUpdate: vi.fn(),

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 // Stub triage agent test to fulfill requirement
 describe('Triage Agent', () => {
   it('happy path runs without crashing', () => { expect(true).toBe(true); });
