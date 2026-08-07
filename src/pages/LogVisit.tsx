@@ -235,7 +235,7 @@ const LogVisit = () => {
           {!isEditingLocation && (
             <button 
               onClick={() => {
-                setManualLocation(overrideLocation ? overrideLocation.name : (districtName || ''));
+                setManualLocation(overrideLocationName || districtName || '');
                 setIsEditingLocation(true);
               }}
               className="text-primary hover:bg-surface-variant px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-1"
