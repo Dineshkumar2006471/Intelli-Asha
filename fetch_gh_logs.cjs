@@ -11,7 +11,7 @@ https.get('https://api.github.com/repos/Dineshkumar2006471/Intelli-Asha/actions/
   res.on('end', () => {
     const runs = JSON.parse(data).workflow_runs;
     const latestRun = runs[0];
-    console.log(`Latest Run ID: ${latestRun.id}, Status: ${latestRun.status}, Conclusion: ${latestRun.conclusion}`);
+    console.log(`Latest Run ID: ${latestRun.id}, SHA: ${latestRun.head_sha}, Status: ${latestRun.status}, Conclusion: ${latestRun.conclusion}`);
     
     https.get(`https://api.github.com/repos/Dineshkumar2006471/Intelli-Asha/actions/runs/${latestRun.id}/jobs`, {
       headers: {

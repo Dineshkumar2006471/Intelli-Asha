@@ -18,13 +18,13 @@ const DHODashboard = () => {
   });
 
   const [loading, setLoading] = useState(true);
-  const [locationName, setLocationName] = useState('Your District');
+  const [locationName, setLocationName] = useState(() => sessionStorage.getItem('dhoLocation') || 'Your District');
   const [aiBrief, setAiBrief] = useState<AIBrief | null>(null);
   const [phcs, setPhcs] = useState<PHCBreakdown[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isEditingLocation, setIsEditingLocation] = useState(false);
-  const [hasManuallyOverridden, setHasManuallyOverridden] = useState(false);
-  const [manualLocation, setManualLocation] = useState('');
+  const [hasManuallyOverridden, setHasManuallyOverridden] = useState(() => !!sessionStorage.getItem('dhoLocation'));
+  const [manualLocation, setManualLocation] = useState(() => sessionStorage.getItem('dhoLocation') || '');
   const [liveVisitCount, setLiveVisitCount] = useState(0);
   const [liveFlaggedCount, setLiveFlaggedCount] = useState(0);
   const { districtName: detectedDistrict, loading: geoLoading } = useGeolocation({ zoom: 10, fallback: 'Your District' });
@@ -77,6 +77,7 @@ const DHODashboard = () => {
     setIsEditingLocation(false);
     setHasManuallyOverridden(true);
     setLocationName(manualLocation);
+    sessionStorage.setItem('dhoLocation', manualLocation);
     setLoading(true);
     setAiBrief(null);
     setPhcs([]);
