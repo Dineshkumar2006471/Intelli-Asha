@@ -47,6 +47,39 @@ const LogVisit = () => {
   } = useSpeechRecognition(selectedLang);
   const { geoAnchor, locationName, districtName } = useGeolocation({ zoom: 14 });
 
+  const [isEditingLocation, setIsEditingLocation] = useState(false);
+  const [manualLocation, setManualLocation] = useState('');
+  const [overrideLocation, setOverrideLocation] = useState<{name: string, lat: number, lng: number} | null>(null);
+  const [geocodingError, setGeocodingError] = useState<string | null>(null);
+
+  const handleManualLocationSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualLocation.trim()) return;
+    setGeocodingError(null);
+    setIsProcessing(true);
+    try {
+      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(manualLocation)}&key=${apiKey}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.status === 'OK' && data.results && data.results.length > 0) {
+        const result = data.results[0];
+        setOverrideLocation({
+          name: manualLocation,
+          lat: result.geometry.location.lat,
+          lng: result.geometry.location.lng
+        });
+        setIsEditingLocation(false);
+      } else {
+        setGeocodingError('Location not found. Try adding a district or state.');
+      }
+    } catch (err) {
+      setGeocodingError('Geocoding failed. Check connection.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   useEffect(() => {
     if (speechError) setError(speechError);
     else if (!speechSupported) setError('Speech Recognition API is not supported in this browser.');
@@ -115,9 +148,9 @@ const LogVisit = () => {
           ...structuredData,
           rawTranscription: editableTranscription,
           audioUrl,
-          geoAnchor: geoAnchor ?? null,
-          locationName: locationName || 'Unknown District',
-          districtName: districtName || 'Unknown District',
+          geoAnchor: overrideLocation ? { lat: overrideLocation.lat, lng: overrideLocation.lng, accuracy: 100 } : (geoAnchor ?? null),
+          locationName: overrideLocation ? overrideLocation.name : (locationName || 'Unknown District'),
+          districtName: overrideLocation ? overrideLocation.name : (districtName || 'Unknown District'),
         },
         currentUser.uid
       );
@@ -155,6 +188,49 @@ const LogVisit = () => {
             <span><strong>You are offline.</strong> Don't worry, you can still log visits. They will sync automatically when you reconnect.</span>
           </div>
         )}
+
+        {/* MANUAL LOCATION OVERRIDE UI */}
+        <div className="mb-6 bg-surface-container-low p-4 rounded-lg border border-border-default flex items-center justify-between shadow-sm">
+          <div>
+            <span className="font-label-sm text-secondary uppercase tracking-wider block mb-1">Current Location</span>
+            {isEditingLocation ? (
+              <form onSubmit={handleManualLocationSubmit} className="flex gap-2 items-center">
+                <input 
+                  type="text" 
+                  value={manualLocation}
+                  onChange={(e) => setManualLocation(e.target.value)}
+                  placeholder="e.g. YSR Kadapa District"
+                  className="border border-border-default rounded px-3 py-1 text-sm bg-surface text-on-surface w-64 focus:border-primary outline-none"
+                  autoFocus
+                />
+                <button type="submit" className="bg-primary text-on-primary px-3 py-1 rounded text-sm hover:bg-primary-dark disabled:opacity-50 transition-colors" disabled={isProcessing}>
+                  {isProcessing ? 'Searching...' : 'Save'}
+                </button>
+                <button type="button" onClick={() => setIsEditingLocation(false)} className="text-secondary hover:text-on-surface text-sm transition-colors">Cancel</button>
+              </form>
+            ) : (
+              <div className="flex items-center gap-3">
+                <span className="font-body-base font-medium text-on-surface">
+                  {overrideLocation ? overrideLocation.name : (locationName || 'Detecting...')}
+                </span>
+                {(!geoAnchor && !overrideLocation) && <span className="text-xs text-error font-bold flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">warning</span> No GPS Found</span>}
+              </div>
+            )}
+            {geocodingError && <p className="text-error text-xs mt-1">{geocodingError}</p>}
+          </div>
+          {!isEditingLocation && (
+            <button 
+              onClick={() => {
+                setManualLocation(overrideLocation ? overrideLocation.name : (districtName || ''));
+                setIsEditingLocation(true);
+              }}
+              className="text-primary hover:bg-surface-variant px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-1"
+            >
+              <span className="material-symbols-outlined text-[18px]">edit_location</span>
+              Override Location
+            </button>
+          )}
+        </div>
 
         {/* SPLIT SCREEN LAYOUT */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">

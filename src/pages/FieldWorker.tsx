@@ -33,16 +33,32 @@ const FieldWorker = () => {
     return () => unsub();
   }, [currentUser]);
 
-  const { locationName, loading: geoLoading } = useGeolocation({ zoom: 14, fallback: 'Unknown Block' });
+  const { locationName: detectedLocation, loading: geoLoading } = useGeolocation({ zoom: 14, fallback: 'Unknown Block' });
+  const [manualLocation, setManualLocation] = useState('');
+  const [isEditingLocation, setIsEditingLocation] = useState(false);
+  const [locationName, setLocationName] = useState(() => {
+    return sessionStorage.getItem('workerLocation') || 'Detecting...';
+  });
+  
+  useEffect(() => {
+    if (!geoLoading && detectedLocation && !isEditingLocation && locationName === 'Detecting...') {
+      setLocationName(detectedLocation);
+    }
+  }, [geoLoading, detectedLocation, isEditingLocation, locationName]);
 
   useEffect(() => {
-    if (!geoLoading && currentUser) {
+    if (locationName !== 'Detecting...' && currentUser) {
       updateDoc(doc(db, 'workers', currentUser.uid), { location: locationName }).catch((err: unknown) => log.error('Failed to update location', err));
     }
-  }, [geoLoading, locationName, currentUser]);
+  }, [locationName, currentUser]);
 
-
-
+  const handleManualLocationSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualLocation.trim()) return;
+    setIsEditingLocation(false);
+    setLocationName(manualLocation);
+    sessionStorage.setItem('workerLocation', manualLocation);
+  };
   const displayName = currentUser?.displayName || 'ASHA Worker';
   const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
@@ -56,7 +72,29 @@ const FieldWorker = () => {
         <header className="flex flex-col md:flex-row md:justify-between md:items-center px-6 md:px-10 py-6 border-b border-border-default bg-surface">
           <div>
             <h1 className="font-title-xl text-title-xl text-on-surface font-bold">Good morning, {displayName}</h1>
-            <p className="font-body-base text-body-base text-on-surface-variant mt-1">Block: {locationName} · Field Worker Dashboard</p>
+            <div className="flex items-center gap-2 mt-1">
+              {isEditingLocation ? (
+                <form onSubmit={handleManualLocationSubmit} className="flex gap-2 items-center">
+                  <input 
+                    type="text" 
+                    value={manualLocation}
+                    onChange={(e) => setManualLocation(e.target.value)}
+                    placeholder="e.g. YSR Kadapa District"
+                    className="border border-border-default rounded px-2 py-1 text-sm bg-surface text-on-surface"
+                    autoFocus
+                  />
+                  <button type="submit" className="bg-primary text-on-primary px-2 py-1 rounded text-xs">Save</button>
+                  <button type="button" onClick={() => setIsEditingLocation(false)} className="text-secondary text-xs">Cancel</button>
+                </form>
+              ) : (
+                <>
+                  <p className="font-body-base text-body-base text-on-surface-variant">Block: {locationName} · Field Worker Dashboard</p>
+                  <button onClick={() => { setManualLocation(locationName); setIsEditingLocation(true); }} className="text-primary hover:bg-surface-variant p-1 rounded-md transition-colors" title="Edit Location">
+                    <span className="material-symbols-outlined text-[16px]">edit</span>
+                  </button>
+                </>
+              )}
+            </div>
           </div>
           <div className="hidden md:flex items-center gap-4">
             <button className="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors">

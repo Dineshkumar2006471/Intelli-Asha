@@ -83,7 +83,7 @@ export async function getRecentVisits(userId: string): Promise<Visit[]> {
 /** Subscribes to the latest 50 visits across all workers. */
 export function onVisitsSnapshot(callback: (visits: Visit[]) => void): Unsubscribe {
   const visitsRef = collection(db, 'visits');
-  const q = query(visitsRef, orderBy('timestamp', 'desc'), limit(50));
+  const q = query(visitsRef, orderBy('timestamp', 'desc'), limit(500));
   return onSnapshot(
     q,
     (snapshot) => {

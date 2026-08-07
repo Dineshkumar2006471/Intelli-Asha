@@ -15,7 +15,7 @@
  */
 
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
 import { GoogleGenAI, Type } from '@google/genai';
 import { writeAgentLog } from '../services/agentLogger';
 import { callGeminiWithRetries } from '../utils/geminiRetries';
@@ -242,6 +242,13 @@ The readiness field for each PHC MUST be a percentage string (e.g. "95%").`,
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       logger.error('[ANALYTICS_AGENT] System Failed', { error: message });
+
+      const db = getFirestore();
+      await db.collection('analytics').doc('global').set({
+        _status: 'error',
+        _lastError: message,
+        _lastAttempt: FieldValue.serverTimestamp(),
+      }, { merge: true });
 
       await writeAgentLog({
         agentName: 'ANALYTICS_AGENT',
