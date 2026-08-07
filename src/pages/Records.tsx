@@ -26,12 +26,14 @@ const Records = () => {
   }, [currentUser]);
 
   const filtered = filter === 'all' ? visits
-    : filter === 'flagged' ? visits.filter(v => v.anomaliesFound)
-    : visits.filter(v => !v.anomaliesFound);
+    : filter === 'flagged' ? visits.filter(v => v.anomaliesFound === true)
+    : filter === 'verified' ? visits.filter(v => v.anomaliesFound === false)
+    : visits.filter(v => v.anomaliesFound === undefined);
 
   const totalVisits = visits.length;
-  const flaggedCount = visits.filter(v => v.anomaliesFound).length;
-  const verifiedCount = totalVisits - flaggedCount;
+  const flaggedCount = visits.filter(v => v.anomaliesFound === true).length;
+  const verifiedCount = visits.filter(v => v.anomaliesFound === false).length;
+  const pendingCount = visits.filter(v => v.anomaliesFound === undefined).length;
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -73,18 +75,18 @@ const Records = () => {
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex gap-2 mb-6">
-            {(['all', 'verified', 'flagged'] as const).map(f => (
+          <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+            {(['all', 'verified', 'flagged', 'pending'] as const).map(f => (
               <button
                 key={f}
-                onClick={() => setFilter(f)}
-                className={`px-4 py-2 rounded-lg font-label-md text-[13px] transition-colors border-2 ${
+                onClick={() => setFilter(f as any)}
+                className={`whitespace-nowrap px-4 py-2 rounded-lg font-label-md text-[13px] transition-colors border-2 ${
                   filter === f
                     ? 'border-primary text-primary bg-transparent font-bold'
                     : 'border-transparent text-secondary hover:bg-surface-container-low'
                 }`}
               >
-                {f === 'all' ? 'All' : f === 'verified' ? 'Verified' : 'Flagged'} ({f === 'all' ? totalVisits : f === 'verified' ? verifiedCount : flaggedCount})
+                {f === 'all' ? 'All' : f === 'verified' ? 'Verified' : f === 'flagged' ? 'Flagged' : 'Pending'} ({f === 'all' ? totalVisits : f === 'verified' ? verifiedCount : f === 'flagged' ? flaggedCount : pendingCount})
               </button>
             ))}
           </div>
@@ -131,13 +133,17 @@ const Records = () => {
                         </td>
                         <td className="p-4 text-[13px] text-secondary">{visit.visitType || 'General'}</td>
                         <td className="p-4">
-                          {visit.anomaliesFound ? (
+                          {visit.anomaliesFound === true ? (
                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-flagged-bg text-flagged-amber font-label-sm text-[10px] font-bold">
                               <span className="material-symbols-outlined text-[12px]">warning</span>Flagged
                             </span>
-                          ) : (
+                          ) : visit.anomaliesFound === false ? (
                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-verified-bg text-verified-green font-label-sm text-[10px] font-bold">
                               <span className="material-symbols-outlined text-[12px]">check_circle</span>Verified
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-surface-container text-secondary font-label-sm text-[10px] font-bold">
+                              <span className="material-symbols-outlined text-[12px] animate-spin">sync</span>Pending
                             </span>
                           )}
                         </td>

@@ -49,7 +49,11 @@ const LogVisit = () => {
 
   const [isEditingLocation, setIsEditingLocation] = useState(false);
   const [manualLocation, setManualLocation] = useState('');
-  const [overrideLocation, setOverrideLocation] = useState<{name: string, lat: number, lng: number} | null>(null);
+  
+  // Track location name and geocodes separately so a sessionStorage string doesn't wipe out GPS coordinates
+  const [overrideLocationName, setOverrideLocationName] = useState<string | null>(() => sessionStorage.getItem('workerLocation'));
+  const [overrideLocation, setOverrideLocation] = useState<{lat: number, lng: number} | null>(null);
+  
   const [geocodingError, setGeocodingError] = useState<string | null>(null);
 
   const handleManualLocationSubmit = async (e: React.FormEvent) => {
@@ -64,11 +68,12 @@ const LogVisit = () => {
       const data = await res.json();
       if (data.status === 'OK' && data.results && data.results.length > 0) {
         const result = data.results[0];
+        setOverrideLocationName(manualLocation);
         setOverrideLocation({
-          name: manualLocation,
           lat: result.geometry.location.lat,
           lng: result.geometry.location.lng
         });
+        sessionStorage.setItem('workerLocation', manualLocation);
         setIsEditingLocation(false);
       } else {
         setGeocodingError('Location not found. Try adding a district or state.');
@@ -149,8 +154,8 @@ const LogVisit = () => {
           rawTranscription: editableTranscription,
           audioUrl,
           geoAnchor: overrideLocation ? { lat: overrideLocation.lat, lng: overrideLocation.lng, accuracy: 100 } : (geoAnchor ?? null),
-          locationName: overrideLocation ? overrideLocation.name : (locationName || 'Unknown District'),
-          districtName: overrideLocation ? overrideLocation.name : (districtName || 'Unknown District'),
+          locationName: overrideLocationName || (locationName || 'Unknown District'),
+          districtName: overrideLocationName || (districtName || 'Unknown District'),
         },
         currentUser.uid
       );
@@ -194,26 +199,35 @@ const LogVisit = () => {
           <div>
             <span className="font-label-sm text-secondary uppercase tracking-wider block mb-1">Current Location</span>
             {isEditingLocation ? (
-              <form onSubmit={handleManualLocationSubmit} className="flex gap-2 items-center">
+              <form onSubmit={handleManualLocationSubmit} className="flex gap-2 w-full mt-2">
                 <input 
                   type="text" 
                   value={manualLocation}
                   onChange={(e) => setManualLocation(e.target.value)}
                   placeholder="e.g. YSR Kadapa District"
-                  className="border border-border-default rounded px-3 py-1 text-sm bg-surface text-on-surface w-64 focus:border-primary outline-none"
+                  className="flex-1 bg-surface border border-border-default rounded-md px-3 py-1.5 text-sm text-on-surface"
                   autoFocus
                 />
-                <button type="submit" className="bg-primary text-on-primary px-3 py-1 rounded text-sm hover:bg-primary-dark disabled:opacity-50 transition-colors" disabled={isProcessing}>
-                  {isProcessing ? 'Searching...' : 'Save'}
+                <button type="submit" disabled={isProcessing} className="bg-primary text-on-primary px-3 py-1.5 rounded-md text-sm disabled:opacity-50">
+                  {isProcessing ? '...' : 'Save'}
                 </button>
-                <button type="button" onClick={() => setIsEditingLocation(false)} className="text-secondary hover:text-on-surface text-sm transition-colors">Cancel</button>
+                <button type="button" onClick={() => setIsEditingLocation(false)} className="text-secondary text-sm px-2">Cancel</button>
               </form>
             ) : (
-              <div className="flex items-center gap-3">
-                <span className="font-body-base font-medium text-on-surface">
-                  {overrideLocation ? overrideLocation.name : (locationName || 'Detecting...')}
+              <div className="flex items-center gap-2 mt-1">
+                <span className="material-symbols-outlined text-[16px] text-secondary">location_on</span>
+                <span className="font-label-md text-secondary truncate max-w-[200px]">
+                  {overrideLocationName || (districtName || 'Detecting location...')}
                 </span>
-                {(!geoAnchor && !overrideLocation) && <span className="text-xs text-error font-bold flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">warning</span> No GPS Found</span>}
+                <button 
+                  onClick={() => {
+                    setManualLocation(overrideLocationName || districtName || '');
+                    setIsEditingLocation(true);
+                  }} 
+                  className="ml-auto text-primary text-sm hover:underline flex items-center gap-1"
+                >
+                  <span className="material-symbols-outlined text-[14px]">edit</span> Edit
+                </button>
               </div>
             )}
             {geocodingError && <p className="text-error text-xs mt-1">{geocodingError}</p>}
