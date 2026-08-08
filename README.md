@@ -3,8 +3,7 @@
   
   # IntelliASHA 
   ### An Agentic Nervous System for Rural Healthcare
-
-  <a href="https://intelliasha.web.app/"><img src="https://img.shields.io/badge/🚀_Live_Demo-View_Deployment-4285F4?style=for-the-badge" alt="Live Deployment" /></a>
+  <a href="https://drive.google.com/file/d/1CIJr6OZxT8-CoDMFlhz_rzcTu1zr8a7D/view?usp=sharing"><img src="https://img.shields.io/badge/🚀_Video_Demo-Watch_Now-4285F4?style=for-the-badge" alt="Video Demo" /></a>
 
   <br />
 
@@ -16,7 +15,7 @@
   
   <br />
 
-  <a href="https://intelliasha.web.app/">
+  <a href="https://drive.google.com/file/d/1CIJr6OZxT8-CoDMFlhz_rzcTu1zr8a7D/view?usp=sharing">
     <img src="hero.png" alt="IntelliASHA Hero Preview" width="100%" style="border-radius: 12px; border: 1px solid #eaeaea; box-shadow: 0 10px 30px rgba(0,0,0,0.1);" />
   </a>
 
